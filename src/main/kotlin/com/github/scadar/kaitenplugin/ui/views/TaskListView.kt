@@ -9,14 +9,17 @@ import com.github.scadar.kaitenplugin.settings.KaitenSettingsState
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
+import java.awt.CardLayout
 import java.awt.Font
 import javax.swing.BoxLayout
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 class TaskListView(private val project: Project) : JPanel(BorderLayout()) {
@@ -26,7 +29,19 @@ class TaskListView(private val project: Project) : JPanel(BorderLayout()) {
     private val userService = UserService.getInstance()
     private val settings = KaitenSettingsState.getInstance()
 
-    private val contentPanel = JPanel()
+    private val contentPanel = JPanel().apply {
+        layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    }
+
+    private val cardLayout = CardLayout()
+    private val container = JPanel(cardLayout)
+
+    // Cached result of last load (already filter-service filtered)
+    private var loadedTasks: List<Task> = emptyList()
+    private var loadedColumns: List<Column> = emptyList()
+
+    // Current text query (set from outside via applySearch / from refreshTasks)
+    private var searchQuery: String = ""
 
     init {
         setupUI()
@@ -34,25 +49,44 @@ class TaskListView(private val project: Project) : JPanel(BorderLayout()) {
     }
 
     private fun setupUI() {
-        contentPanel.layout = BoxLayout(contentPanel, BoxLayout.Y_AXIS)
-        add(JBScrollPane(contentPanel), BorderLayout.CENTER)
+        val loadingPanel = JPanel(BorderLayout()).apply {
+            add(
+                JBLabel("Loading tasks...", SwingConstants.CENTER).apply {
+                    foreground = foreground.darker()
+                },
+                BorderLayout.CENTER
+            )
+        }
+
+        container.add(loadingPanel, "LOADING")
+        container.add(JBScrollPane(contentPanel).apply { border = JBUI.Borders.empty() }, "CONTENT")
+
+        add(container, BorderLayout.CENTER)
     }
 
+    /** Called when the search field changes — instant client-side re-filter, no API call. */
+    fun applySearch(query: String) {
+        searchQuery = query
+        SwingUtilities.invokeLater { updateDisplay() }
+    }
+
+    /** Reload tasks from API (passes current searchQuery as server-side filter). */
     fun refreshTasks() {
+        SwingUtilities.invokeLater { cardLayout.show(container, "LOADING") }
+
         scope.launch {
             val allTasks = mutableListOf<Task>()
             val allColumns = mutableListOf<Column>()
 
-            // Load tasks from all selected boards
+            val serverSearch = searchQuery.takeIf { it.isNotBlank() }
+
             settings.selectedBoardIds.forEach { boardId ->
-                allTasks.addAll(taskService.getTasks(boardId))
+                allTasks.addAll(taskService.getTasks(boardId, searchText = serverSearch))
                 allColumns.addAll(taskService.getColumns(boardId))
             }
 
-            // Get current user
             val currentUser = userService.getCurrentUser()
 
-            // Apply filters
             val filteredTasks = filterService.filterTasks(
                 tasks = allTasks,
                 currentUser = currentUser,
@@ -62,41 +96,69 @@ class TaskListView(private val project: Project) : JPanel(BorderLayout()) {
                 filterLogic = settings.filterLogic
             )
 
-            // Group tasks by column
-            val tasksByColumn = filteredTasks.groupBy { it.columnId }
-
             SwingUtilities.invokeLater {
-                contentPanel.removeAll()
-
-                if (tasksByColumn.isEmpty()) {
-                    val emptyLabel = JBLabel("No tasks found. Please adjust your filters.")
-                    contentPanel.add(emptyLabel)
-                } else {
-                    allColumns.sortedBy { it.position }.forEach { column ->
-                        val tasksInColumn = tasksByColumn[column.id] ?: emptyList()
-                        if (tasksInColumn.isNotEmpty()) {
-                            addColumnSection(column.name, tasksInColumn)
-                        }
-                    }
-                }
-
-                contentPanel.revalidate()
-                contentPanel.repaint()
+                loadedTasks = filteredTasks
+                loadedColumns = allColumns
+                updateDisplay()
+                cardLayout.show(container, "CONTENT")
             }
         }
     }
 
+    private fun updateDisplay() {
+        val displayTasks = if (searchQuery.isBlank()) {
+            loadedTasks
+        } else {
+            loadedTasks.filter {
+                it.title.contains(searchQuery, ignoreCase = true) ||
+                        it.id.toString().contains(searchQuery)
+            }
+        }
+
+        val tasksByColumn = displayTasks.groupBy { it.columnId }
+
+        contentPanel.removeAll()
+
+        if (tasksByColumn.isEmpty()) {
+            val msg = when {
+                settings.selectedBoardIds.isEmpty() -> "Select a board in the filters panel."
+                searchQuery.isNotBlank() -> "No tasks match \"$searchQuery\"."
+                else -> "No tasks found. Adjust your filters."
+            }
+            contentPanel.add(
+                JBLabel(msg, SwingConstants.CENTER).apply {
+                    foreground = foreground.darker()
+                    border = JBUI.Borders.empty(12)
+                }
+            )
+        } else {
+            loadedColumns.sortedBy { it.position }.forEach { column ->
+                val tasksInColumn = tasksByColumn[column.id] ?: emptyList()
+                if (tasksInColumn.isNotEmpty()) {
+                    addColumnSection(column.name, tasksInColumn)
+                }
+            }
+        }
+
+        contentPanel.revalidate()
+        contentPanel.repaint()
+    }
+
     private fun addColumnSection(columnName: String, tasks: List<Task>) {
-        val columnLabel = JBLabel(columnName)
-        columnLabel.font = columnLabel.font.deriveFont(Font.BOLD, 14f)
+        val columnLabel = JBLabel(columnName).apply {
+            font = font.deriveFont(Font.BOLD, 13f)
+            border = JBUI.Borders.empty(8, 6, 2, 6)
+        }
         contentPanel.add(columnLabel)
 
         tasks.forEach { task ->
-            val taskPanel = JPanel(BorderLayout())
-            taskPanel.add(JBLabel("  [#${task.id}] ${task.title}"), BorderLayout.WEST)
+            val taskPanel = JPanel(BorderLayout()).apply {
+                border = JBUI.Borders.empty(1, 16, 1, 6)
+            }
+            taskPanel.add(JBLabel("[#${task.id}] ${task.title}"), BorderLayout.WEST)
             contentPanel.add(taskPanel)
         }
 
-        contentPanel.add(JPanel()) // Spacing
+        contentPanel.add(JPanel().apply { maximumSize = java.awt.Dimension(Int.MAX_VALUE, 6) })
     }
 }

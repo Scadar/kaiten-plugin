@@ -1,5 +1,6 @@
 package com.github.scadar.kaitenplugin.infrastructure
 
+import com.intellij.openapi.diagnostic.Logger
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -12,9 +13,13 @@ import javax.net.ssl.X509TrustManager
 
 class HttpClientProvider(private val token: String, private val skipSslVerification: Boolean = false) {
 
+    private val LOG = Logger.getInstance(HttpClientProvider::class.java)
+
     fun createClient(): OkHttpClient {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+        val loggingInterceptor = HttpLoggingInterceptor { message ->
+            LOG.debug("[OkHttp] $message")
+        }.apply {
+            level = HttpLoggingInterceptor.Level.BASIC
         }
 
         val authInterceptor = Interceptor { chain ->

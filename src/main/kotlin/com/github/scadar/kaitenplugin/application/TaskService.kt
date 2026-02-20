@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 @Service
 class TaskService {
@@ -83,7 +82,24 @@ class TaskService {
         }
     }
 
-    suspend fun getTasks(boardId: Long, forceRefresh: Boolean = false): List<Task> {
+    /**
+     * Fetch tasks for a board.
+     * When [searchText] is provided, the query is passed to the API (server-side search)
+     * and the result is NOT stored in cache, since it's a filtered subset.
+     */
+    suspend fun getTasks(boardId: Long, searchText: String? = null, forceRefresh: Boolean = false): List<Task> {
+        // Server-side search bypasses cache
+        if (!searchText.isNullOrBlank()) {
+            val client = getApiClient() ?: return emptyList()
+            return try {
+                log.info("Fetching tasks for board $boardId with search: \"$searchText\"")
+                client.getCards(boardId, searchText)
+            } catch (e: Exception) {
+                log.error("Failed to search tasks for board $boardId with query \"$searchText\"", e)
+                emptyList()
+            }
+        }
+
         if (!forceRefresh && tasksCache.containsKey(boardId)) {
             return tasksCache.get(boardId) ?: emptyList()
         }

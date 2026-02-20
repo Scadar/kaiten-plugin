@@ -4,6 +4,7 @@ import com.github.scadar.kaitenplugin.api.dto.*
 import com.github.scadar.kaitenplugin.domain.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -11,9 +12,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.net.SocketTimeoutException
+import java.net.URLEncoder
 
 class KaitenApiClient(private val client: OkHttpClient, private val baseUrl: String) {
 
+    private val LOG = Logger.getInstance(KaitenApiClient::class.java)
     private val gson = Gson()
     private val maxRetries = 3
     private val retryDelayMs = 1000L
@@ -28,18 +31,33 @@ class KaitenApiClient(private val client: OkHttpClient, private val baseUrl: Str
             .get()
             .build()
 
+        val startTime = System.currentTimeMillis()
+        LOG.info("[Kaiten API] --> GET $url")
+
         try {
             val response = client.newCall(request).execute()
+            val duration = System.currentTimeMillis() - startTime
 
             when (response.code) {
                 200 -> {
+                    LOG.info("[Kaiten API] <-- GET $url ${response.code} OK (${duration}ms)")
                     val body = response.body?.string() ?: throw KaitenApiException.ServerError("Empty response body")
                     gson.fromJson(body, typeToken.type)
                 }
-                401 -> throw KaitenApiException.Unauthorized()
-                403 -> throw KaitenApiException.Forbidden()
-                404 -> throw KaitenApiException.NotFound()
+                401 -> {
+                    LOG.warn("[Kaiten API] <-- GET $url ${response.code} Unauthorized (${duration}ms)")
+                    throw KaitenApiException.Unauthorized()
+                }
+                403 -> {
+                    LOG.warn("[Kaiten API] <-- GET $url ${response.code} Forbidden (${duration}ms)")
+                    throw KaitenApiException.Forbidden()
+                }
+                404 -> {
+                    LOG.warn("[Kaiten API] <-- GET $url ${response.code} Not Found (${duration}ms)")
+                    throw KaitenApiException.NotFound()
+                }
                 in 500..599 -> {
+                    LOG.warn("[Kaiten API] <-- GET $url ${response.code} Server Error (${duration}ms), retry=$retryCount")
                     if (retryCount < maxRetries) {
                         delay(retryDelayMs * (retryCount + 1))
                         executeRequest(url, typeToken, retryCount + 1)
@@ -47,9 +65,14 @@ class KaitenApiClient(private val client: OkHttpClient, private val baseUrl: Str
                         throw KaitenApiException.ServerError("Server error: ${response.code}")
                     }
                 }
-                else -> throw KaitenApiException.ServerError("Unexpected error: ${response.code}")
+                else -> {
+                    LOG.warn("[Kaiten API] <-- GET $url ${response.code} Unexpected (${duration}ms)")
+                    throw KaitenApiException.ServerError("Unexpected error: ${response.code}")
+                }
             }
         } catch (e: SocketTimeoutException) {
+            val duration = System.currentTimeMillis() - startTime
+            LOG.warn("[Kaiten API] <-- GET $url TIMEOUT (${duration}ms), retry=$retryCount")
             if (retryCount < maxRetries) {
                 delay(retryDelayMs * (retryCount + 1))
                 executeRequest(url, typeToken, retryCount + 1)
@@ -57,10 +80,14 @@ class KaitenApiClient(private val client: OkHttpClient, private val baseUrl: Str
                 throw KaitenApiException.TimeoutError()
             }
         } catch (e: IOException) {
+            val duration = System.currentTimeMillis() - startTime
+            LOG.warn("[Kaiten API] <-- GET $url NETWORK_ERROR (${duration}ms): ${e.message}")
             throw KaitenApiException.NetworkError(e.message ?: "Network error")
         } catch (e: KaitenApiException) {
             throw e
         } catch (e: Exception) {
+            val duration = System.currentTimeMillis() - startTime
+            LOG.error("[Kaiten API] <-- GET $url ERROR (${duration}ms): ${e.message}", e)
             throw KaitenApiException.ServerError(e.message ?: "Unknown error")
         }
     }
@@ -83,9 +110,16 @@ class KaitenApiClient(private val client: OkHttpClient, private val baseUrl: Str
         return dtos.map { it.toDomain() }
     }
 
-    suspend fun getCards(boardId: Long): List<Task> {
+    suspend fun getCards(boardId: Long, searchText: String? = null): List<Task> {
+        val url = if (!searchText.isNullOrBlank()) {
+            val encoded = URLEncoder.encode(searchText, "UTF-8")
+            LOG.info("[Kaiten API] getCards with search query: \"$searchText\"")
+            "$baseUrl/boards/$boardId/cards?text=$encoded"
+        } else {
+            "$baseUrl/boards/$boardId/cards"
+        }
         @Suppress("UNCHECKED_CAST")
-        val dtos = executeRequest("$baseUrl/boards/$boardId/cards", object : TypeToken<List<TaskDto>>() {}) as List<TaskDto>
+        val dtos = executeRequest(url, object : TypeToken<List<TaskDto>>() {}) as List<TaskDto>
         return dtos.map { it.toDomain() }
     }
 
