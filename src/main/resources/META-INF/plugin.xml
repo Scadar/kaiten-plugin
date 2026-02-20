@@ -5,11 +5,11 @@
     <vendor>scadar</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>Git4Idea</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.scadar.kaitenplugin.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.scadar.kaitenplugin.startup.MyProjectActivity" />
+        <toolWindow factoryClass="com.github.scadar.kaitenplugin.ui.KaitenToolWindowFactory" id="Kaiten" icon="/icons/kaiten.svg"/>
     </extensions>
 </idea-plugin>
