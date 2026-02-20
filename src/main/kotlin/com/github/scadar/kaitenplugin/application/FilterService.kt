@@ -44,7 +44,7 @@ class FilterService {
     ): List<Task> {
         return tasks.filter { task ->
             val isAssignee = filterByAssignee && task.assigneeId == user.id
-            val isParticipant = filterByParticipant && user.id in task.participants
+            val isParticipant = filterByParticipant && user.id in task.participants.map { it.id }
 
             when {
                 filterByAssignee && filterByParticipant -> isAssignee && isParticipant
@@ -63,7 +63,7 @@ class FilterService {
     ): List<Task> {
         return tasks.filter { task ->
             val isAssignee = filterByAssignee && task.assigneeId == user.id
-            val isParticipant = filterByParticipant && user.id in task.participants
+            val isParticipant = filterByParticipant && user.id in task.participants.map { it.id }
 
             when {
                 filterByAssignee && filterByParticipant -> isAssignee || isParticipant

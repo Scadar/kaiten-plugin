@@ -8,7 +8,6 @@ data class Task(
     val description: String?,
     val columnId: Long,
     val assigneeId: Long?,
-    val participants: List<Long> = emptyList(),
+    val participants: List<TaskMember> = emptyList(),
     val dueDate: LocalDate?,
-    val tags: List<String> = emptyList()
 )

@@ -114,9 +114,9 @@ class KaitenApiClient(private val client: OkHttpClient, private val baseUrl: Str
         val url = if (!searchText.isNullOrBlank()) {
             val encoded = URLEncoder.encode(searchText, "UTF-8")
             LOG.info("[Kaiten API] getCards with search query: \"$searchText\"")
-            "$baseUrl/boards/$boardId/cards?query=$encoded"
+            "$baseUrl/cards?board_id=$boardId&query=$encoded"
         } else {
-            "$baseUrl/boards/$boardId/cards"
+            "$baseUrl/cards?board_id=$boardId"
         }
         @Suppress("UNCHECKED_CAST")
         val dtos = executeRequest(url, object : TypeToken<List<TaskDto>>() {}) as List<TaskDto>
