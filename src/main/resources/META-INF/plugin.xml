@@ -11,5 +11,11 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.scadar.kaitenplugin.ui.KaitenToolWindowFactory" id="Kaiten" icon="/icons/kaiten.svg"/>
+        <applicationConfigurable
+            parentId="tools"
+            instance="com.github.scadar.kaitenplugin.settings.KaitenSettingsConfigurable"
+            id="com.github.scadar.kaitenplugin.settings.KaitenSettingsConfigurable"
+            displayName="Kaiten"/>
+        <notificationGroup id="Kaiten Notifications" displayType="BALLOON"/>
     </extensions>
 </idea-plugin>

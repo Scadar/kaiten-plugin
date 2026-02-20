@@ -2,6 +2,7 @@ package com.github.scadar.kaitenplugin.ui.views
 
 import com.github.scadar.kaitenplugin.application.FilterService
 import com.github.scadar.kaitenplugin.application.TaskService
+import com.github.scadar.kaitenplugin.application.UserService
 import com.github.scadar.kaitenplugin.domain.Column
 import com.github.scadar.kaitenplugin.domain.Task
 import com.github.scadar.kaitenplugin.settings.KaitenSettingsState
@@ -22,6 +23,7 @@ class KanbanCardView(private val project: Project) : JPanel(BorderLayout()) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val taskService = TaskService.getInstance()
     private val filterService = FilterService.getInstance()
+    private val userService = UserService.getInstance()
     private val settings = KaitenSettingsState.getInstance()
 
     private val boardPanel = JPanel()
@@ -48,8 +50,7 @@ class KanbanCardView(private val project: Project) : JPanel(BorderLayout()) {
             }
 
             // Get current user
-            val users = taskService.getUsers()
-            val currentUser = users.firstOrNull()
+            val currentUser = userService.getCurrentUser()
 
             // Apply filters
             val filteredTasks = filterService.filterTasks(

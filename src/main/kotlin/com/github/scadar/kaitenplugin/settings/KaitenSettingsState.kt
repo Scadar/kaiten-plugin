@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 class KaitenSettingsState : PersistentStateComponent<KaitenSettingsState> {
     var serverUrl: String = "https://kaiten.comagic.dev/api/latest"
     var apiToken: String = ""
+    var currentUserId: Long? = null
     var selectedSpaceIds: MutableSet<Long> = mutableSetOf()
     var selectedBoardIds: MutableSet<Long> = mutableSetOf()
     var selectedColumnIds: MutableSet<Long> = mutableSetOf()
@@ -21,6 +22,7 @@ class KaitenSettingsState : PersistentStateComponent<KaitenSettingsState> {
     var filterByParticipant: Boolean = false
     var filterLogic: String = "AND" // AND or OR
     var viewMode: String = "LIST" // LIST or CARDS
+    var skipSslVerification: Boolean = true
 
     override fun getState(): KaitenSettingsState = this
 

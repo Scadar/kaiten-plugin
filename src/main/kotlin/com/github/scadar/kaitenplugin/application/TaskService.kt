@@ -30,7 +30,7 @@ class TaskService {
             log.warn("API token is not configured")
             return null
         }
-        val httpClient = HttpClientProvider(settings.apiToken).createClient()
+        val httpClient = HttpClientProvider(settings.apiToken, settings.skipSslVerification).createClient()
         return KaitenApiClient(httpClient, settings.serverUrl)
     }
 

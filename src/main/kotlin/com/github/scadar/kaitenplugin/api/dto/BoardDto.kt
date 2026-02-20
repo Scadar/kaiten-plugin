@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 
 data class BoardDto(
     @SerializedName("id") val id: Long,
-    @SerializedName("name") val name: String,
+    @SerializedName("title") val name: String,
     @SerializedName("space_id") val spaceId: Long
 ) {
     fun toDomain() = Board(id, name, spaceId)

@@ -99,4 +99,9 @@ class KaitenApiClient(private val client: OkHttpClient, private val baseUrl: Str
         val dtos = executeRequest("$baseUrl/users", object : TypeToken<List<UserDto>>() {}) as List<UserDto>
         return dtos.map { it.toDomain() }
     }
+
+    suspend fun getCurrentUser(): User {
+        val dto = executeRequest("$baseUrl/users/current", object : TypeToken<UserDto>() {}) as UserDto
+        return dto.toDomain()
+    }
 }

@@ -1,9 +1,11 @@
 package com.github.scadar.kaitenplugin.ui.panels
 
+import com.github.scadar.kaitenplugin.api.KaitenApiException
 import com.github.scadar.kaitenplugin.application.TaskService
 import com.github.scadar.kaitenplugin.domain.Board
 import com.github.scadar.kaitenplugin.domain.Column
 import com.github.scadar.kaitenplugin.domain.Space
+import com.github.scadar.kaitenplugin.infrastructure.NotificationService
 import com.github.scadar.kaitenplugin.settings.KaitenSettingsState
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBCheckBox
@@ -18,6 +20,7 @@ import javax.swing.*
 
 class FiltersPanel(private val project: Project, private val scope: CoroutineScope) : JPanel(GridBagLayout()) {
     private val taskService = TaskService.getInstance()
+    private val notificationService = NotificationService.getInstance()
     private val settings = KaitenSettingsState.getInstance()
 
     private val spaceCheckboxes = mutableMapOf<Long, JCheckBox>()
@@ -101,8 +104,29 @@ class FiltersPanel(private val project: Project, private val scope: CoroutineSco
     }
 
     fun loadData() {
+        if (settings.apiToken.isEmpty()) {
+            SwingUtilities.invokeLater {
+                spacesPanel.removeAll()
+                spacesPanel.add(JBLabel("Please configure Kaiten API token in Settings"))
+                spacesPanel.revalidate()
+                spacesPanel.repaint()
+            }
+            notificationService.showWarning(
+                project,
+                "Configuration Required",
+                "Please configure Kaiten Server URL and API Token in Settings > Tools > Kaiten"
+            )
+            return
+        }
+
         scope.launch {
-            loadSpaces()
+            try {
+                loadSpaces()
+            } catch (e: KaitenApiException) {
+                notificationService.showApiError(project, e)
+            } catch (e: Exception) {
+                notificationService.showError(project, "Error Loading Data", e.message ?: "Unknown error occurred")
+            }
         }
     }
 
@@ -112,13 +136,17 @@ class FiltersPanel(private val project: Project, private val scope: CoroutineSco
             spacesPanel.removeAll()
             spaceCheckboxes.clear()
 
-            spaces.forEach { space ->
-                val checkbox = JBCheckBox(space.name, space.id in settings.selectedSpaceIds)
-                checkbox.addActionListener {
-                    handleSpaceSelection(space, checkbox.isSelected)
+            if (spaces.isEmpty()) {
+                spacesPanel.add(JBLabel("No spaces found"))
+            } else {
+                spaces.forEach { space ->
+                    val checkbox = JBCheckBox(space.name, space.id in settings.selectedSpaceIds)
+                    checkbox.addActionListener {
+                        handleSpaceSelection(space, checkbox.isSelected)
+                    }
+                    spaceCheckboxes[space.id] = checkbox
+                    spacesPanel.add(checkbox)
                 }
-                spaceCheckboxes[space.id] = checkbox
-                spacesPanel.add(checkbox)
             }
 
             spacesPanel.revalidate()

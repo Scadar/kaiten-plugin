@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 
 data class SpaceDto(
     @SerializedName("id") val id: Long,
-    @SerializedName("name") val name: String,
+    @SerializedName("title") val name: String,
     @SerializedName("archived") val archived: Boolean = false
 ) {
     fun toDomain() = Space(id, name, archived)
