@@ -77,7 +77,8 @@ class KanbanCardView(private val project: Project) : JPanel(BorderLayout()) {
 
             val serverSearch = searchQuery.takeIf { it.isNotBlank() }
 
-            settings.selectedBoardIds.forEach { boardId ->
+            val boardId = settings.selectedBoardId
+            if (boardId != null) {
                 allTasks.addAll(taskService.getTasks(boardId, searchText = serverSearch))
                 allColumns.addAll(taskService.getColumns(boardId))
             }
@@ -118,7 +119,7 @@ class KanbanCardView(private val project: Project) : JPanel(BorderLayout()) {
 
         if (tasksByColumn.isEmpty()) {
             val msg = when {
-                settings.selectedBoardIds.isEmpty() -> "Select a board in the filters panel."
+                settings.selectedBoardId == null -> "Select a board in the filters panel."
                 searchQuery.isNotBlank() -> "No tasks match \"$searchQuery\"."
                 else -> "No tasks found. Adjust your filters."
             }

@@ -12,8 +12,6 @@ class FilterService {
     fun filterTasks(
         tasks: List<Task>,
         currentUser: User?,
-        selectedSpaceIds: Set<Long> = emptySet(),
-        selectedBoardIds: Set<Long> = emptySet(),
         selectedColumnIds: Set<Long> = emptySet(),
         filterByAssignee: Boolean = true,
         filterByParticipant: Boolean = false,
@@ -78,8 +76,8 @@ class FilterService {
 
     fun applySettings(settings: KaitenSettingsState): FilterSettings {
         return FilterSettings(
-            selectedSpaceIds = settings.selectedSpaceIds,
-            selectedBoardIds = settings.selectedBoardIds,
+            selectedSpaceId = settings.selectedSpaceId,
+            selectedBoardId = settings.selectedBoardId,
             selectedColumnIds = settings.selectedColumnIds,
             filterByAssignee = settings.filterByAssignee,
             filterByParticipant = settings.filterByParticipant,
@@ -93,8 +91,8 @@ class FilterService {
 }
 
 data class FilterSettings(
-    val selectedSpaceIds: Set<Long>,
-    val selectedBoardIds: Set<Long>,
+    val selectedSpaceId: Long?,
+    val selectedBoardId: Long?,
     val selectedColumnIds: Set<Long>,
     val filterByAssignee: Boolean,
     val filterByParticipant: Boolean,

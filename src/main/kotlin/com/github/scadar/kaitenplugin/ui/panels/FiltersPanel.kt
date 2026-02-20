@@ -8,134 +8,186 @@ import com.github.scadar.kaitenplugin.domain.Space
 import com.github.scadar.kaitenplugin.infrastructure.NotificationService
 import com.github.scadar.kaitenplugin.settings.KaitenSettingsState
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.ui.CheckBoxList
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.FlowLayout
+import java.awt.*
+import java.awt.event.ItemEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
+import javax.swing.SwingUtilities
 
 class FiltersPanel(private val project: Project, private val scope: CoroutineScope) : JPanel() {
     private val taskService = TaskService.getInstance()
     private val notificationService = NotificationService.getInstance()
     private val settings = KaitenSettingsState.getInstance()
 
-    private val spaceCheckboxes = mutableMapOf<Long, JCheckBox>()
-    private val boardCheckboxes = mutableMapOf<Long, JCheckBox>()
-    private val columnCheckboxes = mutableMapOf<Long, JCheckBox>()
-
-    private val spacesPanel = JPanel().apply { layout = BoxLayout(this, BoxLayout.Y_AXIS) }
-    private val boardsPanel = JPanel().apply { layout = BoxLayout(this, BoxLayout.Y_AXIS) }
-    private val columnsPanel = JPanel().apply { layout = BoxLayout(this, BoxLayout.Y_AXIS) }
+    // --- JetBrains components ---
+    private val spaceCombo = ComboBox<Space?>()
+    private val boardCombo = ComboBox<Board?>()
+    private val columnsList = CheckBoxList<Column>()
 
     private val assigneeCheckbox = JBCheckBox("Assignee", settings.filterByAssignee)
     private val participantCheckbox = JBCheckBox("Participant", settings.filterByParticipant)
     private val andRadio = JRadioButton("AND", settings.filterLogic == "AND")
     private val orRadio = JRadioButton("OR", settings.filterLogic == "OR")
 
+    // Guard to prevent listener feedback loops during programmatic updates
+    private var updatingCombos = false
+
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
-        border = JBUI.Borders.empty(4, 6, 4, 4)
-        setupUI()
-        setupListeners()
+        border = JBUI.Borders.empty(4, 6, 4, 6)
+        configureComponents()
+        buildUI()
+        wireListeners()
     }
 
-    private fun setupUI() {
-        // --- User filters section ---
-        add(sectionLabel("User Filters"))
+    // -------------------------------------------------------------------------
+    // Setup
+    // -------------------------------------------------------------------------
 
-        val userFilterPanel = JPanel(FlowLayout(FlowLayout.LEFT, 4, 2)).apply {
-            alignmentX = Component.LEFT_ALIGNMENT
-            maximumSize = Dimension(Int.MAX_VALUE, preferredSize.height)
-            add(assigneeCheckbox)
-            add(participantCheckbox)
-        }
-        add(userFilterPanel)
+    private fun configureComponents() {
+        // ComboBox renderers: show placeholder when item == null
+        spaceCombo.renderer = SimpleListCellRenderer.create<Space?>("-- Select space --") { it?.name ?: "" }
+        boardCombo.renderer = SimpleListCellRenderer.create<Board?>("-- Select board --") { it?.name ?: "" }
 
-        val logicGroup = ButtonGroup()
-        logicGroup.add(andRadio)
-        logicGroup.add(orRadio)
+        // Stretch combos to panel width
+        spaceCombo.alignmentX = Component.LEFT_ALIGNMENT
+        boardCombo.alignmentX = Component.LEFT_ALIGNMENT
+        spaceCombo.maximumSize = Dimension(Int.MAX_VALUE, spaceCombo.preferredSize.height + 4)
+        boardCombo.maximumSize = Dimension(Int.MAX_VALUE, boardCombo.preferredSize.height + 4)
 
-        val logicPanel = JPanel(FlowLayout(FlowLayout.LEFT, 4, 2)).apply {
-            alignmentX = Component.LEFT_ALIGNMENT
-            maximumSize = Dimension(Int.MAX_VALUE, preferredSize.height)
-            add(JBLabel("Logic:"))
-            add(andRadio)
-            add(orRadio)
-        }
-        add(logicPanel)
+        // Start disabled until data is loaded
+        spaceCombo.isEnabled = false
+        boardCombo.isEnabled = false
+        columnsList.isEnabled = false
+    }
 
+    private fun buildUI() {
+        // Space
+        add(sectionLabel("Space"))
+        add(spaceCombo)
         add(Box.createVerticalStrut(8))
-        add(separator())
 
-        // --- Spaces section ---
-        add(sectionLabel("Spaces"))
-        add(scrollPane(spacesPanel, 120))
+        // Board
+        add(sectionLabel("Board"))
+        add(boardCombo)
+        add(Box.createVerticalStrut(8))
 
-        add(Box.createVerticalStrut(4))
-        add(separator())
-
-        // --- Boards section ---
-        add(sectionLabel("Boards"))
-        add(scrollPane(boardsPanel, 120))
-
-        add(Box.createVerticalStrut(4))
-        add(separator())
-
-        // --- Columns section ---
+        // Columns
         add(sectionLabel("Columns"))
-        add(scrollPane(columnsPanel, 140))
+        add(
+            JBScrollPane(columnsList).apply {
+                preferredSize = Dimension(220, 160)
+                maximumSize = Dimension(Int.MAX_VALUE, 160)
+                minimumSize = Dimension(100, 80)
+                alignmentX = Component.LEFT_ALIGNMENT
+                border = JBUI.Borders.customLine(
+                    UIManager.getColor("Component.borderColor") ?: Color.GRAY, 1
+                )
+            }
+        )
+
+        add(Box.createVerticalStrut(10))
+        add(hsep())
+        add(Box.createVerticalStrut(6))
+
+        // User filter
+        add(sectionLabel("User Filter"))
+        add(
+            row(assigneeCheckbox, participantCheckbox)
+        )
+
+        // Filter logic
+        val logicGroup = ButtonGroup().also { it.add(andRadio); it.add(orRadio) }
+        add(
+            row(JBLabel("Logic:"), andRadio, orRadio)
+        )
 
         add(Box.createVerticalGlue())
     }
 
-    private fun sectionLabel(text: String): JBLabel {
-        return JBLabel(text).apply {
-            font = font.deriveFont(java.awt.Font.BOLD)
-            border = JBUI.Borders.empty(6, 0, 2, 0)
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private fun sectionLabel(text: String) = JBLabel(text).apply {
+        font = font.deriveFont(Font.BOLD)
+        border = JBUI.Borders.empty(2, 0, 2, 0)
+        alignmentX = Component.LEFT_ALIGNMENT
+    }
+
+    private fun hsep() = JSeparator().apply {
+        alignmentX = Component.LEFT_ALIGNMENT
+        maximumSize = Dimension(Int.MAX_VALUE, 1)
+    }
+
+    private fun row(vararg components: JComponent): JPanel {
+        return JPanel(FlowLayout(FlowLayout.LEFT, 4, 0)).apply {
             alignmentX = Component.LEFT_ALIGNMENT
+            maximumSize = Dimension(Int.MAX_VALUE, preferredSize.height + 4)
+            components.forEach { add(it) }
         }
     }
 
-    private fun separator(): JSeparator {
-        return JSeparator().apply {
-            alignmentX = Component.LEFT_ALIGNMENT
-            maximumSize = Dimension(Int.MAX_VALUE, 1)
-        }
-    }
+    // -------------------------------------------------------------------------
+    // Listeners
+    // -------------------------------------------------------------------------
 
-    private fun scrollPane(content: JPanel, height: Int): JBScrollPane {
-        return JBScrollPane(content).apply {
-            preferredSize = Dimension(220, height)
-            maximumSize = Dimension(Int.MAX_VALUE, height)
-            minimumSize = Dimension(100, 60)
-            alignmentX = Component.LEFT_ALIGNMENT
-            border = JBUI.Borders.empty(2)
+    private fun wireListeners() {
+        spaceCombo.addItemListener { event ->
+            if (event.stateChange == ItemEvent.SELECTED && !updatingCombos) {
+                val space = spaceCombo.selectedItem as? Space
+                settings.selectedSpaceId = space?.id
+                settings.selectedBoardId = null
+                settings.selectedColumnIds.clear()
+                scope.launch { loadBoards(space?.id) }
+            }
         }
-    }
 
-    private fun setupListeners() {
-        assigneeCheckbox.addActionListener {
-            settings.filterByAssignee = assigneeCheckbox.isSelected
+        boardCombo.addItemListener { event ->
+            if (event.stateChange == ItemEvent.SELECTED && !updatingCombos) {
+                val board = boardCombo.selectedItem as? Board
+                settings.selectedBoardId = board?.id
+                settings.selectedColumnIds.clear()
+                scope.launch { loadColumns(board?.id) }
+            }
         }
-        participantCheckbox.addActionListener {
-            settings.filterByParticipant = participantCheckbox.isSelected
-        }
+
+        // CheckBoxList toggles the checkbox in processMouseEvent (before external listeners fire),
+        // so mouseClicked sees the already-updated state via the model.
+        columnsList.addMouseListener(object : MouseAdapter() {
+            override fun mouseClicked(e: MouseEvent) {
+                if (!SwingUtilities.isLeftMouseButton(e)) return
+                val index = columnsList.locationToIndex(e.point)
+                if (index < 0) return
+                val column = columnsList.getItemAt(index) ?: return
+                val jcb = columnsList.model.getElementAt(index)
+                if (jcb.isSelected) settings.selectedColumnIds.add(column.id)
+                else settings.selectedColumnIds.remove(column.id)
+            }
+        })
+
+        assigneeCheckbox.addActionListener { settings.filterByAssignee = assigneeCheckbox.isSelected }
+        participantCheckbox.addActionListener { settings.filterByParticipant = participantCheckbox.isSelected }
         andRadio.addActionListener { settings.filterLogic = "AND" }
         orRadio.addActionListener { settings.filterLogic = "OR" }
     }
 
+    // -------------------------------------------------------------------------
+    // Data loading
+    // -------------------------------------------------------------------------
+
     fun loadData() {
         if (settings.apiToken.isEmpty()) {
-            SwingUtilities.invokeLater {
-                showLoadingInPanel(spacesPanel, "Configure API token in Settings")
-                showLoadingInPanel(boardsPanel, "")
-                showLoadingInPanel(columnsPanel, "")
-            }
             notificationService.showWarning(
                 project,
                 "Configuration Required",
@@ -150,136 +202,87 @@ class FiltersPanel(private val project: Project, private val scope: CoroutineSco
             } catch (e: KaitenApiException) {
                 notificationService.showApiError(project, e)
             } catch (e: Exception) {
-                notificationService.showError(project, "Error Loading Data", e.message ?: "Unknown error occurred")
+                notificationService.showError(project, "Error Loading Filters", e.message ?: "Unknown error")
             }
         }
     }
 
     private suspend fun loadSpaces() {
         SwingUtilities.invokeLater {
-            showLoadingInPanel(spacesPanel, "Loading spaces...")
+            updatingCombos = true
+            spaceCombo.removeAllItems()
+            spaceCombo.addItem(null)
+            spaceCombo.isEnabled = false
+            updatingCombos = false
         }
 
         val spaces = taskService.getSpaces()
 
         SwingUtilities.invokeLater {
-            spacesPanel.removeAll()
-            spaceCheckboxes.clear()
+            updatingCombos = true
+            spaceCombo.removeAllItems()
+            spaceCombo.addItem(null)
+            spaces.forEach { spaceCombo.addItem(it) }
 
-            if (spaces.isEmpty()) {
-                spacesPanel.add(checkboxPlaceholder("No spaces found"))
-            } else {
-                spaces.forEach { space ->
-                    val checkbox = JBCheckBox(space.name, space.id in settings.selectedSpaceIds)
-                    checkbox.alignmentX = Component.LEFT_ALIGNMENT
-                    checkbox.addActionListener { handleSpaceSelection(space, checkbox.isSelected) }
-                    spaceCheckboxes[space.id] = checkbox
-                    spacesPanel.add(checkbox)
-                }
+            // Restore saved selection
+            val savedId = settings.selectedSpaceId
+            spaceCombo.selectedItem = spaces.find { it.id == savedId }
+            spaceCombo.isEnabled = spaces.isNotEmpty()
+            updatingCombos = false
+        }
+
+        // Load boards for the already-saved space (no event fired above due to guard)
+        loadBoards(settings.selectedSpaceId)
+    }
+
+    private suspend fun loadBoards(spaceId: Long?) {
+        SwingUtilities.invokeLater {
+            updatingCombos = true
+            boardCombo.removeAllItems()
+            boardCombo.addItem(null)
+            boardCombo.isEnabled = false
+            updatingCombos = false
+            columnsList.setItems(emptyList()) { it.name }
+            columnsList.isEnabled = false
+        }
+
+        if (spaceId == null) return
+
+        val boards = taskService.getBoards(spaceId)
+
+        SwingUtilities.invokeLater {
+            updatingCombos = true
+            boardCombo.removeAllItems()
+            boardCombo.addItem(null)
+            boards.forEach { boardCombo.addItem(it) }
+
+            val savedId = settings.selectedBoardId
+            boardCombo.selectedItem = boards.find { it.id == savedId }
+            boardCombo.isEnabled = boards.isNotEmpty()
+            updatingCombos = false
+        }
+
+        // Load columns for the already-saved board
+        loadColumns(settings.selectedBoardId)
+    }
+
+    private suspend fun loadColumns(boardId: Long?) {
+        SwingUtilities.invokeLater {
+            columnsList.setItems(emptyList()) { it.name }
+            columnsList.isEnabled = false
+        }
+
+        if (boardId == null) return
+
+        val columns = taskService.getColumns(boardId).sortedBy { it.position }
+
+        SwingUtilities.invokeLater {
+            columnsList.setItems(columns) { it.name }
+            // Restore saved selections
+            columns.forEach { col ->
+                columnsList.setItemSelected(col, col.id in settings.selectedColumnIds)
             }
-
-            spacesPanel.revalidate()
-            spacesPanel.repaint()
-        }
-
-        scope.launch { loadBoardsForSelectedSpaces() }
-    }
-
-    private fun handleSpaceSelection(space: Space, selected: Boolean) {
-        if (selected) settings.selectedSpaceIds.add(space.id)
-        else settings.selectedSpaceIds.remove(space.id)
-        scope.launch { loadBoardsForSelectedSpaces() }
-    }
-
-    private suspend fun loadBoardsForSelectedSpaces() {
-        SwingUtilities.invokeLater {
-            showLoadingInPanel(boardsPanel, if (settings.selectedSpaceIds.isEmpty()) "Select a space first" else "Loading boards...")
-        }
-
-        val allBoards = mutableListOf<Board>()
-        settings.selectedSpaceIds.forEach { spaceId ->
-            allBoards.addAll(taskService.getBoards(spaceId))
-        }
-
-        SwingUtilities.invokeLater {
-            boardsPanel.removeAll()
-            boardCheckboxes.clear()
-
-            if (allBoards.isEmpty()) {
-                boardsPanel.add(checkboxPlaceholder(if (settings.selectedSpaceIds.isEmpty()) "Select a space first" else "No boards found"))
-            } else {
-                allBoards.forEach { board ->
-                    val checkbox = JBCheckBox(board.name, board.id in settings.selectedBoardIds)
-                    checkbox.alignmentX = Component.LEFT_ALIGNMENT
-                    checkbox.addActionListener { handleBoardSelection(board, checkbox.isSelected) }
-                    boardCheckboxes[board.id] = checkbox
-                    boardsPanel.add(checkbox)
-                }
-            }
-
-            boardsPanel.revalidate()
-            boardsPanel.repaint()
-        }
-
-        scope.launch { loadColumnsForSelectedBoards() }
-    }
-
-    private fun handleBoardSelection(board: Board, selected: Boolean) {
-        if (selected) settings.selectedBoardIds.add(board.id)
-        else settings.selectedBoardIds.remove(board.id)
-        scope.launch { loadColumnsForSelectedBoards() }
-    }
-
-    private suspend fun loadColumnsForSelectedBoards() {
-        SwingUtilities.invokeLater {
-            showLoadingInPanel(columnsPanel, if (settings.selectedBoardIds.isEmpty()) "Select a board first" else "Loading columns...")
-        }
-
-        val allColumns = mutableListOf<Column>()
-        settings.selectedBoardIds.forEach { boardId ->
-            allColumns.addAll(taskService.getColumns(boardId))
-        }
-
-        SwingUtilities.invokeLater {
-            columnsPanel.removeAll()
-            columnCheckboxes.clear()
-
-            if (allColumns.isEmpty()) {
-                columnsPanel.add(checkboxPlaceholder(if (settings.selectedBoardIds.isEmpty()) "Select a board first" else "No columns found"))
-            } else {
-                allColumns.sortedBy { it.position }.forEach { column ->
-                    val checkbox = JBCheckBox(column.name, column.id in settings.selectedColumnIds)
-                    checkbox.alignmentX = Component.LEFT_ALIGNMENT
-                    checkbox.addActionListener { handleColumnSelection(column, checkbox.isSelected) }
-                    columnCheckboxes[column.id] = checkbox
-                    columnsPanel.add(checkbox)
-                }
-            }
-
-            columnsPanel.revalidate()
-            columnsPanel.repaint()
-        }
-    }
-
-    private fun handleColumnSelection(column: Column, selected: Boolean) {
-        if (selected) settings.selectedColumnIds.add(column.id)
-        else settings.selectedColumnIds.remove(column.id)
-    }
-
-    private fun showLoadingInPanel(panel: JPanel, message: String) {
-        panel.removeAll()
-        if (message.isNotEmpty()) {
-            panel.add(checkboxPlaceholder(message))
-        }
-        panel.revalidate()
-        panel.repaint()
-    }
-
-    private fun checkboxPlaceholder(text: String): JBLabel {
-        return JBLabel(text).apply {
-            foreground = foreground.darker()
-            alignmentX = Component.LEFT_ALIGNMENT
-            border = JBUI.Borders.empty(2, 4)
+            columnsList.isEnabled = columns.isNotEmpty()
         }
     }
 }

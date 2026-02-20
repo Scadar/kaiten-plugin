@@ -15,13 +15,18 @@ class KaitenSettingsState : PersistentStateComponent<KaitenSettingsState> {
     var serverUrl: String = "https://kaiten.comagic.dev/api/latest"
     var apiToken: String = ""
     var currentUserId: Long? = null
-    var selectedSpaceIds: MutableSet<Long> = mutableSetOf()
-    var selectedBoardIds: MutableSet<Long> = mutableSetOf()
+
+    // Single-select: space → board cascade
+    var selectedSpaceId: Long? = null
+    var selectedBoardId: Long? = null
+
+    // Multi-select: columns within the selected board
     var selectedColumnIds: MutableSet<Long> = mutableSetOf()
+
     var filterByAssignee: Boolean = true
     var filterByParticipant: Boolean = false
     var filterLogic: String = "AND" // AND or OR
-    var viewMode: String = "LIST" // LIST or CARDS
+    var viewMode: String = "LIST"   // LIST, CARDS, or STATISTICS
     var skipSslVerification: Boolean = true
 
     override fun getState(): KaitenSettingsState = this

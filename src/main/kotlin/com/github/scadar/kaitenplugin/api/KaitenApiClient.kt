@@ -114,7 +114,7 @@ class KaitenApiClient(private val client: OkHttpClient, private val baseUrl: Str
         val url = if (!searchText.isNullOrBlank()) {
             val encoded = URLEncoder.encode(searchText, "UTF-8")
             LOG.info("[Kaiten API] getCards with search query: \"$searchText\"")
-            "$baseUrl/boards/$boardId/cards?text=$encoded"
+            "$baseUrl/boards/$boardId/cards?query=$encoded"
         } else {
             "$baseUrl/boards/$boardId/cards"
         }
