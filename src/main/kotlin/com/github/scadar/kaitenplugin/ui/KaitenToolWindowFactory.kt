@@ -157,11 +157,26 @@ class KaitenToolWindowFactory : ToolWindowFactory {
             project.name
         }
 
+        // Register getSettings RPC handler
+        bridgeHandler.registerRPC("getSettings") { _ ->
+            val settings = com.github.scadar.kaitenplugin.settings.KaitenSettingsState.getInstance()
+            mapOf(
+                "apiToken" to settings.apiToken,
+                "serverUrl" to settings.serverUrl,
+                "selectedSpaceId" to settings.selectedSpaceId,
+                "selectedBoardId" to settings.selectedBoardId,
+                "selectedColumnIds" to settings.selectedColumnIds.toList(),
+                "filterByAssignee" to settings.filterByAssignee,
+                "filterByParticipant" to settings.filterByParticipant,
+                "filterLogic" to settings.filterLogic
+            )
+        }
+
         // TODO: Register additional RPC handlers as needed
         // Examples:
         // - getTasks, getBoards, getSpaces (via TaskService)
         // - getUser, getCurrentUser (via UserService)
-        // - getSettings, updateSettings (via KaitenSettingsState)
+        // - updateSettings (via KaitenSettingsState)
 
         log.debug("Registered RPC handlers for IDE operations")
     }
