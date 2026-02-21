@@ -1,8 +1,10 @@
 package com.github.scadar.kaitenplugin.ui
 
 import com.github.scadar.kaitenplugin.bridge.JCEFBridgeHandler
+import com.github.scadar.kaitenplugin.state.StateSyncService
 import com.github.scadar.kaitenplugin.timetracker.GitBranchListener
 import com.github.scadar.kaitenplugin.timetracker.IdeFocusTracker
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -44,6 +46,10 @@ class KaitenToolWindowFactory : ToolWindowFactory {
 
             // Register RPC handlers for IDE operations
             registerRPCHandlers(project, bridgeHandler)
+
+            // Initialize state synchronization service
+            val stateSyncService = project.service<StateSyncService>()
+            stateSyncService.initialize(bridgeHandler)
 
             // Load React application
             loadReactApp(browser)
