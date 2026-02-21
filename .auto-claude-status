@@ -3,7 +3,7 @@
   "spec": "001-migrate-business-login-from-kaiten-to-react",
   "state": "building",
   "subtasks": {
-    "completed": 15,
+    "completed": 16,
     "total": 18,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 6,
+    "number": 7,
     "started_at": "2026-02-22T01:44:14.973955"
   },
-  "last_update": "2026-02-22T01:59:40.319560"
+  "last_update": "2026-02-22T02:09:26.666703"
 }
