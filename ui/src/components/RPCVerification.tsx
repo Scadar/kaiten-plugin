@@ -32,7 +32,8 @@ interface RPCTestResult {
 }
 
 /**
- * RPC tests to run
+ * RPC tests to run (testing minimal IDE-specific API only)
+ * NOTE: Data-fetching RPC methods (getState, getTasks, getCurrentUser) have been removed
  */
 const RPC_TESTS: RPCTest[] = [
   {
@@ -50,11 +51,11 @@ const RPC_TESTS: RPCTest[] = [
     description: 'Fetch the current project name from IDE',
   },
   {
-    id: 'test-getState',
-    name: 'Get Full State',
-    method: 'getState',
+    id: 'test-getSettings',
+    name: 'Get Settings',
+    method: 'getSettings',
     params: undefined,
-    description: 'Fetch the complete application state from IDE',
+    description: 'Fetch plugin settings from IDE (apiToken, serverUrl, etc.)',
   },
 ];
 

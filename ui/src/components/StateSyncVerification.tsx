@@ -60,7 +60,9 @@ export function StateSyncVerification() {
   // Ref to track previous state for comparison
   const previousStateRef = useRef(state);
 
-  // Monitor state changes from IDE
+  // Monitor IDE-specific state changes
+  // NOTE: Only monitoring IDE state (projectPath, selectedFile, settings)
+  // User and tasks are now managed via React Query hooks
   useSyncedStateEffect('selectedFile', (newValue, oldValue) => {
     addToLog('ide', 'selectedFile', oldValue, newValue);
   });
@@ -71,10 +73,6 @@ export function StateSyncVerification() {
 
   useSyncedStateEffect('settings', (newValue, oldValue) => {
     addToLog('ide', 'settings', oldValue, newValue);
-  });
-
-  useSyncedStateEffect('user', (newValue, oldValue) => {
-    addToLog('ide', 'user', oldValue, newValue);
   });
 
   // Add entry to change log
@@ -129,16 +127,6 @@ export function StateSyncVerification() {
     }
   };
 
-  // Update user from React
-  const handleUpdateUser = () => {
-    const oldUser = state.user;
-    const newUser = oldUser
-      ? null
-      : { id: 'test-user', name: 'Test User', email: 'test@example.com' };
-    addToLog('react', 'user', oldUser, newUser);
-    updateField('user', newUser);
-  };
-
   // Clear change log
   const handleClearLog = () => {
     setChangeLog([]);
@@ -185,10 +173,13 @@ export function StateSyncVerification() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Current State Display */}
+        {/* Current State Display - IDE-specific state only */}
         <Card>
           <CardHeader>
-            <CardTitle>Current Synchronized State</CardTitle>
+            <CardTitle>Current Synchronized IDE State</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Only IDE-specific state is synced. User and task data are fetched via React Query.
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -220,31 +211,11 @@ export function StateSyncVerification() {
               </pre>
             </div>
 
-            <Separator />
-
-            <div>
-              <Label className="text-xs text-muted-foreground">User</Label>
-              <pre className="text-xs font-mono bg-muted p-2 rounded mt-1 overflow-auto max-h-32">
-                {formatValue(state.user)}
-              </pre>
-            </div>
-
-            <Separator />
-
-            <div>
-              <Label className="text-xs text-muted-foreground">
-                Tasks Count
-              </Label>
-              <p className="text-sm">{state.tasks.length}</p>
-            </div>
-
-            <Separator />
-
-            <div>
-              <Label className="text-xs text-muted-foreground">Filters</Label>
-              <pre className="text-xs font-mono bg-muted p-2 rounded mt-1 overflow-auto max-h-32">
-                {formatValue(state.filters)}
-              </pre>
+            <div className="pt-4 text-xs text-muted-foreground">
+              💡 <strong>Note:</strong> User, tasks, and filters are no longer part of the synced state.
+              Use React Query hooks instead: <code className="bg-muted px-1 rounded">useCurrentUser()</code>,{' '}
+              <code className="bg-muted px-1 rounded">useTasks()</code>,{' '}
+              <code className="bg-muted px-1 rounded">filterTasks()</code>
             </div>
           </CardContent>
         </Card>
@@ -323,16 +294,6 @@ export function StateSyncVerification() {
                   Set
                 </Button>
               </div>
-            </div>
-
-            <Separator />
-
-            {/* Toggle User */}
-            <div className="space-y-2">
-              <Label>Toggle User</Label>
-              <Button onClick={handleUpdateUser} variant="outline" size="sm" className="w-full">
-                {state.user ? 'Clear User' : 'Set Test User'}
-              </Button>
             </div>
 
             <Separator />

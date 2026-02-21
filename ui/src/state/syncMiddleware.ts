@@ -17,14 +17,12 @@ import type { AppState } from '@/bridge/types';
 
 /**
  * Fields from AppState that should be synchronized to IDE
+ * NOTE: Only IDE-specific fields are synced. user, tasks, filters are now managed via React Query.
  */
 const SYNCABLE_FIELDS: (keyof AppState)[] = [
   'projectPath',
   'selectedFile',
   'settings',
-  'user',
-  'tasks',
-  'filters',
 ];
 
 /**

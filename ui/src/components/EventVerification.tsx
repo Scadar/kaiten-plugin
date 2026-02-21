@@ -37,11 +37,10 @@ export function EventVerification() {
   const [subscribedEvents, setSubscribedEvents] = useState<Set<string>>(new Set(['state:update']));
   const [customEventName, setCustomEventName] = useState('');
 
-  // Access synced state to show real-time updates
+  // Access IDE-specific synced state to show real-time updates
+  // NOTE: user and tasks are now fetched via React Query hooks (useCurrentUser, useTasks)
   const projectPath = useSyncedStore((state) => state.projectPath);
   const selectedFile = useSyncedStore((state) => state.selectedFile);
-  const user = useSyncedStore((state) => state.user);
-  const tasks = useSyncedStore((state) => state.tasks);
   const settings = useSyncedStore((state) => state.settings);
 
   /**
@@ -100,20 +99,19 @@ export function EventVerification() {
 
   /**
    * Set up default event subscriptions on mount
+   * NOTE: Only subscribing to IDE-specific events (not data events like task:*, user:*)
    */
   useEffect(() => {
     const unsubscribers: Array<() => void> = [];
 
-    // Subscribe to common events
+    // Subscribe to IDE-specific events only
+    // Data events (task:*, user:*) are now handled by React Query invalidation
     const commonEvents = [
       'state:update',
-      'task:created',
-      'task:updated',
-      'task:deleted',
       'settings:changed',
       'file:selected',
-      'user:login',
-      'user:logout',
+      'project:opened',
+      'project:closed',
     ];
 
     commonEvents.forEach((eventName) => {
@@ -164,9 +162,9 @@ export function EventVerification() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Current State Display */}
+          {/* Current State Display - IDE-specific state only */}
           <div>
-            <h3 className="text-sm font-medium mb-2">Current State (from syncStore)</h3>
+            <h3 className="text-sm font-medium mb-2">Current IDE State (from syncStore)</h3>
             <div className="space-y-1 text-xs font-mono bg-muted p-3 rounded-md">
               <div>
                 <span className="text-muted-foreground">projectPath:</span>{' '}
@@ -177,20 +175,15 @@ export function EventVerification() {
                 <span className="text-foreground">{selectedFile || 'null'}</span>
               </div>
               <div>
-                <span className="text-muted-foreground">user:</span>{' '}
-                <span className="text-foreground">
-                  {user ? `${user.name} (${user.email})` : 'null'}
-                </span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">tasks:</span>{' '}
-                <span className="text-foreground">{tasks.length} tasks</span>
-              </div>
-              <div>
                 <span className="text-muted-foreground">settings:</span>{' '}
                 <span className="text-foreground">{Object.keys(settings).length} keys</span>
               </div>
             </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              💡 <strong>Note:</strong> User and task data are now fetched via React Query hooks
+              (<code className="bg-muted px-1 rounded">useCurrentUser()</code>, <code className="bg-muted px-1 rounded">useTasks()</code>)
+              instead of being stored in the sync store.
+            </p>
           </div>
 
           <Separator />
