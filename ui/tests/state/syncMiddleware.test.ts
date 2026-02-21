@@ -40,18 +40,12 @@ describe('SyncMiddleware', () => {
         projectPath: '/old/path',
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const current: AppState = {
         projectPath: '/new/path',
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const changes = detectChanges(current, previous);
@@ -66,18 +60,12 @@ describe('SyncMiddleware', () => {
         projectPath: '/old/path',
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const current: AppState = {
         projectPath: '/new/path',
         selectedFile: '/new/file.ts',
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const changes = detectChanges(current, previous);
@@ -93,18 +81,12 @@ describe('SyncMiddleware', () => {
         projectPath: null,
         selectedFile: null,
         settings: { theme: 'light' },
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const current: AppState = {
         projectPath: null,
         selectedFile: null,
         settings: { theme: 'dark' },
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const changes = detectChanges(current, previous);
@@ -114,100 +96,12 @@ describe('SyncMiddleware', () => {
       });
     });
 
-    it('should detect user changes', () => {
-      const previous: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
-      };
-
-      const current: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: {
-          id: 'user1',
-          name: 'John Doe',
-          email: 'john@example.com',
-        },
-        tasks: [],
-        filters: {},
-      };
-
-      const changes = detectChanges(current, previous);
-
-      expect(changes).toEqual({
-        user: {
-          id: 'user1',
-          name: 'John Doe',
-          email: 'john@example.com',
-        },
-      });
-    });
-
-    it('should detect array changes', () => {
-      const previous: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
-      };
-
-      const current: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [{ id: 'task1', title: 'Task 1' }],
-        filters: {},
-      };
-
-      const changes = detectChanges(current, previous);
-
-      expect(changes).toEqual({
-        tasks: [{ id: 'task1', title: 'Task 1' }],
-      });
-    });
-
-    it('should detect filter changes', () => {
-      const previous: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
-      };
-
-      const current: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [],
-        filters: { status: 'open' },
-      };
-
-      const changes = detectChanges(current, previous);
-
-      expect(changes).toEqual({
-        filters: { status: 'open' },
-      });
-    });
 
     it('should return empty object when no changes', () => {
       const state: AppState = {
         projectPath: '/same/path',
         selectedFile: '/same/file.ts',
         settings: { theme: 'dark' },
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const changes = detectChanges(state, state);
@@ -220,9 +114,6 @@ describe('SyncMiddleware', () => {
         projectPath: null,
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const current: AppState = {
@@ -256,9 +147,6 @@ describe('SyncMiddleware', () => {
         projectPath: null,
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const changes = detectChanges(current, previous);
@@ -295,63 +183,6 @@ describe('SyncMiddleware', () => {
       });
     });
 
-    it('should handle array item changes', () => {
-      const previous: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [{ id: 'task1', title: 'Task 1' }],
-        filters: {},
-      };
-
-      const current: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [{ id: 'task1', title: 'Updated Task 1' }],
-        filters: {},
-      };
-
-      const changes = detectChanges(current, previous);
-
-      expect(changes).toEqual({
-        tasks: [{ id: 'task1', title: 'Updated Task 1' }],
-      });
-    });
-
-    it('should handle array length changes', () => {
-      const previous: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [{ id: 'task1', title: 'Task 1' }],
-        filters: {},
-      };
-
-      const current: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [
-          { id: 'task1', title: 'Task 1' },
-          { id: 'task2', title: 'Task 2' },
-        ],
-        filters: {},
-      };
-
-      const changes = detectChanges(current, previous);
-
-      expect(changes).toEqual({
-        tasks: [
-          { id: 'task1', title: 'Task 1' },
-          { id: 'task2', title: 'Task 2' },
-        ],
-      });
-    });
   });
 
   describe('Pending changes management', () => {
@@ -380,9 +211,6 @@ describe('SyncMiddleware', () => {
         projectPath: null,
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       });
 
       const changes2 = detectChanges(state2, state1);
@@ -452,9 +280,6 @@ describe('SyncMiddleware', () => {
         projectPath: '/same',
         selectedFile: '/file.ts',
         settings: { theme: 'dark', fontSize: 14 },
-        user: { id: 'user1', name: 'User', email: 'user@test.com' },
-        tasks: [{ id: 'task1', title: 'Task 1' }],
-        filters: { status: 'open' },
       };
 
       // Create a deep copy
@@ -508,37 +333,6 @@ describe('SyncMiddleware', () => {
       });
     });
 
-    it('should detect changes in nested arrays', () => {
-      const previous: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [
-          { id: 'task1', title: 'Task 1', subtasks: ['sub1', 'sub2'] },
-        ],
-        filters: {},
-      };
-
-      const current: AppState = {
-        projectPath: null,
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [
-          { id: 'task1', title: 'Task 1', subtasks: ['sub1', 'sub2', 'sub3'] },
-        ],
-        filters: {},
-      };
-
-      const changes = detectChanges(current, previous);
-
-      expect(changes).toEqual({
-        tasks: [
-          { id: 'task1', title: 'Task 1', subtasks: ['sub1', 'sub2', 'sub3'] },
-        ],
-      });
-    });
   });
 
   describe('Multiple field updates', () => {
@@ -547,18 +341,12 @@ describe('SyncMiddleware', () => {
         projectPath: '/old',
         selectedFile: '/old.ts',
         settings: { theme: 'light' },
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const current: AppState = {
         projectPath: '/new',
         selectedFile: '/new.ts',
         settings: { theme: 'dark' },
-        user: { id: 'user1', name: 'User', email: 'user@test.com' },
-        tasks: [{ id: 'task1', title: 'Task 1' }],
-        filters: { status: 'open' },
       };
 
       const changes = detectChanges(current, previous);
@@ -567,9 +355,6 @@ describe('SyncMiddleware', () => {
         projectPath: '/new',
         selectedFile: '/new.ts',
         settings: { theme: 'dark' },
-        user: { id: 'user1', name: 'User', email: 'user@test.com' },
-        tasks: [{ id: 'task1', title: 'Task 1' }],
-        filters: { status: 'open' },
       });
     });
 
@@ -578,25 +363,18 @@ describe('SyncMiddleware', () => {
         projectPath: '/same',
         selectedFile: '/old.ts',
         settings: { theme: 'dark' },
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const current: AppState = {
         projectPath: '/same', // Unchanged
         selectedFile: '/new.ts', // Changed
         settings: { theme: 'dark' }, // Unchanged
-        user: null, // Unchanged
-        tasks: [], // Unchanged
-        filters: { status: 'open' }, // Changed
       };
 
       const changes = detectChanges(current, previous);
 
       expect(changes).toEqual({
         selectedFile: '/new.ts',
-        filters: { status: 'open' },
       });
     });
   });
@@ -607,18 +385,12 @@ describe('SyncMiddleware', () => {
         projectPath: null,
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const current: AppState = {
         projectPath: null,
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const changes = detectChanges(current, previous);
@@ -630,9 +402,6 @@ describe('SyncMiddleware', () => {
         projectPath: null,
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const changes = detectChanges(state, state);
@@ -644,26 +413,18 @@ describe('SyncMiddleware', () => {
         projectPath: null,
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const current: AppState = {
         projectPath: null,
         selectedFile: null,
         settings: { key: 'value' },
-        user: null,
-        tasks: [{ id: 'task1', title: 'Task 1' }],
-        filters: { status: 'open' },
       };
 
       const changes = detectChanges(current, previous);
 
       expect(changes).toEqual({
         settings: { key: 'value' },
-        tasks: [{ id: 'task1', title: 'Task 1' }],
-        filters: { status: 'open' },
       });
     });
 
@@ -672,26 +433,18 @@ describe('SyncMiddleware', () => {
         projectPath: null,
         selectedFile: null,
         settings: { key: 'value' },
-        user: null,
-        tasks: [{ id: 'task1', title: 'Task 1' }],
-        filters: { status: 'open' },
       };
 
       const current: AppState = {
         projectPath: null,
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const changes = detectChanges(current, previous);
 
       expect(changes).toEqual({
         settings: {},
-        tasks: [],
-        filters: {},
       });
     });
   });

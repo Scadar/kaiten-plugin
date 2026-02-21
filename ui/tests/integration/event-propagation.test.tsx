@@ -128,50 +128,6 @@ describe('Event Propagation: IDE → React', () => {
     });
   });
 
-  it('should handle task:updated event and update tasks in syncStore', async () => {
-    const { result } = renderHook(() => useSyncedStore());
-
-    // Set initial state with some tasks
-    const initialTasks = [
-      { id: '1', title: 'Task 1' },
-      { id: '2', title: 'Task 2' },
-    ];
-
-    simulateStateUpdate({ tasks: initialTasks });
-
-    await waitFor(() => {
-      expect(result.current.tasks).toEqual(initialTasks);
-    });
-
-    // Simulate task:updated event which triggers a state update
-    // First, subscribe to the event
-    const eventHandler = vi.fn();
-    const unsub = bridge.on('task:updated', eventHandler);
-
-    // Simulate IDE emitting task:updated event
-    const updatedTask = { id: '1', title: 'Updated Task 1' };
-    simulateIDEEvent('task:updated', updatedTask);
-
-    await waitFor(() => {
-      expect(eventHandler).toHaveBeenCalledWith(updatedTask);
-    });
-
-    // Then simulate the corresponding state update that the IDE would emit
-    const updatedTasks = [
-      { id: '1', title: 'Updated Task 1' },
-      { id: '2', title: 'Task 2' },
-      { id: '3', title: 'Task 3' },
-    ];
-
-    simulateStateUpdate({ tasks: updatedTasks });
-
-    await waitFor(() => {
-      expect(result.current.tasks).toEqual(updatedTasks);
-      expect(result.current.tasks).toHaveLength(3);
-    });
-
-    unsub();
-  });
 
   it('should support multiple concurrent event subscriptions', async () => {
     const handler1 = vi.fn();
@@ -265,61 +221,6 @@ describe('Event Propagation: IDE → React', () => {
     unsubscribe();
   });
 
-  it('should handle user state updates via messages', async () => {
-    const { result } = renderHook(() => useSyncedStore());
-
-    // Initial user is null
-    expect(result.current.user).toBeNull();
-
-    // IDE emits user:login event
-    const user = {
-      id: 'user-123',
-      name: 'John Doe',
-      email: 'john@example.com',
-    };
-
-    const eventHandler = vi.fn();
-    const unsub1 = bridge.on('user:login', eventHandler);
-
-    simulateIDEEvent('user:login', user);
-
-    await waitFor(() => {
-      expect(eventHandler).toHaveBeenCalledWith(user);
-    });
-
-    // IDE also sends state update with user info
-    const userUpdate: Partial<AppState> = { user };
-
-    simulateStateUpdate(userUpdate);
-
-    await waitFor(() => {
-      expect(result.current.user).toEqual(user);
-    });
-
-    // IDE emits user:logout event
-    const logoutHandler = vi.fn();
-    const unsub2 = bridge.on('user:logout', logoutHandler);
-
-    simulateIDEEvent('user:logout', null);
-
-    await waitFor(() => {
-      expect(logoutHandler).toHaveBeenCalled();
-    });
-
-    // IDE sends state update clearing user
-    const logoutUpdate: Partial<AppState> = {
-      user: null,
-    };
-
-    simulateStateUpdate(logoutUpdate);
-
-    await waitFor(() => {
-      expect(result.current.user).toBeNull();
-    });
-
-    unsub1();
-    unsub2();
-  });
 
   it('should unsubscribe from events correctly', async () => {
     const handler = vi.fn();

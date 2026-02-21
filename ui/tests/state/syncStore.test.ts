@@ -32,9 +32,6 @@ describe('SyncStore', () => {
       expect(result.current.projectPath).toBeNull();
       expect(result.current.selectedFile).toBeNull();
       expect(result.current.settings).toEqual({});
-      expect(result.current.user).toBeNull();
-      expect(result.current.tasks).toEqual([]);
-      expect(result.current.filters).toEqual({});
       expect(result.current.isLoading).toBe(false);
       expect(result.current.error).toBeNull();
     });
@@ -84,51 +81,6 @@ describe('SyncStore', () => {
       expect(result.current.selectedFile).toBe('/file.ts');
     });
 
-    it('should update user state', () => {
-      const { result } = renderHook(() => useSyncedStore());
-
-      const user = {
-        id: 'user123',
-        name: 'John Doe',
-        email: 'john@example.com',
-      };
-
-      act(() => {
-        result.current.updateFromIDE({ user });
-      });
-
-      expect(result.current.user).toEqual(user);
-    });
-
-    it('should update tasks array', () => {
-      const { result } = renderHook(() => useSyncedStore());
-
-      const tasks = [
-        { id: 'task1', title: 'Task 1' },
-        { id: 'task2', title: 'Task 2' },
-      ];
-
-      act(() => {
-        result.current.updateFromIDE({ tasks });
-      });
-
-      expect(result.current.tasks).toEqual(tasks);
-    });
-
-    it('should update filters', () => {
-      const { result } = renderHook(() => useSyncedStore());
-
-      const filters = {
-        status: 'open',
-        assignee: 'user123',
-      };
-
-      act(() => {
-        result.current.updateFromIDE({ filters });
-      });
-
-      expect(result.current.filters).toEqual(filters);
-    });
 
     it('should update settings', () => {
       const { result } = renderHook(() => useSyncedStore());
@@ -202,10 +154,7 @@ describe('SyncStore', () => {
       // Verify reset to initial state
       expect(result.current.projectPath).toBeNull();
       expect(result.current.selectedFile).toBeNull();
-      expect(result.current.user).toBeNull();
       expect(result.current.settings).toEqual({});
-      expect(result.current.tasks).toEqual([]);
-      expect(result.current.filters).toEqual({});
       expect(result.current.isLoading).toBe(false);
       expect(result.current.error).toBeNull();
     });
@@ -268,47 +217,6 @@ describe('SyncStore', () => {
       expect(result.current).toBe('/file.ts');
     });
 
-    it('should select user', () => {
-      const { result } = renderHook(() =>
-        useSyncedStore(syncStoreSelectors.user)
-      );
-
-      const user = { id: 'user1', name: 'User', email: 'user@test.com' };
-
-      act(() => {
-        useSyncedStore.getState().updateFromIDE({ user });
-      });
-
-      expect(result.current).toEqual(user);
-    });
-
-    it('should select tasks', () => {
-      const { result } = renderHook(() =>
-        useSyncedStore(syncStoreSelectors.tasks)
-      );
-
-      const tasks = [{ id: 'task1', title: 'Task 1' }];
-
-      act(() => {
-        useSyncedStore.getState().updateFromIDE({ tasks });
-      });
-
-      expect(result.current).toEqual(tasks);
-    });
-
-    it('should select filters', () => {
-      const { result } = renderHook(() =>
-        useSyncedStore(syncStoreSelectors.filters)
-      );
-
-      const filters = { status: 'open' };
-
-      act(() => {
-        useSyncedStore.getState().updateFromIDE({ filters });
-      });
-
-      expect(result.current).toEqual(filters);
-    });
 
     it('should select settings', () => {
       const { result } = renderHook(() =>

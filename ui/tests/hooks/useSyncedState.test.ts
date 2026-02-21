@@ -222,37 +222,29 @@ describe('useSyncedState', () => {
     });
 
     it('should work with different field types', () => {
-      // Test with user field
-      const { result: userResult } = renderHook(() => useSyncedField('user'));
+      // Test with projectPath field (string)
+      const { result: pathResult } = renderHook(() => useSyncedField('projectPath'));
 
       act(() => {
-        const [, setUser] = userResult.current;
-        setUser({
-          id: 'user1',
-          name: 'John Doe',
-          email: 'john@example.com',
-        });
+        const [, setPath] = pathResult.current;
+        setPath('/test/path');
       });
 
-      const [user] = userResult.current;
-      expect(user).toEqual({
-        id: 'user1',
-        name: 'John Doe',
-        email: 'john@example.com',
-      });
+      const [path] = pathResult.current;
+      expect(path).toBe('/test/path');
 
-      // Test with tasks field
-      const { result: tasksResult } = renderHook(() =>
-        useSyncedField('tasks')
+      // Test with settings field (object)
+      const { result: settingsResult } = renderHook(() =>
+        useSyncedField('settings')
       );
 
       act(() => {
-        const [, setTasks] = tasksResult.current;
-        setTasks([{ id: 'task1', title: 'Task 1' }]);
+        const [, setSettings] = settingsResult.current;
+        setSettings({ theme: 'dark', fontSize: 14 });
       });
 
-      const [tasks] = tasksResult.current;
-      expect(tasks).toEqual([{ id: 'task1', title: 'Task 1' }]);
+      const [settings] = settingsResult.current;
+      expect(settings).toEqual({ theme: 'dark', fontSize: 14 });
     });
 
     it('should have stable setter reference', () => {
@@ -455,19 +447,19 @@ describe('useSyncedState', () => {
     it('should work with complex field types', () => {
       const callback = vi.fn();
 
-      renderHook(() => useSyncedStateEffect('user', callback));
+      renderHook(() => useSyncedStateEffect('settings', callback));
 
-      const user = {
-        id: 'user1',
-        name: 'John Doe',
-        email: 'john@example.com',
+      const settings = {
+        theme: 'dark',
+        fontSize: 14,
+        notifications: { enabled: true },
       };
 
       act(() => {
-        useSyncedStore.getState().updateFromIDE({ user });
+        useSyncedStore.getState().updateFromIDE({ settings });
       });
 
-      expect(callback).toHaveBeenCalledWith(user, null);
+      expect(callback).toHaveBeenCalledWith(settings, {});
     });
 
     it('should unsubscribe on unmount', () => {
@@ -551,9 +543,6 @@ describe('useSyncedState', () => {
           'projectPath',
           'selectedFile',
           'settings',
-          'user',
-          'tasks',
-          'filters',
         ])
       );
 
@@ -561,9 +550,6 @@ describe('useSyncedState', () => {
         projectPath: null,
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       });
     });
   });
@@ -572,34 +558,32 @@ describe('useSyncedState', () => {
     it('should return derived value', () => {
       act(() => {
         useSyncedStore.getState().updateFromIDE({
-          tasks: [
-            { id: 'task1', title: 'Task 1' },
-            { id: 'task2', title: 'Task 2' },
-          ],
+          projectPath: '/test/path',
+          selectedFile: '/file.ts',
         });
       });
 
       const { result } = renderHook(() =>
-        useSyncedDerived((s) => s.tasks.length)
+        useSyncedDerived((s) => s.projectPath?.split('/').length || 0)
       );
 
-      expect(result.current).toBe(2);
+      expect(result.current).toBe(3);
     });
 
     it('should recompute when dependency changes', () => {
       const { result } = renderHook(() =>
-        useSyncedDerived((s) => s.tasks.length)
+        useSyncedDerived((s) => s.projectPath?.split('/').length || 0)
       );
 
       expect(result.current).toBe(0);
 
       act(() => {
         useSyncedStore.getState().updateFromIDE({
-          tasks: [{ id: 'task1', title: 'Task 1' }],
+          projectPath: '/test/path',
         });
       });
 
-      expect(result.current).toBe(1);
+      expect(result.current).toBe(3);
     });
 
     it('should work with complex derived state', () => {
@@ -651,7 +635,7 @@ describe('useSyncedState', () => {
 
       const { result, rerender } = renderHook(
         ({ multiplier }) =>
-          useSyncedDerived((s) => s.tasks.length * multiplier, [multiplier]),
+          useSyncedDerived((s) => (s.projectPath?.split('/').length || 0) * multiplier, [multiplier]),
         {
           initialProps: { multiplier: customMultiplier },
         }
@@ -659,16 +643,16 @@ describe('useSyncedState', () => {
 
       act(() => {
         useSyncedStore.getState().updateFromIDE({
-          tasks: [{ id: 'task1', title: 'Task 1' }],
+          projectPath: '/test/path',
         });
       });
 
-      expect(result.current).toBe(2); // 1 * 2
+      expect(result.current).toBe(6); // 3 * 2
 
       // Rerender with new multiplier
       rerender({ multiplier: 3 });
 
-      expect(result.current).toBe(3); // 1 * 3
+      expect(result.current).toBe(9); // 3 * 3
     });
   });
 
