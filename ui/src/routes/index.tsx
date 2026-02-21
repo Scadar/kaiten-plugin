@@ -17,7 +17,7 @@ import { RefreshCw, Settings } from 'lucide-react';
  * The path '/' is inferred from the filename 'index.tsx' in file-based routing.
  */
 export const Route = createFileRoute('/')({
-  component: () => <IndexComponent />,
+  component: IndexComponent,
 });
 
 function IndexComponent() {
