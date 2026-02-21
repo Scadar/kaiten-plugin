@@ -135,6 +135,19 @@ kover {
 }
 
 tasks {
+    val platformVersion = providers.gradleProperty("platformVersion")
+    val pluginName = providers.gradleProperty("pluginName")
+
+    register<Copy>("copyUiDist") {
+        description = "Copies the React UI build output into the plugin sandbox directory"
+        from(layout.projectDirectory.dir("ui/dist"))
+        into(layout.buildDirectory.dir(platformVersion.map { "idea-sandbox/IU-$it/plugins/${pluginName.get()}/ui/dist" }))
+    }
+
+    named("prepareSandbox") {
+        finalizedBy("copyUiDist")
+    }
+
     wrapper {
         gradleVersion = providers.gradleProperty("gradleVersion").get()
     }

@@ -1,17 +1,20 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import { viteSingleFile } from 'vite-plugin-singlefile';
 import path from 'path';
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [
     // CRITICAL: TanStack Router plugin must come BEFORE React plugin
     tanstackRouter({
       target: 'react',
-      autoCodeSplitting: true,
+      autoCodeSplitting: false,
     }),
     react(),
+    viteSingleFile(),
   ],
   resolve: {
     alias: {
@@ -20,7 +23,8 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false,
+    cssCodeSplit: false,
   },
   test: {
     globals: true,

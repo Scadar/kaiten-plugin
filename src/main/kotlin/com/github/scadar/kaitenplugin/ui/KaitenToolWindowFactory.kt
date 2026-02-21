@@ -4,8 +4,11 @@ import com.github.scadar.kaitenplugin.bridge.JCEFBridgeHandler
 import com.github.scadar.kaitenplugin.state.StateSyncService
 import com.github.scadar.kaitenplugin.timetracker.GitBranchListener
 import com.github.scadar.kaitenplugin.timetracker.IdeFocusTracker
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
@@ -110,24 +113,34 @@ class KaitenToolWindowFactory : ToolWindowFactory {
      * Get the path to React build index.html
      */
     private fun getReactBuildPath(): File {
-        // Try development path first (ui/dist/index.html relative to project root)
-        val projectDir = System.getProperty("user.dir")
-        val devPath = Paths.get(projectDir, "ui", "dist", "index.html").toFile()
-
-        if (devPath.exists()) {
-            return devPath
+        // 1. Resolve via the plugin's actual installation directory (works in sandbox and production)
+        val plugin = PluginManagerCore.getPlugin(PluginId.getId("com.github.scadar.kaitenplugin"))
+        if (plugin != null) {
+            val uiPath = plugin.pluginPath.resolve("ui/dist/index.html").toFile()
+            if (uiPath.exists()) {
+                return uiPath
+            }
+            log.warn("Plugin found but UI not at pluginPath: ${plugin.pluginPath}")
         }
 
-        // Try relative to plugin directory (for production builds)
-        // This would be set up during the plugin build process
-        val pluginPath = Paths.get(projectDir, "build", "idea-sandbox", "plugins", "kaiten-plugin", "ui", "dist", "index.html").toFile()
-
-        if (pluginPath.exists()) {
-            return pluginPath
+        // 2. Check sandbox plugins directory via PathManager
+        val sandboxPath = Paths.get(
+            PathManager.getConfigPath(), "..", "plugins", "kaiten-plugin", "ui", "dist", "index.html"
+        ).normalize().toFile()
+        if (sandboxPath.exists()) {
+            return sandboxPath
         }
 
-        // Default to dev path (will trigger error page if not found)
-        return devPath
+        // 3. Check the system plugins path (another sandbox location)
+        val systemPluginsPath = Paths.get(
+            PathManager.getPluginsPath(), "kaiten-plugin", "ui", "dist", "index.html"
+        ).toFile()
+        if (systemPluginsPath.exists()) {
+            return systemPluginsPath
+        }
+
+        // 4. Fallback: path relative to working directory
+        return Paths.get(System.getProperty("user.dir"), "ui", "dist", "index.html").toFile()
     }
 
     /**
