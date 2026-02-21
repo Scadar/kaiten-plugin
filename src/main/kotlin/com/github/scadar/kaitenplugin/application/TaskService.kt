@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
+@Deprecated("Business logic migrated to React frontend. Use REST API endpoints instead.")
 @Service
 class TaskService {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())

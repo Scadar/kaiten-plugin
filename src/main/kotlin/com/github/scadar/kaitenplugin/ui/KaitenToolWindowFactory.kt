@@ -157,11 +157,63 @@ class KaitenToolWindowFactory : ToolWindowFactory {
             project.name
         }
 
-        // TODO: Register additional RPC handlers as needed
-        // Examples:
-        // - getTasks, getBoards, getSpaces (via TaskService)
-        // - getUser, getCurrentUser (via UserService)
-        // - getSettings, updateSettings (via KaitenSettingsState)
+        // Register getSettings RPC handler
+        bridgeHandler.registerRPC("getSettings") { _ ->
+            val settings = com.github.scadar.kaitenplugin.settings.KaitenSettingsState.getInstance()
+            mapOf(
+                "apiToken" to settings.apiToken,
+                "serverUrl" to settings.serverUrl,
+                "selectedSpaceId" to settings.selectedSpaceId,
+                "selectedBoardId" to settings.selectedBoardId,
+                "selectedColumnIds" to settings.selectedColumnIds.toList(),
+                "filterByAssignee" to settings.filterByAssignee,
+                "filterByParticipant" to settings.filterByParticipant,
+                "filterLogic" to settings.filterLogic
+            )
+        }
+
+        // Register updateSettings RPC handler
+        bridgeHandler.registerRPC("updateSettings") { params ->
+            val settings = com.github.scadar.kaitenplugin.settings.KaitenSettingsState.getInstance()
+            @Suppress("UNCHECKED_CAST")
+            val updates = params as? Map<String, Any?> ?: return@registerRPC false
+
+            updates["apiToken"]?.let { settings.apiToken = it as String }
+            updates["serverUrl"]?.let { settings.serverUrl = it as String }
+            updates["selectedSpaceId"]?.let { settings.selectedSpaceId = it as? Long }
+            updates["selectedBoardId"]?.let { settings.selectedBoardId = it as? Long }
+            updates["selectedColumnIds"]?.let {
+                @Suppress("UNCHECKED_CAST")
+                settings.selectedColumnIds = (it as List<Long>).toMutableSet()
+            }
+            updates["filterByAssignee"]?.let { settings.filterByAssignee = it as Boolean }
+            updates["filterByParticipant"]?.let { settings.filterByParticipant = it as Boolean }
+            updates["filterLogic"]?.let { settings.filterLogic = it as String }
+
+            true
+        }
+
+        // Register openFile RPC handler
+        bridgeHandler.registerRPC("openFile") { params ->
+            @Suppress("UNCHECKED_CAST")
+            val filePath = params as? String ?: return@registerRPC false
+
+            // TODO: Implement file opening logic using VirtualFileManager
+            log.info("Open file requested: $filePath")
+            true
+        }
+
+        // Register showNotification RPC handler
+        bridgeHandler.registerRPC("showNotification") { params ->
+            @Suppress("UNCHECKED_CAST")
+            val notification = params as? Map<String, Any?> ?: return@registerRPC false
+            val message = notification["message"] as? String ?: "No message"
+            val type = notification["type"] as? String ?: "info"
+
+            // TODO: Implement notification display using IntelliJ Notification API
+            log.info("Notification requested ($type): $message")
+            true
+        }
 
         log.debug("Registered RPC handlers for IDE operations")
     }

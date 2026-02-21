@@ -90,18 +90,17 @@ export interface EventMessage<T = unknown> extends BaseMessage {
 
 /**
  * Application state structure
+ *
+ * IDE-SPECIFIC STATE - Only IDE context, not application data
+ * Application data (tasks, users, boards, etc.) managed in React via React Query
  */
 export interface AppState {
+  // IDE project context
   projectPath: string | null;
   selectedFile: string | null;
+
+  // IDE settings (for synchronization)
   settings: Record<string, unknown>;
-  user: {
-    id: string | null;
-    name: string | null;
-    email: string | null;
-  } | null;
-  tasks: unknown[];
-  filters: Record<string, unknown>;
 }
 
 /**
@@ -254,9 +253,38 @@ export function isBridgeReady(message: BridgeMessage): message is BridgeReadyMes
 
 /**
  * Available RPC methods that can be called from React
+ *
+ * MINIMAL API - Only IDE-specific operations
+ * Data fetching moved to React API client (see ui/src/api/client.ts)
  */
 export interface RPCMethods {
-  // Project operations
+  // Settings operations (IDE configuration)
+  getSettings: {
+    params: void;
+    result: unknown; // Will be cast to KaitenSettings in useSettings hook
+  };
+  updateSettings: {
+    params: { settings: unknown }; // Will be KaitenSettings
+    result: void;
+  };
+
+  // File operations (IDE integration)
+  openFile: {
+    params: { path: string; line?: number };
+    result: void;
+  };
+
+  // Notification operations (IDE notifications)
+  showNotification: {
+    params: {
+      message: string;
+      type?: 'info' | 'warning' | 'error';
+      title?: string;
+    };
+    result: void;
+  };
+
+  // Project operations (IDE context)
   getProjectPath: {
     params: void;
     result: string | null;
@@ -264,38 +292,6 @@ export interface RPCMethods {
   getSelectedFile: {
     params: void;
     result: string | null;
-  };
-
-  // State operations
-  getState: {
-    params: void;
-    result: AppState;
-  };
-
-  // Settings operations
-  getSetting: {
-    params: { key: string };
-    result: unknown;
-  };
-  setSetting: {
-    params: { key: string; value: unknown };
-    result: void;
-  };
-
-  // Task operations
-  getTasks: {
-    params: { filters?: Record<string, unknown> };
-    result: unknown[];
-  };
-  getTask: {
-    params: { id: string };
-    result: unknown;
-  };
-
-  // User operations
-  getCurrentUser: {
-    params: void;
-    result: { id: string; name: string; email: string } | null;
   };
 }
 
@@ -320,17 +316,22 @@ export type RPCResult<M extends RPCMethodName> = RPCMethods[M]['result'];
 
 /**
  * Available event types that can be emitted from IDE to React
+ *
+ * IDE-SPECIFIC EVENTS - Push notifications from IDE about context changes
+ * Task/user/board data events removed - data fetching now handled in React
  */
 export interface EventTypes {
-  'task:created': { taskId: string; task: unknown };
-  'task:updated': { taskId: string; task: unknown };
-  'task:deleted': { taskId: string };
+  // Settings events (IDE settings changes)
   'settings:changed': { key: string; value: unknown };
-  'user:login': { userId: string; userName: string };
-  'user:logout': void;
+
+  // Project events (IDE project context)
   'project:opened': { projectPath: string };
   'project:closed': void;
+
+  // File events (IDE file selection)
   'file:selected': { filePath: string };
+
+  // State events (IDE state synchronization)
   'state:update': Partial<AppState>;
 }
 

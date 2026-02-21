@@ -58,15 +58,13 @@ export interface SyncStoreActions {
 export type SyncStore = SyncStoreState & SyncStoreActions;
 
 /**
- * Initial state
+ * Initial state (IDE-specific state only)
+ * NOTE: user, tasks, and filters are now managed via React Query hooks
  */
 const initialState: SyncStoreState = {
   projectPath: null,
   selectedFile: null,
   settings: {},
-  user: null,
-  tasks: [],
-  filters: {},
   isLoading: false,
   error: null,
 };
@@ -88,7 +86,8 @@ export const useSyncedStore = create<SyncStore>((set, _get) => ({
   ...initialState,
 
   /**
-   * Initialize state from IDE
+   * Initialize state from IDE (fetches IDE-specific state only)
+   * NOTE: Data fetching (users, tasks) is now handled by React Query hooks
    */
   initialize: async () => {
     set({ isLoading: true, error: null });
@@ -97,12 +96,17 @@ export const useSyncedStore = create<SyncStore>((set, _get) => ({
       // Wait for bridge to be ready
       await bridge.ready();
 
-      // Fetch initial state from IDE
-      const state = await bridge.call('getState', undefined);
+      // Fetch IDE-specific state (settings, project path, selected file)
+      // NOTE: getSettings is the new minimal RPC API
+      const settings = await bridge.call('getSettings', undefined);
+      const projectPath = await bridge.call('getProjectPath', undefined);
+      const selectedFile = await bridge.call('getSelectedFile', undefined);
 
       // Update store with IDE state
       set({
-        ...state,
+        settings: (settings as Record<string, unknown>) || ({} as Record<string, unknown>),
+        projectPath: projectPath || null,
+        selectedFile: selectedFile || null,
         isLoading: false,
         error: null,
       });
@@ -188,7 +192,8 @@ export function disposeSyncStore(): void {
 }
 
 /**
- * Selector helpers for common state access patterns
+ * Selector helpers for IDE-specific state access patterns
+ * NOTE: user, tasks, filters selectors removed - use React Query hooks instead
  */
 export const syncStoreSelectors = {
   /**
@@ -200,21 +205,6 @@ export const syncStoreSelectors = {
    * Select selected file
    */
   selectedFile: (state: SyncStore) => state.selectedFile,
-
-  /**
-   * Select user
-   */
-  user: (state: SyncStore) => state.user,
-
-  /**
-   * Select all tasks
-   */
-  tasks: (state: SyncStore) => state.tasks,
-
-  /**
-   * Select filters
-   */
-  filters: (state: SyncStore) => state.filters,
 
   /**
    * Select settings

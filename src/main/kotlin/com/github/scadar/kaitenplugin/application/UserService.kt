@@ -9,6 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 
+@Deprecated("Business logic migrated to React frontend. Use REST API endpoints instead.")
 @Service
 class UserService {
     private val log = logger<UserService>()
