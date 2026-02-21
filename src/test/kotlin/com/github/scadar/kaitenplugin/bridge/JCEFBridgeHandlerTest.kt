@@ -7,7 +7,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.jcef.JBCefBrowser
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import org.mockito.Mockito.*
 
 /**
  * Basic tests for JCEFBridgeHandler
@@ -25,7 +24,7 @@ class JCEFBridgeHandlerTest : BasePlatformTestCase() {
         // Full testing requires mocking JBCefBrowser which is done in integration tests
 
         var handlerCalled = false
-        val testHandler: suspend (JsonElement?) -> String = { params ->
+        val testHandler: suspend (Any?) -> String = { params ->
             handlerCalled = true
             "test-result"
         }
@@ -42,8 +41,8 @@ class JCEFBridgeHandlerTest : BasePlatformTestCase() {
      * Test that RPC handlers can process parameters
      */
     fun testRPCHandlerWithParams() {
-        val testHandler: suspend (JsonElement?) -> String = { params ->
-            val jsonObj = params?.asJsonObject
+        val testHandler: suspend (Any?) -> String = { params ->
+            val jsonObj = (params as? JsonElement)?.asJsonObject
             val key = jsonObj?.get("key")?.asString ?: "default"
             "result-$key"
         }

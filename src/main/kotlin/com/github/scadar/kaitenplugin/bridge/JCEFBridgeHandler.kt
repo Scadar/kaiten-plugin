@@ -32,7 +32,7 @@ class JCEFBridgeHandler(
     private val gson = Gson()
 
     // RPC handler registry: method name -> handler function
-    private val rpcHandlers = ConcurrentHashMap<String, suspend (JsonElement?) -> Any?>()
+    private val rpcHandlers = ConcurrentHashMap<String, suspend (Any?) -> Any?>()
 
     // Event listeners: event name -> list of listeners
     private val eventListeners = ConcurrentHashMap<String, MutableList<(JsonElement) -> Unit>>()
@@ -337,7 +337,7 @@ class JCEFBridgeHandler(
      * }
      * ```
      */
-    fun registerRPC(method: String, handler: suspend (JsonElement?) -> Any?) {
+    fun registerRPC(method: String, handler: suspend (Any?) -> Any?) {
         rpcHandlers[method] = handler
         log.debug("Registered RPC handler: $method")
     }
