@@ -77,7 +77,7 @@ describe('ErrorBoundary', () => {
 
       // Default fallback UI should be shown
       expect(screen.getByText('Something went wrong')).toBeInTheDocument();
-      expect(screen.getByText(/An error occurred in the application/)).toBeInTheDocument();
+      expect(screen.getByText(/An unexpected error occurred/)).toBeInTheDocument();
     });
 
     it('should catch errors from event handlers in child components', async () => {
@@ -122,8 +122,8 @@ describe('ErrorBoundary', () => {
       );
 
       expect(screen.getByText('Something went wrong')).toBeInTheDocument();
-      expect(screen.getByText(/An error occurred in the application/)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /reload application/i })).toBeInTheDocument();
+      expect(screen.getByText(/An unexpected error occurred/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
     });
 
     it('should render custom fallback UI when provided', () => {
@@ -140,7 +140,9 @@ describe('ErrorBoundary', () => {
       expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument();
     });
 
-    it('should show error message in development mode', () => {
+    it('should show error message in development mode', async () => {
+      const user = userEvent.setup();
+
       // Mock DEV mode
       vi.stubEnv('DEV', true);
 
@@ -150,8 +152,17 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      // Error message should be visible in dev mode
-      expect(screen.getByText('Test error')).toBeInTheDocument();
+      // Technical details should be available in dev mode
+      const detailsButton = screen.getByText(/Technical Details/);
+      expect(detailsButton).toBeInTheDocument();
+
+      // Click to expand error details
+      await user.click(detailsButton);
+
+      // Error message should now be visible
+      await waitFor(() => {
+        expect(screen.getByText('Test error')).toBeInTheDocument();
+      });
 
       vi.unstubAllEnvs();
     });
@@ -188,7 +199,7 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      const reloadButton = screen.getByRole('button', { name: /reload application/i });
+      const reloadButton = screen.getByRole('button', { name: /try again/i });
       await user.click(reloadButton);
 
       expect(reloadSpy).toHaveBeenCalledTimes(1);
@@ -391,7 +402,13 @@ describe('ErrorBoundary', () => {
       // Check for dark theme classes
       const fallbackContainer = container.querySelector('.bg-background');
       expect(fallbackContainer).toBeInTheDocument();
-      expect(fallbackContainer).toHaveClass('text-foreground');
+
+      // Check that text elements use theme colors
+      const heading = screen.getByText('Something went wrong');
+      expect(heading).toHaveClass('text-foreground');
+
+      const message = screen.getByText(/An unexpected error occurred/);
+      expect(message).toHaveClass('text-muted-foreground');
     });
 
     it('should have accessible reload button', () => {
@@ -401,9 +418,13 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      const reloadButton = screen.getByRole('button', { name: /reload application/i });
-      expect(reloadButton).toBeInTheDocument();
-      expect(reloadButton).toBeEnabled();
+      const tryAgainButton = screen.getByRole('button', { name: /try again/i });
+      expect(tryAgainButton).toBeInTheDocument();
+      expect(tryAgainButton).toBeEnabled();
+
+      const resetButton = screen.getByRole('button', { name: /reset application/i });
+      expect(resetButton).toBeInTheDocument();
+      expect(resetButton).toBeEnabled();
     });
 
     it('should have readable error heading', () => {
