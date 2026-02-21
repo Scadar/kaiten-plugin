@@ -6,6 +6,7 @@ import com.github.scadar.kaitenplugin.settings.KaitenSettingsState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 
+@Deprecated("Business logic migrated to React frontend. Use REST API endpoints instead.")
 @Service
 class FilterService {
 
