@@ -281,6 +281,14 @@ export interface RPCMethods {
     params: { key: string; value: unknown };
     result: void;
   };
+  getSettings: {
+    params: void;
+    result: unknown; // Will be cast to KaitenSettings in useSettings hook
+  };
+  updateSettings: {
+    params: { settings: unknown }; // Will be KaitenSettings
+    result: void;
+  };
 
   // Task operations
   getTasks: {

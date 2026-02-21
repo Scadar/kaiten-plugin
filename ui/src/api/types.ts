@@ -200,3 +200,75 @@ export function userDtoToDomain(dto: UserDto): User {
     email: dto.email,
   };
 }
+
+// ============================================================================
+// Settings & Configuration
+// ============================================================================
+
+/**
+ * Kaiten plugin settings (accessed via RPC from IDE)
+ * These settings are stored in the IDE plugin settings and accessed via bridge RPC
+ */
+export interface KaitenSettings {
+  /**
+   * Kaiten API token for authentication
+   */
+  apiToken: string;
+
+  /**
+   * Kaiten server URL (e.g., https://yourcompany.kaiten.ru)
+   */
+  serverUrl: string;
+
+  /**
+   * Currently selected space ID
+   */
+  selectedSpaceId: number | null;
+
+  /**
+   * Currently selected board ID
+   */
+  selectedBoardId: number | null;
+
+  /**
+   * Currently selected column IDs for filtering
+   */
+  selectedColumnIds: number[];
+
+  /**
+   * Filter tasks by assignee (owner)
+   */
+  filterByAssignee: boolean;
+
+  /**
+   * Filter tasks by participant (member)
+   */
+  filterByParticipant: boolean;
+
+  /**
+   * Filter logic: AND (both conditions must match) or OR (either condition matches)
+   */
+  filterLogic: 'AND' | 'OR';
+
+  /**
+   * Current user ID (for filtering assigned/participant tasks)
+   */
+  currentUserId: number | null;
+}
+
+/**
+ * Default settings used as fallback when settings are unavailable
+ */
+export function getDefaultSettings(): KaitenSettings {
+  return {
+    apiToken: '',
+    serverUrl: '',
+    selectedSpaceId: null,
+    selectedBoardId: null,
+    selectedColumnIds: [],
+    filterByAssignee: true,
+    filterByParticipant: false,
+    filterLogic: 'AND',
+    currentUserId: null,
+  };
+}
