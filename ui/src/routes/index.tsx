@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useSyncedFields } from '@/hooks/useSyncedState';
 import { useSyncedReady } from '@/hooks/useSyncedState';
 import { Layout } from '@/components/Layout';
+import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -127,7 +128,14 @@ function Toolbar() {
 
 function Sidebar() {
   return (
-    <div className="p-4">
+    <div className="p-4 space-y-6">
+      {/* Navigation */}
+      <div>
+        <h2 className="mb-3 px-2 text-sm font-semibold text-muted-foreground">Navigation</h2>
+        <Navigation />
+      </div>
+
+      {/* Filters Section */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Filters</CardTitle>
