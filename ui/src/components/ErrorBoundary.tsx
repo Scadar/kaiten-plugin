@@ -1,5 +1,6 @@
 import { Component, ReactNode } from 'react';
 import { bridge } from '@/bridge/JCEFBridge';
+import { FallbackUI } from './FallbackUI';
 
 interface Props {
   children: ReactNode;
@@ -44,33 +45,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      // Use custom fallback if provided, otherwise use default fallback UI
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
-      // Default fallback UI with dark theme styling
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-background text-foreground p-4">
-          <div className="max-w-md space-y-4">
-            <h1 className="text-2xl font-bold text-destructive">Something went wrong</h1>
-            <p className="text-muted-foreground">
-              An error occurred in the application. The error has been reported.
-            </p>
-            {import.meta.env.DEV && this.state.error && (
-              <div className="rounded-md bg-muted p-3 text-sm">
-                <p className="font-mono text-xs">{this.state.error.message}</p>
-              </div>
-            )}
-            <button
-              onClick={() => window.location.reload()}
-              className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
-            >
-              Reload Application
-            </button>
-          </div>
-        </div>
-      );
+      // Use custom fallback if provided, otherwise use FallbackUI component
+      return this.props.fallback || <FallbackUI error={this.state.error} />;
     }
 
     return this.props.children;
