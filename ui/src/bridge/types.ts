@@ -331,6 +331,7 @@ export interface EventTypes {
   'project:opened': { projectPath: string };
   'project:closed': void;
   'file:selected': { filePath: string };
+  'state:update': Partial<AppState>;
 }
 
 /**

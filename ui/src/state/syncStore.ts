@@ -84,7 +84,7 @@ const initialState: SyncStoreState = {
  * }
  * ```
  */
-export const useSyncedStore = create<SyncStore>((set, get) => ({
+export const useSyncedStore = create<SyncStore>((set, _get) => ({
   ...initialState,
 
   /**

@@ -23,7 +23,7 @@
  * ```
  */
 
-import { useEffect, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useSyncedStore, type SyncStore } from '@/state/syncStore';
 import type { AppState } from '@/bridge/types';
 
@@ -260,7 +260,7 @@ export function useSyncedStateEffect<K extends keyof AppState>(
   callback: (value: AppState[K], previousValue: AppState[K]) => void
 ): void {
   // Track previous value
-  const previousValueRef = useRef<AppState[K]>();
+  const previousValueRef = useRef<AppState[K] | undefined>(undefined);
   const callbackRef = useRef(callback);
 
   // Update callback ref on each render to avoid stale closures

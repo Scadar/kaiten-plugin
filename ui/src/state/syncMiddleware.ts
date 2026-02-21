@@ -11,7 +11,7 @@
  * - Prevents circular updates by tracking update source
  */
 
-import { StateCreator, StoreMutatorIdentifier } from 'zustand';
+import { StateCreator } from 'zustand';
 import { bridge } from '@/bridge/JCEFBridge';
 import type { AppState } from '@/bridge/types';
 
@@ -53,7 +53,7 @@ export function detectChanges(
 
     // Deep comparison for objects and arrays
     if (!isEqual(currentValue, previousValue)) {
-      changes[field] = currentValue;
+      (changes as Record<string, unknown>)[field] = currentValue;
     }
   }
 
@@ -210,8 +210,14 @@ export const syncMiddleware = <T extends object>(
         isUpdatingFromIDE = true;
       }
 
-      // Call original setState
-      set(partial, replace);
+      // Call original setState with proper type handling
+      if (replace === true) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        set(partial as any, true);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        set(partial as any, replace as false | undefined);
+      }
 
       if (isIDEUpdate) {
         // Reset flag after a microtask to allow the update to propagate
@@ -252,7 +258,7 @@ export interface SyncMiddlewareConfig {
  * @returns Configured sync middleware
  */
 export function createSyncMiddleware<T extends object>(
-  config: SyncMiddlewareConfig = {}
+  _config: SyncMiddlewareConfig = {}
 ): (stateCreator: StateCreator<T, [], []>) => StateCreator<T, [], []> {
   // TODO: Apply custom configuration if needed
   // For now, we use the default configuration
