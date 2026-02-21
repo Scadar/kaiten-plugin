@@ -119,11 +119,6 @@ class StateManager(private val project: Project) {
     fun setBridgeHandler(handler: JCEFBridgeHandler) {
         this.bridgeHandler = handler
 
-        // Register RPC handler for getState
-        handler.registerRPC("getState") { _ ->
-            getState()
-        }
-
         // Register callback for state sync from React
         handler.onStateSync { changes ->
             handleStateSyncFromReact(changes)
