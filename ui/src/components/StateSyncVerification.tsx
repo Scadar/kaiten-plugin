@@ -13,7 +13,7 @@
  * Usage: Add this component to a route or page to test state synchronization
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import {
   useSyncedState,
   useSyncedField,
