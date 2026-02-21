@@ -216,7 +216,7 @@ export class RPCHandler {
   cancelAll(): number {
     const count = this.pendingRequests.size;
 
-    for (const [id, pending] of this.pendingRequests.entries()) {
+    for (const [, pending] of this.pendingRequests.entries()) {
       clearTimeout(pending.timeoutId);
       pending.reject(new Error(`RPC call to "${pending.method}" was cancelled`));
     }
