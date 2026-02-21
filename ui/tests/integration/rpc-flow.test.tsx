@@ -11,10 +11,13 @@
  * In production, manual testing in the IDE is required for full verification.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createJCEFBridge } from '@/bridge/JCEFBridge';
 
 describe('RPC Call Flow', () => {
+  // Track all bridge instances created during tests
+  const bridges: ReturnType<typeof createJCEFBridge>[] = [];
+
   beforeEach(() => {
     // Clear any previous mocks
     vi.clearAllMocks();
@@ -22,6 +25,20 @@ describe('RPC Call Flow', () => {
     // Clear window functions
     delete (window as any).__jcef_send__;
     delete (window as any).__jcef_receive__;
+  });
+
+  afterEach(() => {
+    // Dispose all bridges to prevent unhandled promise rejections
+    bridges.forEach((bridge) => {
+      try {
+        bridge.dispose();
+      } catch (error) {
+        // Ignore errors during cleanup
+      }
+    });
+
+    // Clear the bridges array
+    bridges.length = 0;
   });
 
   describe('React → IDE → React flow', () => {
@@ -32,6 +49,7 @@ describe('RPC Call Flow', () => {
 
       // Create bridge instance
       const bridge = createJCEFBridge({ debug: false });
+      bridges.push(bridge);
 
       // Simulate IDE ready handshake
       const receiveFunction = (window as any).__jcef_receive__;
@@ -74,9 +92,6 @@ describe('RPC Call Flow', () => {
 
       // Verify result
       expect(result).toBe('/path/to/project');
-
-      // Cleanup
-      bridge.dispose();
     });
 
     it('should handle multiple concurrent RPC calls', async () => {
@@ -86,6 +101,7 @@ describe('RPC Call Flow', () => {
 
       // Create bridge instance
       const bridge = createJCEFBridge({ debug: false });
+      bridges.push(bridge);
 
       // Simulate IDE ready handshake
       const receiveFunction = (window as any).__jcef_receive__;
@@ -169,8 +185,6 @@ describe('RPC Call Flow', () => {
         filters: {},
       });
 
-      // Cleanup
-      bridge.dispose();
     });
 
     it('should handle RPC errors from IDE', async () => {
@@ -180,6 +194,7 @@ describe('RPC Call Flow', () => {
 
       // Create bridge instance
       const bridge = createJCEFBridge({ debug: false });
+      bridges.push(bridge);
 
       // Simulate IDE ready handshake
       const receiveFunction = (window as any).__jcef_receive__;
@@ -216,8 +231,6 @@ describe('RPC Call Flow', () => {
       // Verify error is thrown
       await expect(callPromise).rejects.toThrow('No project is currently open');
 
-      // Cleanup
-      bridge.dispose();
     });
 
     it('should timeout if IDE does not respond', async () => {
@@ -227,6 +240,7 @@ describe('RPC Call Flow', () => {
 
       // Create bridge instance
       const bridge = createJCEFBridge({ debug: false });
+      bridges.push(bridge);
 
       // Simulate IDE ready handshake
       const receiveFunction = (window as any).__jcef_receive__;
@@ -249,8 +263,6 @@ describe('RPC Call Flow', () => {
       // Verify timeout error
       await expect(callPromise).rejects.toThrow('timed out');
 
-      // Cleanup
-      bridge.dispose();
     });
   });
 
@@ -259,19 +271,24 @@ describe('RPC Call Flow', () => {
       // This test verifies TypeScript type checking at compile time
       // If this compiles, type safety is working
 
-      const bridge = createJCEFBridge();
+      // Mock __jcef_send__ to prevent errors
+      const sendMock = vi.fn();
+      (window as any).__jcef_send__ = sendMock;
+
+      const bridge = createJCEFBridge({ debug: false });
+      bridges.push(bridge);
 
       // These should compile (valid methods)
-      bridge.call('getProjectPath', undefined);
-      bridge.call('getProjectName', undefined);
-      bridge.call('getState', undefined);
+      // We don't await these - just checking they compile
+      // Suppress unhandled rejections by catching them
+      bridge.call('getProjectPath', undefined).catch(() => {});
+      bridge.call('getProjectName', undefined).catch(() => {});
+      bridge.call('getState', undefined).catch(() => {});
 
       // TypeScript should catch invalid methods at compile time
       // Uncomment to test:
       // bridge.call('invalidMethod', undefined); // Should error
       // bridge.call('getProjectPath', 'wrong-params'); // Should error
-
-      bridge.dispose();
     });
   });
 });
