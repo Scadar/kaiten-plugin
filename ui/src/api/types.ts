@@ -28,6 +28,7 @@ export interface TaskMemberDto {
   id: number;
   full_name: string;
   email: string;
+  type?: number; // 1 = member, 2 = responsible
 }
 
 export interface TagDto {
@@ -111,6 +112,7 @@ export interface TaskMember {
   id: number;
   fullName: string;
   email: string;
+  type: number; // 1 = member, 2 = responsible
 }
 
 export interface Tag {
@@ -200,6 +202,7 @@ export function taskMemberDtoToDomain(dto: TaskMemberDto): TaskMember {
     id: dto.id,
     fullName: dto.full_name,
     email: dto.email,
+    type: dto.type ?? 0,
   };
 }
 

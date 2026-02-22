@@ -47,7 +47,10 @@ export const columnsKeys = {
 export const tasksKeys = {
   all: () => ['tasks'] as const,
   byColumn: (columnId: number) => ['tasks', { columnId }] as const,
-  byBoard: (boardId: number) => ['tasks', { boardId }] as const,
+  byBoard: (boardId: number, memberId?: number | null) =>
+    memberId != null
+      ? ['tasks', { boardId, memberId }] as const
+      : ['tasks', { boardId }] as const,
   detail: (id: number) => ['tasks', id] as const,
 };
 

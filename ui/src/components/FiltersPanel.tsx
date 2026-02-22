@@ -4,12 +4,15 @@ import { useFilterStore } from '@/state/filterStore';
 import { Label } from '@/components/ui/label';
 import { Combobox } from '@/components/ui/combobox';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { ChevronRight, SlidersHorizontal } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface FilterSectionProps {
   title: string;
@@ -45,16 +48,24 @@ export function FiltersPanel() {
   const selectedBoardId = useFilterStore((state) => state.selectedBoardId);
   const selectedColumnIds = useFilterStore((state) => state.selectedColumnIds);
   const selectedUserId = useFilterStore((state) => state.selectedUserId);
+  const filterAsMember = useFilterStore((state) => state.filterAsMember);
+  const filterAsResponsible = useFilterStore((state) => state.filterAsResponsible);
+  const filterLogic = useFilterStore((state) => state.filterLogic);
 
   const setSelectedSpace = useFilterStore((state) => state.setSelectedSpace);
   const setSelectedBoard = useFilterStore((state) => state.setSelectedBoard);
   const toggleColumn = useFilterStore((state) => state.toggleColumn);
   const setSelectedUser = useFilterStore((state) => state.setSelectedUser);
+  const setFilterAsMember = useFilterStore((state) => state.setFilterAsMember);
+  const setFilterAsResponsible = useFilterStore((state) => state.setFilterAsResponsible);
+  const setFilterLogic = useFilterStore((state) => state.setFilterLogic);
 
   const { data: spaces, isLoading: spacesLoading } = useSpaces();
   const { data: boards, isLoading: boardsLoading } = useBoards(selectedSpaceId);
   const { data: columns, isLoading: columnsLoading } = useColumns(selectedBoardId);
   const { data: users, isLoading: usersLoading } = useUsers();
+
+  const bothRolesSelected = filterAsMember && filterAsResponsible;
 
   if (!isConfigured) {
     return (
@@ -150,23 +161,83 @@ export function FiltersPanel() {
 
           {/* User */}
           <FilterSection title="User" defaultOpen={false}>
-            {usersLoading ? (
-              <p className="text-xs text-muted-foreground">Loading...</p>
-            ) : !users?.length ? (
-              <p className="text-xs text-muted-foreground">No users</p>
-            ) : (
-              <Combobox
-                options={users.map((u) => ({
-                  value: String(u.id),
-                  label: u.name,
-                }))}
-                value={selectedUserId !== null ? String(selectedUserId) : null}
-                onChange={(val) => setSelectedUser(val ? Number(val) : null)}
-                placeholder="Select user..."
-                searchPlaceholder="Search users..."
-                emptyText="No users found."
-              />
-            )}
+            <div className="space-y-2">
+              {usersLoading ? (
+                <p className="text-xs text-muted-foreground">Loading...</p>
+              ) : !users?.length ? (
+                <p className="text-xs text-muted-foreground">No users</p>
+              ) : (
+                <Combobox
+                  options={users.map((u) => ({
+                    value: String(u.id),
+                    label: u.name,
+                  }))}
+                  value={selectedUserId !== null ? String(selectedUserId) : null}
+                  onChange={(val) => setSelectedUser(val ? Number(val) : null)}
+                  placeholder="Select user..."
+                  searchPlaceholder="Search users..."
+                  emptyText="No users found."
+                />
+              )}
+
+              {selectedUserId !== null && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <div
+                      className="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-accent/40 cursor-pointer"
+                      onClick={() => setFilterAsMember(!filterAsMember)}
+                    >
+                      <Checkbox
+                        id="filter-member"
+                        checked={filterAsMember}
+                        onCheckedChange={(c) => setFilterAsMember(c === true)}
+                      />
+                      <Label htmlFor="filter-member" className="text-xs font-normal cursor-pointer">
+                        Member
+                      </Label>
+                    </div>
+                    <div
+                      className="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-accent/40 cursor-pointer"
+                      onClick={() => setFilterAsResponsible(!filterAsResponsible)}
+                    >
+                      <Checkbox
+                        id="filter-responsible"
+                        checked={filterAsResponsible}
+                        onCheckedChange={(c) => setFilterAsResponsible(c === true)}
+                      />
+                      <Label htmlFor="filter-responsible" className="text-xs font-normal cursor-pointer">
+                        Responsible
+                      </Label>
+                    </div>
+                  </div>
+
+                  {bothRolesSelected && (
+                    <>
+                      <Separator />
+                      <RadioGroup
+                        value={filterLogic}
+                        onValueChange={(val) => setFilterLogic(val as 'OR' | 'AND')}
+                        className={cn('gap-1 pl-1')}
+                      >
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="OR" id="logic-or" />
+                          <Label htmlFor="logic-or" className="text-xs font-normal cursor-pointer">
+                            OR — any role
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="AND" id="logic-and" />
+                          <Label htmlFor="logic-and" className="text-xs font-normal cursor-pointer">
+                            AND — both roles
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </FilterSection>
         </CollapsibleContent>
       </Collapsible>

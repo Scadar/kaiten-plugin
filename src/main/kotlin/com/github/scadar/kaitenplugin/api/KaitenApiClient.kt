@@ -110,16 +110,22 @@ class KaitenApiClient(private val client: OkHttpClient, private val baseUrl: Str
         return dtos.map { it.toDomain() }
     }
 
-    suspend fun getCards(boardId: Long, searchText: String? = null): List<Task> {
-        val url = if (!searchText.isNullOrBlank()) {
+    suspend fun getCards(
+        boardId: Long,
+        searchText: String? = null,
+        memberIds: List<Long>? = null,
+    ): List<Task> {
+        val sb = StringBuilder("$baseUrl/cards?board_id=$boardId")
+        if (!searchText.isNullOrBlank()) {
             val encoded = URLEncoder.encode(searchText, "UTF-8")
             LOG.info("[Kaiten API] getCards with search query: \"$searchText\"")
-            "$baseUrl/cards?board_id=$boardId&query=$encoded"
-        } else {
-            "$baseUrl/cards?board_id=$boardId"
+            sb.append("&query=$encoded")
+        }
+        memberIds?.forEachIndexed { i, id ->
+            sb.append("&member_ids[$i]=$id")
         }
         @Suppress("UNCHECKED_CAST")
-        val dtos = executeRequest(url, object : TypeToken<List<TaskDto>>() {}) as List<TaskDto>
+        val dtos = executeRequest(sb.toString(), object : TypeToken<List<TaskDto>>() {}) as List<TaskDto>
         return dtos.map { it.toDomain() }
     }
 

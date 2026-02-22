@@ -182,14 +182,23 @@ export class KaitenApiClient {
   }
 
   /**
-   * Get all cards in a board, optionally filtered by search text
+   * Get all cards in a board, optionally filtered by search text and member ID.
+   *
+   * @param boardId - Board to fetch cards from
+   * @param searchText - Optional server-side text search
+   * @param memberId - Optional user ID to filter cards by (member_ids API param)
    */
-  async getCards(boardId: number, searchText?: string): Promise<Task[]> {
+  async getCards(boardId: number, searchText?: string, memberId?: number | null): Promise<Task[]> {
     const params: Record<string, unknown> = { board_id: boardId };
 
     if (searchText?.trim()) {
       console.log(`[Kaiten API] getCards with search query: "${searchText}"`);
       params.query = searchText.trim();
+    }
+
+    if (memberId != null) {
+      console.log(`[Kaiten API] getCards with member filter: ${memberId}`);
+      params.member_ids = memberId;
     }
 
     const dtos = await this.executeRequest<TaskDto[]>('cards', params);

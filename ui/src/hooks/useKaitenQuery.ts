@@ -78,16 +78,17 @@ export function useColumns(boardId: number | null | undefined): UseQueryResult<C
 
 export function useTasks(
   boardId: number | null | undefined,
-  searchText?: string
+  searchText?: string,
+  memberId?: number | null
 ): UseQueryResult<Task[], Error> {
   const settings = useSettings();
   const enabled = !!(settings.serverUrl && settings.apiToken && boardId != null);
-  console.log('[useTasks] enabled:', enabled, '| boardId:', boardId);
+  console.log('[useTasks] enabled:', enabled, '| boardId:', boardId, '| memberId:', memberId);
   return useQuery({
-    queryKey: tasksKeys.byBoard(boardId!),
+    queryKey: tasksKeys.byBoard(boardId!, memberId),
     queryFn: async () => {
-      console.log('[useTasks] queryFn running, boardId:', boardId);
-      const result = await makeClient(settings.serverUrl, settings.apiToken).getCards(boardId!, searchText);
+      console.log('[useTasks] queryFn running, boardId:', boardId, 'memberId:', memberId);
+      const result = await makeClient(settings.serverUrl, settings.apiToken).getCards(boardId!, searchText, memberId);
       console.log('[useTasks] queryFn success, count:', result.length);
       return result;
     },

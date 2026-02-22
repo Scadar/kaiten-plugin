@@ -33,6 +33,23 @@ export interface FilterStoreState {
    * Selected user ID for filtering tasks (null if no user filter)
    */
   selectedUserId: number | null;
+
+  /**
+   * Filter by member role (type 1). Only applies when selectedUserId is set.
+   */
+  filterAsMember: boolean;
+
+  /**
+   * Filter by responsible role (type 2). Only applies when selectedUserId is set.
+   */
+  filterAsResponsible: boolean;
+
+  /**
+   * Logic for combining role filters when both are enabled.
+   * - 'OR': show cards where user matches ANY selected role
+   * - 'AND': show cards where user matches ALL selected roles
+   */
+  filterLogic: 'OR' | 'AND';
 }
 
 /**
@@ -67,6 +84,10 @@ export interface FilterStoreActions {
    */
   setSelectedUser: (userId: number | null) => void;
 
+  setFilterAsMember: (enabled: boolean) => void;
+  setFilterAsResponsible: (enabled: boolean) => void;
+  setFilterLogic: (logic: 'OR' | 'AND') => void;
+
   /**
    * Reset all filters to initial state
    */
@@ -86,6 +107,9 @@ const initialState: FilterStoreState = {
   selectedBoardId: null,
   selectedColumnIds: [],
   selectedUserId: null,
+  filterAsMember: true,
+  filterAsResponsible: true,
+  filterLogic: 'OR',
 };
 
 /**
@@ -164,6 +188,10 @@ export const useFilterStore = create<FilterStore>((set) => ({
     set({ selectedUserId: userId });
   },
 
+  setFilterAsMember: (enabled: boolean) => set({ filterAsMember: enabled }),
+  setFilterAsResponsible: (enabled: boolean) => set({ filterAsResponsible: enabled }),
+  setFilterLogic: (logic: 'OR' | 'AND') => set({ filterLogic: logic }),
+
   /**
    * Reset all filters to initial state
    */
@@ -182,6 +210,9 @@ export const filterStoreSelectors = {
   filterOptions: (state: FilterStore) => ({
     selectedColumnIds: state.selectedColumnIds,
     selectedUserId: state.selectedUserId,
+    filterAsMember: state.filterAsMember,
+    filterAsResponsible: state.filterAsResponsible,
+    filterLogic: state.filterLogic,
   }),
 
   /**

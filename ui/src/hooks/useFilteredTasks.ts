@@ -1,5 +1,9 @@
 /**
- * Hook for fetching and filtering Kaiten tasks
+ * Hook for fetching and filtering Kaiten tasks.
+ *
+ * Two-stage filtering:
+ * 1. API-level: member_ids param pre-filters cards by selected user (server-side)
+ * 2. Client-level: further filter by column and member role type
  */
 
 import { useMemo } from 'react';
@@ -18,7 +22,10 @@ export function useFilteredTasks(
   filterOptions: FilterTasksOptions = {},
   searchText?: string
 ): UseFilteredTasksResult {
-  const tasksQuery = useTasks(boardId, searchText);
+  const { selectedUserId } = filterOptions;
+
+  // Pass selectedUserId to the API call for server-side pre-filtering
+  const tasksQuery = useTasks(boardId, searchText, selectedUserId ?? null);
 
   const filteredTasks = useMemo(() => {
     if (!tasksQuery.data) {
