@@ -8,6 +8,7 @@ import { useFilterStore } from '@/state/filterStore';
 import { Layout } from '@/components/Layout';
 import { FiltersPanel } from '@/components/FiltersPanel';
 import { TaskList } from '@/components/TaskList';
+import { TaskDetailPanel } from '@/components/TaskDetail';
 import { KanbanBoard } from '@/components/KanbanBoard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ function TasksComponent() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchText, setSearchText] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -42,6 +44,18 @@ function TasksComponent() {
 
   const { data: columns, isLoading: columnsLoading } = useColumns(selectedBoardId);
   const isLoading = tasksLoading || columnsLoading;
+
+  // Detail view: full-screen replacement
+  if (selectedTaskId !== null) {
+    return (
+      <Layout>
+        <TaskDetailPanel
+          taskId={selectedTaskId}
+          onBack={() => setSelectedTaskId(null)}
+        />
+      </Layout>
+    );
+  }
 
   return (
     <Layout
@@ -135,6 +149,7 @@ function TasksComponent() {
           isLoading={isLoading}
           error={tasksError}
           columns={columns}
+          onTaskClick={setSelectedTaskId}
         />
       ) : (
         <div className="overflow-x-auto">

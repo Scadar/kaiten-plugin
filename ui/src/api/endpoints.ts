@@ -61,6 +61,13 @@ export const usersKeys = {
 };
 
 /**
+ * Query keys for comments
+ */
+export const commentsKeys = {
+  byCard: (cardId: number) => ['comments', { cardId }] as const,
+};
+
+/**
  * Query keys for settings (IDE settings accessed via RPC)
  */
 export const settingsKeys = {

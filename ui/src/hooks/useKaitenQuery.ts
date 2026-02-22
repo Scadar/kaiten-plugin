@@ -7,12 +7,13 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { useSettings } from './useSettings';
 import { KaitenApiClient } from '../api/client';
-import { Space, Board, Column, Task, User } from '../api/types';
+import { Space, Board, Column, Task, TaskDetail, Comment, User } from '../api/types';
 import {
   spacesKeys,
   boardsKeys,
   columnsKeys,
   tasksKeys,
+  commentsKeys,
   usersKeys,
 } from '../api/endpoints';
 import { CACHE_CONFIG } from '../lib/cache';
@@ -104,6 +105,36 @@ export function useTask(cardId: number | null | undefined): UseQueryResult<Task,
     queryFn: async () => {
       console.log('[useTask] queryFn running, cardId:', cardId);
       return makeClient(settings.serverUrl, settings.apiToken).getCard(cardId!);
+    },
+    staleTime: CACHE_CONFIG.STALE_TIME,
+    gcTime: CACHE_CONFIG.GC_TIME,
+    enabled,
+  });
+}
+
+export function useCardDetail(cardId: number | null | undefined): UseQueryResult<TaskDetail, Error> {
+  const settings = useSettings();
+  const enabled = !!(settings.serverUrl && settings.apiToken && cardId != null);
+  return useQuery({
+    queryKey: [...tasksKeys.detail(cardId!), 'detail'],
+    queryFn: async () => {
+      console.log('[useCardDetail] queryFn running, cardId:', cardId);
+      return makeClient(settings.serverUrl, settings.apiToken).getCardDetail(cardId!);
+    },
+    staleTime: CACHE_CONFIG.STALE_TIME,
+    gcTime: CACHE_CONFIG.GC_TIME,
+    enabled,
+  });
+}
+
+export function useCardComments(cardId: number | null | undefined): UseQueryResult<Comment[], Error> {
+  const settings = useSettings();
+  const enabled = !!(settings.serverUrl && settings.apiToken && cardId != null);
+  return useQuery({
+    queryKey: commentsKeys.byCard(cardId!),
+    queryFn: async () => {
+      console.log('[useCardComments] queryFn running, cardId:', cardId);
+      return makeClient(settings.serverUrl, settings.apiToken).getCardComments(cardId!);
     },
     staleTime: CACHE_CONFIG.STALE_TIME,
     gcTime: CACHE_CONFIG.GC_TIME,

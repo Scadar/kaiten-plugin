@@ -9,16 +9,22 @@ import {
   BoardDto,
   ColumnDto,
   TaskDto,
+  TaskDetailDto,
+  CommentDto,
   UserDto,
   Space,
   Board,
   Column,
   Task,
+  TaskDetail,
+  Comment,
   User,
   spaceDtoToDomain,
   boardDtoToDomain,
   columnDtoToDomain,
   taskDtoToDomain,
+  taskDetailDtoToDomain,
+  commentDtoToDomain,
   userDtoToDomain,
 } from './types';
 import {
@@ -191,11 +197,27 @@ export class KaitenApiClient {
   }
 
   /**
-   * Get a single card by ID
+   * Get a single card by ID (basic fields)
    */
   async getCard(cardId: number): Promise<Task> {
     const dto = await this.executeRequest<TaskDto>(`cards/${cardId}`);
     return taskDtoToDomain(dto);
+  }
+
+  /**
+   * Get a single card with extended detail fields
+   */
+  async getCardDetail(cardId: number): Promise<TaskDetail> {
+    const dto = await this.executeRequest<TaskDetailDto>(`cards/${cardId}`);
+    return taskDetailDtoToDomain(dto);
+  }
+
+  /**
+   * Get comments for a card
+   */
+  async getCardComments(cardId: number): Promise<Comment[]> {
+    const dtos = await this.executeRequest<CommentDto[]>(`cards/${cardId}/comments`);
+    return dtos.map(commentDtoToDomain);
   }
 
   /**

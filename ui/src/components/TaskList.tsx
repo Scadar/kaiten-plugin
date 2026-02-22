@@ -8,6 +8,7 @@ export interface TaskListProps {
   error?: Error | null
   columns?: Column[]
   className?: string
+  onTaskClick?: (taskId: number) => void
 }
 
 export function TaskList({
@@ -16,6 +17,7 @@ export function TaskList({
   error = null,
   columns = [],
   className,
+  onTaskClick,
 }: TaskListProps) {
   if (isLoading) {
     return (
@@ -60,6 +62,7 @@ export function TaskList({
           <div
             key={task.id}
             className="flex items-start gap-2 px-3 py-2 hover:bg-accent/30 cursor-pointer transition-colors"
+            onClick={() => onTaskClick?.(task.id)}
           >
             {/* Task ID */}
             <span className="mt-0.5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">
