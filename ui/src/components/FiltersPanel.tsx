@@ -1,18 +1,15 @@
 import { useSettingsStatus } from '@/hooks/useSettings';
-import { useSpaces, useBoards, useColumns } from '@/hooks/useKaitenQuery';
+import { useSpaces, useBoards, useColumns, useUsers } from '@/hooks/useKaitenQuery';
 import { useFilterStore } from '@/state/filterStore';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Combobox } from '@/components/ui/combobox';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { ChevronRight, SlidersHorizontal } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface FilterSectionProps {
   title: string;
@@ -47,20 +44,17 @@ export function FiltersPanel() {
   const selectedSpaceId = useFilterStore((state) => state.selectedSpaceId);
   const selectedBoardId = useFilterStore((state) => state.selectedBoardId);
   const selectedColumnIds = useFilterStore((state) => state.selectedColumnIds);
-  const filterByAssignee = useFilterStore((state) => state.filterByAssignee);
-  const filterByParticipant = useFilterStore((state) => state.filterByParticipant);
-  const filterLogic = useFilterStore((state) => state.filterLogic);
+  const selectedUserId = useFilterStore((state) => state.selectedUserId);
 
   const setSelectedSpace = useFilterStore((state) => state.setSelectedSpace);
   const setSelectedBoard = useFilterStore((state) => state.setSelectedBoard);
   const toggleColumn = useFilterStore((state) => state.toggleColumn);
-  const setFilterByAssignee = useFilterStore((state) => state.setFilterByAssignee);
-  const setFilterByParticipant = useFilterStore((state) => state.setFilterByParticipant);
-  const setFilterLogic = useFilterStore((state) => state.setFilterLogic);
+  const setSelectedUser = useFilterStore((state) => state.setSelectedUser);
 
   const { data: spaces, isLoading: spacesLoading } = useSpaces();
   const { data: boards, isLoading: boardsLoading } = useBoards(selectedSpaceId);
   const { data: columns, isLoading: columnsLoading } = useColumns(selectedBoardId);
+  const { data: users, isLoading: usersLoading } = useUsers();
 
   if (!isConfigured) {
     return (
@@ -154,61 +148,25 @@ export function FiltersPanel() {
             </FilterSection>
           )}
 
-          {/* Users */}
-          <FilterSection title="Users" defaultOpen={false}>
-            <div className="space-y-1.5">
-              <div
-                className="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-accent/40 cursor-pointer"
-                onClick={() => setFilterByAssignee(!filterByAssignee)}
-              >
-                <Checkbox
-                  id="filter-assignee"
-                  checked={filterByAssignee}
-                  onCheckedChange={(c) => setFilterByAssignee(c === true)}
-                />
-                <Label htmlFor="filter-assignee" className="text-xs font-normal cursor-pointer">
-                  Assignee
-                </Label>
-              </div>
-
-              <div
-                className="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-accent/40 cursor-pointer"
-                onClick={() => setFilterByParticipant(!filterByParticipant)}
-              >
-                <Checkbox
-                  id="filter-participant"
-                  checked={filterByParticipant}
-                  onCheckedChange={(c) => setFilterByParticipant(c === true)}
-                />
-                <Label htmlFor="filter-participant" className="text-xs font-normal cursor-pointer">
-                  Participant
-                </Label>
-              </div>
-
-              {(filterByAssignee || filterByParticipant) && (
-                <>
-                  <Separator className="my-1.5" />
-                  <RadioGroup
-                    value={filterLogic}
-                    onValueChange={(val) => setFilterLogic(val as 'AND' | 'OR')}
-                    className={cn('gap-1 pl-1')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="AND" id="logic-and" />
-                      <Label htmlFor="logic-and" className="text-xs font-normal cursor-pointer">
-                        AND — match all
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="OR" id="logic-or" />
-                      <Label htmlFor="logic-or" className="text-xs font-normal cursor-pointer">
-                        OR — match any
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </>
-              )}
-            </div>
+          {/* User */}
+          <FilterSection title="User" defaultOpen={false}>
+            {usersLoading ? (
+              <p className="text-xs text-muted-foreground">Loading...</p>
+            ) : !users?.length ? (
+              <p className="text-xs text-muted-foreground">No users</p>
+            ) : (
+              <Combobox
+                options={users.map((u) => ({
+                  value: String(u.id),
+                  label: u.name,
+                }))}
+                value={selectedUserId !== null ? String(selectedUserId) : null}
+                onChange={(val) => setSelectedUser(val ? Number(val) : null)}
+                placeholder="Select user..."
+                searchPlaceholder="Search users..."
+                emptyText="No users found."
+              />
+            )}
           </FilterSection>
         </CollapsibleContent>
       </Collapsible>

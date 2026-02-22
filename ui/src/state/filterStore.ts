@@ -30,21 +30,9 @@ export interface FilterStoreState {
   selectedColumnIds: number[];
 
   /**
-   * Whether to filter tasks by assignee (current user)
+   * Selected user ID for filtering tasks (null if no user filter)
    */
-  filterByAssignee: boolean;
-
-  /**
-   * Whether to filter tasks by participant (current user)
-   */
-  filterByParticipant: boolean;
-
-  /**
-   * Filter logic for user-based filtering
-   * - 'AND': User must match ALL enabled criteria (assignee AND participant)
-   * - 'OR': User must match ANY enabled criteria (assignee OR participant)
-   */
-  filterLogic: 'AND' | 'OR';
+  selectedUserId: number | null;
 }
 
 /**
@@ -75,19 +63,9 @@ export interface FilterStoreActions {
   toggleColumn: (columnId: number) => void;
 
   /**
-   * Set filter by assignee option
+   * Set selected user ID for filtering
    */
-  setFilterByAssignee: (enabled: boolean) => void;
-
-  /**
-   * Set filter by participant option
-   */
-  setFilterByParticipant: (enabled: boolean) => void;
-
-  /**
-   * Set filter logic (AND/OR)
-   */
-  setFilterLogic: (logic: 'AND' | 'OR') => void;
+  setSelectedUser: (userId: number | null) => void;
 
   /**
    * Reset all filters to initial state
@@ -107,9 +85,7 @@ const initialState: FilterStoreState = {
   selectedSpaceId: null,
   selectedBoardId: null,
   selectedColumnIds: [],
-  filterByAssignee: true,
-  filterByParticipant: false,
-  filterLogic: 'AND',
+  selectedUserId: null,
 };
 
 /**
@@ -182,24 +158,10 @@ export const useFilterStore = create<FilterStore>((set) => ({
   },
 
   /**
-   * Set filter by assignee option
+   * Set selected user ID for filtering
    */
-  setFilterByAssignee: (enabled: boolean) => {
-    set({ filterByAssignee: enabled });
-  },
-
-  /**
-   * Set filter by participant option
-   */
-  setFilterByParticipant: (enabled: boolean) => {
-    set({ filterByParticipant: enabled });
-  },
-
-  /**
-   * Set filter logic (AND/OR)
-   */
-  setFilterLogic: (logic: 'AND' | 'OR') => {
-    set({ filterLogic: logic });
+  setSelectedUser: (userId: number | null) => {
+    set({ selectedUserId: userId });
   },
 
   /**
@@ -219,9 +181,7 @@ export const filterStoreSelectors = {
    */
   filterOptions: (state: FilterStore) => ({
     selectedColumnIds: state.selectedColumnIds,
-    filterByAssignee: state.filterByAssignee,
-    filterByParticipant: state.filterByParticipant,
-    filterLogic: state.filterLogic,
+    selectedUserId: state.selectedUserId,
   }),
 
   /**
@@ -229,8 +189,7 @@ export const filterStoreSelectors = {
    */
   hasActiveFilters: (state: FilterStore) =>
     state.selectedColumnIds.length > 0 ||
-    state.filterByAssignee ||
-    state.filterByParticipant,
+    state.selectedUserId !== null,
 
   /**
    * Check if a space is selected

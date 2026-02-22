@@ -32,13 +32,11 @@ function TasksComponent() {
 
   const selectedBoardId = useFilterStore((s) => s.selectedBoardId);
   const selectedColumnIds = useFilterStore((s) => s.selectedColumnIds);
-  const filterByAssignee = useFilterStore((s) => s.filterByAssignee);
-  const filterByParticipant = useFilterStore((s) => s.filterByParticipant);
-  const filterLogic = useFilterStore((s) => s.filterLogic);
+  const selectedUserId = useFilterStore((s) => s.selectedUserId);
 
   const { data: tasks, isLoading: tasksLoading, error: tasksError } = useFilteredTasks(
     selectedBoardId,
-    { selectedColumnIds, filterByAssignee, filterByParticipant, filterLogic },
+    { selectedColumnIds, selectedUserId },
     searchText
   );
 

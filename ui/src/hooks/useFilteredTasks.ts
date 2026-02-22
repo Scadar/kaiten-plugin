@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import { useTasks, useCurrentUser } from './useKaitenQuery';
+import { useTasks } from './useKaitenQuery';
 import { filterTasks, FilterTasksOptions } from '../lib/filters';
 import { Task } from '../api/types';
 
@@ -19,18 +19,17 @@ export function useFilteredTasks(
   searchText?: string
 ): UseFilteredTasksResult {
   const tasksQuery = useTasks(boardId, searchText);
-  const currentUserQuery = useCurrentUser();
 
   const filteredTasks = useMemo(() => {
     if (!tasksQuery.data) {
       return undefined;
     }
-    return filterTasks(tasksQuery.data, currentUserQuery.data ?? null, filterOptions);
-  }, [tasksQuery.data, currentUserQuery.data, filterOptions]);
+    return filterTasks(tasksQuery.data, filterOptions);
+  }, [tasksQuery.data, filterOptions]);
 
   return {
     data: filteredTasks,
-    isLoading: tasksQuery.isLoading || currentUserQuery.isLoading,
-    error: tasksQuery.error || currentUserQuery.error || null,
+    isLoading: tasksQuery.isLoading,
+    error: tasksQuery.error || null,
   };
 }
