@@ -4,12 +4,12 @@ import { useSettingsStatus } from '@/hooks/useSettings';
 import { useSpaces, useBoards } from '@/hooks/useKaitenQuery';
 import { useFilterStore } from '@/state/filterStore';
 import { Layout } from '@/components/Layout';
-import { Navigation } from '@/components/Navigation';
-import { FiltersPanel } from '@/components/FiltersPanel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RefreshCw, Settings, CheckCircle2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { RefreshCw, Search, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { Space, Board } from '@/api/types';
 
 export const Route = createFileRoute('/boards')({
@@ -18,67 +18,89 @@ export const Route = createFileRoute('/boards')({
 
 function BoardsComponent() {
   const [searchText, setSearchText] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
   const { isConfigured } = useSettingsStatus();
-  const selectedBoardId = useFilterStore((state) => state.selectedBoardId);
-  const setSelectedBoard = useFilterStore((state) => state.setSelectedBoard);
+  const selectedBoardId = useFilterStore((s) => s.selectedBoardId);
+  const setSelectedBoard = useFilterStore((s) => s.setSelectedBoard);
 
-  const { data: spaces, isLoading: spacesLoading, error: spacesError } = useSpaces();
+  const { data: spaces, isLoading: spacesLoading, error: spacesError, refetch } = useSpaces();
 
   return (
     <Layout
-      sidebar={<Sidebar />}
-      toolbar={<Toolbar searchText={searchText} onSearchChange={setSearchText} />}
+      header={
+        <>
+          <span className="flex-1 text-xs font-medium text-muted-foreground">Boards</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setShowSearch((v) => !v)}
+              >
+                <Search size={13} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Search</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => refetch()}>
+                <RefreshCw size={13} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Refresh</TooltipContent>
+          </Tooltip>
+        </>
+      }
     >
-      <div className="p-6">
-        {!isConfigured ? (
-          <div className="flex items-center justify-center p-8">
-            <Card className="max-w-md">
-              <CardHeader>
-                <CardTitle>Setup Required</CardTitle>
-                <CardDescription>Configure Kaiten API settings</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Please configure your API token and server URL in{' '}
-                  <span className="font-medium">Settings → Tools → Kaiten</span>
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        ) : spacesLoading ? (
-          <div className="flex items-center justify-center p-8">
-            <p className="text-muted-foreground">Loading spaces and boards...</p>
-          </div>
-        ) : spacesError ? (
-          <div className="flex items-center justify-center p-8">
-            <Card className="max-w-md">
-              <CardHeader>
-                <CardTitle className="text-destructive">Error Loading Data</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{spacesError.message}</p>
-              </CardContent>
-            </Card>
-          </div>
-        ) : !spaces || spaces.length === 0 ? (
-          <div className="flex items-center justify-center p-8">
-            <p className="text-muted-foreground">No spaces available</p>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {spaces.map((space) => (
-              <SpaceSection
-                key={space.id}
-                space={space}
-                searchText={searchText}
-                selectedBoardId={selectedBoardId}
-                onSelectBoard={setSelectedBoard}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Search */}
+      {showSearch && (
+        <div className="border-b border-border px-2 py-1.5">
+          <Input
+            autoFocus
+            placeholder="Search boards..."
+            className="h-7 text-xs"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+        </div>
+      )}
+
+      {/* Content */}
+      {!isConfigured ? (
+        <div className="px-3 py-4">
+          <p className="text-xs text-muted-foreground">
+            Configure API settings in{' '}
+            <span className="font-medium text-foreground">Settings</span> to view boards.
+          </p>
+        </div>
+      ) : spacesLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <p className="text-xs text-muted-foreground">Loading...</p>
+        </div>
+      ) : spacesError ? (
+        <div className="px-3 py-3">
+          <p className="text-xs text-destructive">{spacesError.message}</p>
+        </div>
+      ) : !spaces?.length ? (
+        <div className="flex items-center justify-center py-8">
+          <p className="text-xs text-muted-foreground">No spaces available</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-border">
+          {spaces.map((space) => (
+            <SpaceSection
+              key={space.id}
+              space={space}
+              searchText={searchText}
+              selectedBoardId={selectedBoardId}
+              onSelectBoard={setSelectedBoard}
+            />
+          ))}
+        </div>
+      )}
     </Layout>
   );
 }
@@ -87,113 +109,80 @@ interface SpaceSectionProps {
   space: Space;
   searchText: string;
   selectedBoardId: number | null;
-  onSelectBoard: (boardId: number | null) => void;
+  onSelectBoard: (id: number | null) => void;
 }
 
 function SpaceSection({ space, searchText, selectedBoardId, onSelectBoard }: SpaceSectionProps) {
-  const { data: boards, isLoading: boardsLoading, error: boardsError } = useBoards(space.id);
+  const { data: boards, isLoading } = useBoards(space.id);
 
-  const filteredBoards = boards?.filter((board) =>
-    board.name.toLowerCase().includes(searchText.toLowerCase())
-  ) || [];
+  const filtered = boards?.filter((b) =>
+    b.name.toLowerCase().includes(searchText.toLowerCase())
+  ) ?? [];
 
-  if (searchText && filteredBoards.length === 0) {
-    return null;
-  }
+  if (searchText && filtered.length === 0) return null;
 
   return (
-    <div>
-      <h2 className="mb-4 text-lg font-semibold">{space.name}</h2>
-      {boardsLoading ? (
-        <p className="text-sm text-muted-foreground">Loading boards...</p>
-      ) : boardsError ? (
-        <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <p className="text-sm text-destructive">Failed to load boards</p>
-            <p className="text-xs text-muted-foreground mt-1">{boardsError.message}</p>
-          </CardContent>
-        </Card>
-      ) : filteredBoards.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No boards available</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredBoards.map((board) => (
-            <BoardCard
-              key={board.id}
-              board={board}
-              isSelected={board.id === selectedBoardId}
-              onSelect={() => onSelectBoard(board.id)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    <Collapsible defaultOpen className="group/space">
+      <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-3 py-1.5 hover:bg-accent/40 transition-colors">
+        <ChevronRight
+          size={11}
+          className="shrink-0 text-muted-foreground transition-transform group-data-[state=open]/space:rotate-90"
+        />
+        <span className="flex-1 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {space.name}
+        </span>
+        {boards && (
+          <span className="text-[10px] text-muted-foreground">{filtered.length}</span>
+        )}
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        {isLoading ? (
+          <div className="px-3 py-1.5">
+            <p className="text-xs text-muted-foreground">Loading...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="px-3 py-1.5">
+            <p className="text-xs text-muted-foreground">No boards</p>
+          </div>
+        ) : (
+          <div className="pb-1">
+            {filtered.map((board) => (
+              <BoardRow
+                key={board.id}
+                board={board}
+                isSelected={board.id === selectedBoardId}
+                onSelect={() =>
+                  onSelectBoard(board.id === selectedBoardId ? null : board.id)
+                }
+              />
+            ))}
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
-interface BoardCardProps {
+interface BoardRowProps {
   board: Board;
   isSelected: boolean;
   onSelect: () => void;
 }
 
-function BoardCard({ board, isSelected, onSelect }: BoardCardProps) {
+function BoardRow({ board, isSelected, onSelect }: BoardRowProps) {
   return (
-    <Card
-      className={`cursor-pointer transition-all hover:shadow-md ${
-        isSelected ? 'border-primary ring-2 ring-primary ring-opacity-50' : ''
-      }`}
+    <button
       onClick={onSelect}
+      className={cn(
+        'flex w-full items-center gap-2 px-6 py-1.5 text-left transition-colors',
+        'hover:bg-accent/40',
+        isSelected && 'bg-accent/60 text-accent-foreground'
+      )}
     >
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-base">{board.name}</CardTitle>
-          {isSelected && (
-            <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-          )}
-        </div>
-      </CardHeader>
-    </Card>
-  );
-}
-
-interface ToolbarProps {
-  searchText: string;
-  onSearchChange: (value: string) => void;
-}
-
-function Toolbar({ searchText, onSearchChange }: ToolbarProps) {
-  return (
-    <div className="flex items-center gap-2 p-2">
-      <Button variant="ghost" size="sm">
-        <RefreshCw className="h-4 w-4 mr-2" />
-        Refresh
-      </Button>
-      <Button variant="ghost" size="sm">
-        <Settings className="h-4 w-4 mr-2" />
-        Settings
-      </Button>
-
-      <div className="ml-4 flex-1">
-        <Input
-          placeholder="Search boards by name..."
-          className="max-w-md"
-          value={searchText}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-      </div>
-    </div>
-  );
-}
-
-function Sidebar() {
-  return (
-    <div className="p-4 space-y-6">
-      <div>
-        <h2 className="mb-3 px-2 text-sm font-semibold text-muted-foreground">Navigation</h2>
-        <Navigation />
-      </div>
-      <FiltersPanel />
-    </div>
+      <span className="flex-1 truncate text-[13px]">{board.name}</span>
+      {isSelected && (
+        <CheckCircle2 size={13} className="shrink-0 text-primary" />
+      )}
+    </button>
   );
 }

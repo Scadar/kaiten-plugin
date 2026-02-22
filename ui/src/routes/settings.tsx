@@ -6,116 +6,72 @@ import { settingsKeys } from '@/api/endpoints';
 import { bridge } from '@/bridge/JCEFBridge';
 import { KaitenApiClient } from '@/api/client';
 import { Layout } from '@/components/Layout';
-import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Save, RefreshCw, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { KaitenSettings } from '@/api/types';
 
-/**
- * Settings route - plugin configuration page.
- *
- * This route displays the Kaiten plugin settings with:
- * - Server URL configuration
- * - API token management
- * - Connection testing
- * - Settings persistence via IDE bridge
- *
- * The path '/settings' is inferred from the filename 'settings.tsx' in file-based routing.
- */
 export const Route = createFileRoute('/settings')({
   component: SettingsComponent,
 });
 
-type TestConnectionStatus = 'idle' | 'testing' | 'success' | 'error';
+type TestStatus = 'idle' | 'testing' | 'success' | 'error';
 
 function SettingsComponent() {
   const currentSettings = useSettings();
   const queryClient = useQueryClient();
 
-  // Form state
   const [serverUrl, setServerUrl] = useState(currentSettings.serverUrl);
   const [apiToken, setApiToken] = useState(currentSettings.apiToken);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-
-  // Test connection state
-  const [testStatus, setTestStatus] = useState<TestConnectionStatus>('idle');
+  const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [testMessage, setTestMessage] = useState('');
 
-  // Track if form has unsaved changes
   const hasChanges =
-    serverUrl !== currentSettings.serverUrl ||
-    apiToken !== currentSettings.apiToken;
+    serverUrl !== currentSettings.serverUrl || apiToken !== currentSettings.apiToken;
 
-  /**
-   * Test connection to Kaiten API
-   */
   const handleTestConnection = async () => {
     if (!serverUrl.trim() || !apiToken.trim()) {
       setTestStatus('error');
-      setTestMessage('Please enter both Server URL and API Token');
+      setTestMessage('Enter both Server URL and API Token');
       return;
     }
-
     setTestStatus('testing');
-    setTestMessage('Testing connection...');
-
+    setTestMessage('Testing...');
     try {
-      const client = new KaitenApiClient({
-        serverUrl: serverUrl.trim(),
-        apiToken: apiToken.trim(),
-      });
+      const client = new KaitenApiClient({ serverUrl: serverUrl.trim(), apiToken: apiToken.trim() });
       const user = await client.getCurrentUser();
       setTestStatus('success');
-      setTestMessage(`Connection successful! Logged in as: ${user.name}`);
-    } catch (error) {
+      setTestMessage(`Connected as ${user.name}`);
+    } catch (err) {
       setTestStatus('error');
-      setTestMessage(`Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setTestMessage(err instanceof Error ? err.message : 'Unknown error');
     }
   };
 
-  /**
-   * Save settings via IDE bridge
-   */
   const handleSave = async () => {
     setIsSaving(true);
     setSaveStatus('idle');
-
     try {
-      // Create updated settings object
-      const updatedSettings: KaitenSettings = {
+      const updated: KaitenSettings = {
         ...currentSettings,
         serverUrl: serverUrl.trim(),
         apiToken: apiToken.trim(),
       };
-
-      // Call bridge RPC to update settings in IDE
-      await bridge.call('updateSettings', { settings: updatedSettings });
-
-      // Invalidate cached settings so useKaitenQuery hooks see the new values immediately
+      await bridge.call('updateSettings', { settings: updated });
       await queryClient.invalidateQueries({ queryKey: settingsKeys.all() });
-
       setSaveStatus('success');
-
-      // Show success notification
-      await bridge.call('showNotification', {
-        message: 'Settings saved successfully',
-        type: 'info',
-        title: 'Settings',
-      });
-
-      // Reset test status since settings changed
+      await bridge.call('showNotification', { message: 'Settings saved', type: 'info', title: 'Settings' });
       setTestStatus('idle');
       setTestMessage('');
-    } catch (error) {
+    } catch (err) {
       setSaveStatus('error');
-
-      // Show error notification
       await bridge.call('showNotification', {
-        message: `Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to save: ${err instanceof Error ? err.message : 'Unknown error'}`,
         type: 'error',
         title: 'Settings Error',
       });
@@ -125,147 +81,118 @@ function SettingsComponent() {
   };
 
   return (
-    <Layout sidebar={<Sidebar />}>
-      <div className="p-6 max-w-4xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground mt-2">
-            Configure your Kaiten plugin connection and preferences
-          </p>
-        </div>
+    <Layout>
+      {/* Section: Connection */}
+      <div className="px-3 pt-3 pb-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Connection
+        </p>
+      </div>
 
-        {/* Connection Settings Card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Connection Settings</CardTitle>
-            <CardDescription>
-              Configure your Kaiten server connection. These settings are stored in the IDE.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Server URL */}
-            <div className="space-y-2">
-              <Label htmlFor="serverUrl">Server URL</Label>
-              <Input
-                id="serverUrl"
-                type="url"
-                placeholder="https://yourcompany.kaiten.ru"
-                value={serverUrl}
-                onChange={(e) => setServerUrl(e.target.value)}
-              />
-              <p className="text-sm text-muted-foreground">
-                The URL of your Kaiten server instance
-              </p>
-            </div>
+      <div className="px-3 pb-3 space-y-3">
+        <FieldRow label="Server URL">
+          <Input
+            type="url"
+            placeholder="https://yourcompany.kaiten.ru"
+            value={serverUrl}
+            onChange={(e) => setServerUrl(e.target.value)}
+            className="h-7 text-xs"
+          />
+        </FieldRow>
 
-            {/* API Token */}
-            <div className="space-y-2">
-              <Label htmlFor="apiToken">API Token</Label>
-              <Input
-                id="apiToken"
-                type="password"
-                placeholder="Enter your API token"
-                value={apiToken}
-                onChange={(e) => setApiToken(e.target.value)}
-              />
-              <p className="text-sm text-muted-foreground">
-                Your personal API token for authentication
-              </p>
-            </div>
+        <FieldRow label="API Token">
+          <Input
+            type="password"
+            placeholder="Paste your API token"
+            value={apiToken}
+            onChange={(e) => setApiToken(e.target.value)}
+            className="h-7 text-xs"
+          />
+        </FieldRow>
 
-            {/* Test Connection Button */}
-            <div className="pt-2">
-              <Button
-                variant="outline"
-                onClick={handleTestConnection}
-                disabled={testStatus === 'testing' || !serverUrl.trim() || !apiToken.trim()}
-              >
-                {testStatus === 'testing' ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Test Connection
-                  </>
-                )}
-              </Button>
-
-              {/* Test Connection Status */}
-              {testMessage && (
-                <div
-                  className={`mt-3 flex items-start gap-2 text-sm ${
-                    testStatus === 'success'
-                      ? 'text-green-600'
-                      : testStatus === 'error'
-                      ? 'text-red-600'
-                      : 'text-muted-foreground'
-                  }`}
-                >
-                  {testStatus === 'success' && <CheckCircle2 className="h-4 w-4 mt-0.5" />}
-                  {testStatus === 'error' && <XCircle className="h-4 w-4 mt-0.5" />}
-                  {testStatus === 'testing' && <Loader2 className="h-4 w-4 mt-0.5 animate-spin" />}
-                  <span>{testMessage}</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Save Button */}
-        <div className="flex items-center gap-4">
+        {/* Test connection */}
+        <div className="space-y-1.5">
           <Button
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={handleTestConnection}
+            disabled={testStatus === 'testing' || !serverUrl.trim() || !apiToken.trim()}
           >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
-              </>
+            {testStatus === 'testing' ? (
+              <Loader2 size={12} className="mr-1.5 animate-spin" />
             ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Save Settings
-              </>
+              <RefreshCw size={12} className="mr-1.5" />
             )}
+            Test Connection
           </Button>
 
-          {saveStatus === 'success' && (
-            <span className="text-sm text-green-600 flex items-center gap-1">
-              <CheckCircle2 className="h-4 w-4" />
-              Settings saved successfully
-            </span>
-          )}
-
-          {saveStatus === 'error' && (
-            <span className="text-sm text-red-600 flex items-center gap-1">
-              <XCircle className="h-4 w-4" />
-              Failed to save settings
-            </span>
-          )}
-
-          {hasChanges && saveStatus === 'idle' && (
-            <span className="text-sm text-muted-foreground">
-              You have unsaved changes
-            </span>
+          {testMessage && (
+            <div
+              className={cn(
+                'flex items-start gap-1.5 text-[11px]',
+                testStatus === 'success' ? 'text-green-600 dark:text-green-500' : 'text-destructive'
+              )}
+            >
+              {testStatus === 'success' ? (
+                <CheckCircle2 size={12} className="mt-0.5 shrink-0" />
+              ) : (
+                <XCircle size={12} className="mt-0.5 shrink-0" />
+              )}
+              <span>{testMessage}</span>
+            </div>
           )}
         </div>
+      </div>
+
+      <Separator />
+
+      {/* Save */}
+      <div className="px-3 py-3 flex items-center gap-3">
+        <Button
+          size="sm"
+          className="h-7 text-xs"
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving}
+        >
+          {isSaving ? (
+            <Loader2 size={12} className="mr-1.5 animate-spin" />
+          ) : (
+            <Save size={12} className="mr-1.5" />
+          )}
+          Save
+        </Button>
+
+        {saveStatus === 'success' && (
+          <span className="flex items-center gap-1 text-[11px] text-green-600 dark:text-green-500">
+            <CheckCircle2 size={12} />
+            Saved
+          </span>
+        )}
+        {saveStatus === 'error' && (
+          <span className="flex items-center gap-1 text-[11px] text-destructive">
+            <XCircle size={12} />
+            Failed
+          </span>
+        )}
+        {hasChanges && saveStatus === 'idle' && (
+          <span className="text-[11px] text-muted-foreground">Unsaved changes</span>
+        )}
       </div>
     </Layout>
   );
 }
 
-function Sidebar() {
+interface FieldRowProps {
+  label: string;
+  children: React.ReactNode;
+}
+
+function FieldRow({ label, children }: FieldRowProps) {
   return (
-    <div className="p-4 space-y-6">
-      {/* Navigation */}
-      <div>
-        <h2 className="mb-3 px-2 text-sm font-semibold text-muted-foreground">Navigation</h2>
-        <Navigation />
-      </div>
+    <div className="space-y-1">
+      <Label className="text-[11px] text-muted-foreground">{label}</Label>
+      {children}
     </div>
   );
 }

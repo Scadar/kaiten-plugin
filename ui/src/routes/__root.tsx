@@ -1,15 +1,8 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
-/**
- * Root route component that wraps all child routes.
- * Provides:
- * - ThemeProvider for theme persistence and FOUC prevention
- * - ErrorBoundary for catching and handling React errors
- * - Dark theme wrapper with JetBrains IDE-matching colors
- * - Outlet for rendering child routes
- */
 export const Route = createRootRoute({
   component: RootComponent,
 });
@@ -17,11 +10,11 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <ThemeProvider>
-      <ErrorBoundary>
-        <div className="min-h-screen bg-background text-foreground">
+      <TooltipProvider delayDuration={400}>
+        <ErrorBoundary>
           <Outlet />
-        </div>
-      </ErrorBoundary>
+        </ErrorBoundary>
+      </TooltipProvider>
     </ThemeProvider>
   );
 }

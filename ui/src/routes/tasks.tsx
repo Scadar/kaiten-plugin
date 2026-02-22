@@ -1,16 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useFilteredTasks } from '@/hooks/useFilteredTasks';
 import { useColumns } from '@/hooks/useKaitenQuery';
+import { tasksKeys } from '@/api/endpoints';
 import { useFilterStore } from '@/state/filterStore';
 import { Layout } from '@/components/Layout';
-import { Navigation } from '@/components/Navigation';
 import { FiltersPanel } from '@/components/FiltersPanel';
 import { TaskList } from '@/components/TaskList';
 import { KanbanBoard } from '@/components/KanbanBoard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { RefreshCw, Settings, LayoutList, LayoutGrid } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { RefreshCw, LayoutList, LayoutGrid, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/tasks')({
   component: TasksComponent,
@@ -21,12 +24,15 @@ type ViewMode = 'list' | 'kanban';
 function TasksComponent() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchText, setSearchText] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
-  const selectedBoardId = useFilterStore((state) => state.selectedBoardId);
-  const selectedColumnIds = useFilterStore((state) => state.selectedColumnIds);
-  const filterByAssignee = useFilterStore((state) => state.filterByAssignee);
-  const filterByParticipant = useFilterStore((state) => state.filterByParticipant);
-  const filterLogic = useFilterStore((state) => state.filterLogic);
+  const queryClient = useQueryClient();
+
+  const selectedBoardId = useFilterStore((s) => s.selectedBoardId);
+  const selectedColumnIds = useFilterStore((s) => s.selectedColumnIds);
+  const filterByAssignee = useFilterStore((s) => s.filterByAssignee);
+  const filterByParticipant = useFilterStore((s) => s.filterByParticipant);
+  const filterLogic = useFilterStore((s) => s.filterLogic);
 
   const { data: tasks, isLoading: tasksLoading, error: tasksError } = useFilteredTasks(
     selectedBoardId,
@@ -35,95 +41,112 @@ function TasksComponent() {
   );
 
   const { data: columns, isLoading: columnsLoading } = useColumns(selectedBoardId);
-
   const isLoading = tasksLoading || columnsLoading;
 
   return (
     <Layout
-      sidebar={<Sidebar />}
-      toolbar={<Toolbar searchText={searchText} onSearchChange={setSearchText} viewMode={viewMode} onViewModeChange={setViewMode} />}
+      header={
+        <>
+          <span className="flex-1 text-xs font-medium text-muted-foreground">Tasks</span>
+          {tasks && (
+            <span className="text-[11px] text-muted-foreground">{tasks.length}</span>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setShowSearch((v) => !v)}
+              >
+                <Search size={13} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Search</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn('h-6 w-6', viewMode === 'list' && 'text-primary')}
+                onClick={() => setViewMode('list')}
+              >
+                <LayoutList size={13} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">List view</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn('h-6 w-6', viewMode === 'kanban' && 'text-primary')}
+                onClick={() => setViewMode('kanban')}
+              >
+                <LayoutGrid size={13} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Kanban view</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => queryClient.invalidateQueries({ queryKey: tasksKeys.all() })}
+              >
+                <RefreshCw size={13} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Refresh</TooltipContent>
+          </Tooltip>
+        </>
+      }
     >
-      <div className="p-6">
-        {!selectedBoardId ? (
-          <div className="flex items-center justify-center p-8">
-            <p className="text-muted-foreground">Please select a board from the filters to view tasks</p>
-          </div>
-        ) : viewMode === 'list' ? (
-          <TaskList
-            tasks={tasks}
-            isLoading={isLoading}
-            error={tasksError}
-            columns={columns}
+      {/* Filters */}
+      <FiltersPanel />
+
+      {/* Search */}
+      {showSearch && (
+        <div className="border-b border-border px-2 py-1.5">
+          <Input
+            autoFocus
+            placeholder="Search tasks..."
+            className="h-7 text-xs"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
           />
-        ) : (
+        </div>
+      )}
+
+      {/* Content */}
+      {!selectedBoardId ? (
+        <div className="flex items-center justify-center py-8 px-3">
+          <p className="text-center text-xs text-muted-foreground">
+            Select a space and board in Filters to view tasks
+          </p>
+        </div>
+      ) : viewMode === 'list' ? (
+        <TaskList
+          tasks={tasks}
+          isLoading={isLoading}
+          error={tasksError}
+          columns={columns}
+        />
+      ) : (
+        <div className="overflow-x-auto">
           <KanbanBoard
             tasks={tasks}
             columns={columns}
             isLoading={isLoading}
             error={tasksError}
+            className="p-3"
           />
-        )}
-      </div>
+        </div>
+      )}
     </Layout>
-  );
-}
-
-interface ToolbarProps {
-  searchText: string;
-  onSearchChange: (value: string) => void;
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
-}
-
-function Toolbar({ searchText, onSearchChange, viewMode, onViewModeChange }: ToolbarProps) {
-  return (
-    <div className="flex items-center gap-2 p-2">
-      <Button variant="ghost" size="sm">
-        <RefreshCw className="h-4 w-4 mr-2" />
-        Refresh
-      </Button>
-      <Button variant="ghost" size="sm">
-        <Settings className="h-4 w-4 mr-2" />
-        Settings
-      </Button>
-
-      <div className="ml-2 flex items-center gap-1 border rounded-md p-1">
-        <Button
-          variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-          size="sm"
-          onClick={() => onViewModeChange('list')}
-        >
-          <LayoutList className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
-          size="sm"
-          onClick={() => onViewModeChange('kanban')}
-        >
-          <LayoutGrid className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="ml-4 flex-1">
-        <Input
-          placeholder="Search tasks by title or ID..."
-          className="max-w-md"
-          value={searchText}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-      </div>
-    </div>
-  );
-}
-
-function Sidebar() {
-  return (
-    <div className="p-4 space-y-6">
-      <div>
-        <h2 className="mb-3 px-2 text-sm font-semibold text-muted-foreground">Navigation</h2>
-        <Navigation />
-      </div>
-      <FiltersPanel />
-    </div>
   );
 }
