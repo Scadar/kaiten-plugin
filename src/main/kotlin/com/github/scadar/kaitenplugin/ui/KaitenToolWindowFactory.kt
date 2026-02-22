@@ -198,10 +198,13 @@ class KaitenToolWindowFactory : ToolWindowFactory {
         }
 
         // Register updateSettings RPC handler
+        // React sends { settings: { apiToken, serverUrl, ... } } — unpack from "settings" key
         bridgeHandler.registerRPC("updateSettings") { params ->
             val settings = com.github.scadar.kaitenplugin.settings.KaitenSettingsState.getInstance()
             @Suppress("UNCHECKED_CAST")
-            val updates = params as? Map<String, Any?> ?: return@registerRPC false
+            val outerParams = params as? Map<String, Any?> ?: return@registerRPC false
+            @Suppress("UNCHECKED_CAST")
+            val updates = outerParams["settings"] as? Map<String, Any?> ?: return@registerRPC false
 
             updates["apiToken"]?.let { settings.apiToken = it as String }
             updates["serverUrl"]?.let { settings.serverUrl = it as String }

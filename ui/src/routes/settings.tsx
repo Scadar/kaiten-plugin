@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSettings } from '@/hooks/useSettings';
+import { settingsKeys } from '@/api/endpoints';
 import { bridge } from '@/bridge/JCEFBridge';
 import { KaitenApiClient } from '@/api/client';
 import { Layout } from '@/components/Layout';
@@ -31,6 +33,7 @@ type TestConnectionStatus = 'idle' | 'testing' | 'success' | 'error';
 
 function SettingsComponent() {
   const currentSettings = useSettings();
+  const queryClient = useQueryClient();
 
   // Form state
   const [serverUrl, setServerUrl] = useState(currentSettings.serverUrl);
@@ -91,6 +94,9 @@ function SettingsComponent() {
 
       // Call bridge RPC to update settings in IDE
       await bridge.call('updateSettings', { settings: updatedSettings });
+
+      // Invalidate cached settings so useKaitenQuery hooks see the new values immediately
+      await queryClient.invalidateQueries({ queryKey: settingsKeys.all() });
 
       setSaveStatus('success');
 

@@ -303,8 +303,22 @@ class JCEFBridgeHandler(
     private fun sendToReact(message: Any) {
         try {
             val messageJson = gson.toJson(message)
-            // Escape single quotes in JSON for JavaScript string
-            val escapedJson = messageJson.replace("'", "\\'")
+
+            // The JSON is embedded inside a JS single-quoted string literal.
+            // We must escape characters that the JS engine would otherwise re-interpret:
+            //
+            //   1. Backslashes FIRST — Gson emits JSON escapes like \n, \r, \t as two-char
+            //      sequences (backslash + letter). Without doubling, the JS engine sees e.g.
+            //      '\n' and turns it into a literal newline, which JSON.parse then rejects as
+            //      "Bad control character in string literal".
+            //   2. Single quotes — would close the JS string prematurely.
+            //   3/4. Literal LF / CR as safety nets (shouldn't appear in Gson output, but
+            //      guard against any edge-case in the API response body).
+            val escapedJson = messageJson
+                .replace("\\", "\\\\")   // 1. must be first
+                .replace("'", "\\'")     // 2.
+                .replace("\n", "\\\\n")  // 3. literal LF  → \\n in JS source → \n in JS value → JSON OK
+                .replace("\r", "\\\\r")  // 4. literal CR  → \\r in JS source → \r in JS value → JSON OK
 
             val script = "window.__jcef_receive__ && window.__jcef_receive__('$escapedJson');"
 

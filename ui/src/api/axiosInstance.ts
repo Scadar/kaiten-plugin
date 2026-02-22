@@ -30,7 +30,21 @@ const bridgeAdapter: AxiosAdapter = async (
   // Build full URL: baseURL + path + serialized query params
   const url = axios.getUri(config);
 
-  const result = await bridge.call('apiRequest', { url });
+  console.log('[bridgeAdapter] → apiRequest', url);
+
+  let result: Awaited<ReturnType<typeof bridge.call<'apiRequest'>>>;
+  try {
+    result = await bridge.call('apiRequest', { url });
+  } catch (bridgeError) {
+    console.error('[bridgeAdapter] bridge.call threw:', bridgeError);
+    throw new AxiosError(
+      bridgeError instanceof Error ? bridgeError.message : 'Bridge error',
+      'ERR_NETWORK',
+      config,
+    );
+  }
+
+  console.log('[bridgeAdapter] ← apiRequest', { ok: result.ok, status: result.status });
 
   if (result.ok) {
     return {
