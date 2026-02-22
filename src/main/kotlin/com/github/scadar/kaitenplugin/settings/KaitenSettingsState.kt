@@ -29,6 +29,11 @@ class KaitenSettingsState : PersistentStateComponent<KaitenSettingsState> {
     var viewMode: String = "LIST"   // LIST, CARDS, or STATISTICS
     var skipSslVerification: Boolean = true
 
+    // Filter panel state (persisted between sessions)
+    var selectedFilterUserId: Long? = null
+    var filterAsMember: Boolean = true
+    var filterAsResponsible: Boolean = true
+
     override fun getState(): KaitenSettingsState = this
 
     override fun loadState(state: KaitenSettingsState) {

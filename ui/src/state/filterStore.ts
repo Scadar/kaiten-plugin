@@ -9,6 +9,7 @@
  */
 
 import { create } from 'zustand';
+import type { KaitenSettings } from '@/api/types';
 
 /**
  * Filter state interface
@@ -92,6 +93,11 @@ export interface FilterStoreActions {
    * Reset all filters to initial state
    */
   reset: () => void;
+
+  /**
+   * Initialize filter state from persisted IDE settings
+   */
+  initializeFromSettings: (settings: KaitenSettings) => void;
 }
 
 /**
@@ -197,6 +203,21 @@ export const useFilterStore = create<FilterStore>((set) => ({
    */
   reset: () => {
     set(initialState);
+  },
+
+  /**
+   * Initialize filter state from persisted IDE settings (called once on startup)
+   */
+  initializeFromSettings: (settings: KaitenSettings) => {
+    set({
+      selectedSpaceId: settings.selectedSpaceId,
+      selectedBoardId: settings.selectedBoardId,
+      selectedColumnIds: settings.selectedColumnIds,
+      selectedUserId: settings.selectedFilterUserId,
+      filterAsMember: settings.filterAsMember,
+      filterAsResponsible: settings.filterAsResponsible,
+      filterLogic: settings.filterLogic,
+    });
   },
 }));
 

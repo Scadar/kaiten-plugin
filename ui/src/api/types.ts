@@ -269,6 +269,10 @@ export interface KaitenSettings {
   filterByParticipant: boolean;
   filterLogic: 'AND' | 'OR';
   currentUserId: number | null;
+  // Filter panel state (persisted between sessions)
+  selectedFilterUserId: number | null;
+  filterAsMember: boolean;
+  filterAsResponsible: boolean;
 }
 
 export function getDefaultSettings(): KaitenSettings {
@@ -282,5 +286,8 @@ export function getDefaultSettings(): KaitenSettings {
     filterByParticipant: false,
     filterLogic: 'AND',
     currentUserId: null,
+    selectedFilterUserId: null,
+    filterAsMember: true,
+    filterAsResponsible: true,
   };
 }

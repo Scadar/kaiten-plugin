@@ -193,7 +193,10 @@ class KaitenToolWindowFactory : ToolWindowFactory {
                 "selectedColumnIds" to settings.selectedColumnIds.toList(),
                 "filterByAssignee" to settings.filterByAssignee,
                 "filterByParticipant" to settings.filterByParticipant,
-                "filterLogic" to settings.filterLogic
+                "filterLogic" to settings.filterLogic,
+                "selectedFilterUserId" to settings.selectedFilterUserId,
+                "filterAsMember" to settings.filterAsMember,
+                "filterAsResponsible" to settings.filterAsResponsible
             )
         }
 
@@ -217,6 +220,13 @@ class KaitenToolWindowFactory : ToolWindowFactory {
             updates["filterByAssignee"]?.let { settings.filterByAssignee = it as Boolean }
             updates["filterByParticipant"]?.let { settings.filterByParticipant = it as Boolean }
             updates["filterLogic"]?.let { settings.filterLogic = it as String }
+
+            // Filter panel state (can be null to clear selection)
+            if (updates.containsKey("selectedFilterUserId")) {
+                settings.selectedFilterUserId = (updates["selectedFilterUserId"] as? Number)?.toLong()
+            }
+            updates["filterAsMember"]?.let { settings.filterAsMember = it as Boolean }
+            updates["filterAsResponsible"]?.let { settings.filterAsResponsible = it as Boolean }
 
             true
         }

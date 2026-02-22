@@ -201,6 +201,8 @@ export class KaitenApiClient {
       params.member_ids = memberId;
     }
 
+    params.archived = 'false';
+
     const dtos = await this.executeRequest<TaskDto[]>('cards', params);
     return dtos.map(taskDtoToDomain);
   }
