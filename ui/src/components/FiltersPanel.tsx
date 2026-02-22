@@ -1,37 +1,16 @@
-/**
- * FiltersPanel Component
- *
- * Provides interactive filter controls for Kaiten tasks:
- * - Space selection dropdown
- * - Board selection dropdown
- * - Column multi-select checkboxes
- * - User filtering options (assignee, participant)
- * - Filter logic selection (AND/OR)
- *
- * Connects to filterStore for state management and uses React Query hooks for data fetching.
- */
-
 import { useSettingsStatus } from '@/hooks/useSettings';
 import { useSpaces, useBoards, useColumns } from '@/hooks/useKaitenQuery';
 import { useFilterStore } from '@/state/filterStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Combobox } from '@/components/ui/combobox';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-/**
- * FiltersPanel displays all available filter controls
- *
- * Features:
- * - Cascading dropdowns (space -> board -> columns)
- * - Multi-select columns with checkboxes
- * - User-based filtering options
- * - Loading states for data fetching
- * - Error handling with user-friendly messages
- */
 export function FiltersPanel() {
   const { isConfigured } = useSettingsStatus();
 
-  // Filter state from Zustand store
   const selectedSpaceId = useFilterStore((state) => state.selectedSpaceId);
   const selectedBoardId = useFilterStore((state) => state.selectedBoardId);
   const selectedColumnIds = useFilterStore((state) => state.selectedColumnIds);
@@ -39,7 +18,6 @@ export function FiltersPanel() {
   const filterByParticipant = useFilterStore((state) => state.filterByParticipant);
   const filterLogic = useFilterStore((state) => state.filterLogic);
 
-  // Filter actions from Zustand store
   const setSelectedSpace = useFilterStore((state) => state.setSelectedSpace);
   const setSelectedBoard = useFilterStore((state) => state.setSelectedBoard);
   const toggleColumn = useFilterStore((state) => state.toggleColumn);
@@ -47,7 +25,6 @@ export function FiltersPanel() {
   const setFilterByParticipant = useFilterStore((state) => state.setFilterByParticipant);
   const setFilterLogic = useFilterStore((state) => state.setFilterLogic);
 
-  // Fetch data using React Query hooks
   const { data: spaces, isLoading: spacesLoading, error: spacesError } = useSpaces();
   const { data: boards, isLoading: boardsLoading, error: boardsError } = useBoards(selectedSpaceId);
   const { data: columns, isLoading: columnsLoading, error: columnsError } = useColumns(selectedBoardId);
@@ -88,18 +65,14 @@ export function FiltersPanel() {
           ) : !spaces || spaces.length === 0 ? (
             <p className="text-sm text-muted-foreground">No spaces available</p>
           ) : (
-            <select
-              value={selectedSpaceId ?? ''}
-              onChange={(e) => setSelectedSpace(e.target.value ? Number(e.target.value) : null)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <option value="">Select a space</option>
-              {spaces.map((space) => (
-                <option key={space.id} value={space.id}>
-                  {space.name}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              options={spaces.map((s) => ({ value: String(s.id), label: s.name }))}
+              value={selectedSpaceId !== null ? String(selectedSpaceId) : null}
+              onChange={(val) => setSelectedSpace(val ? Number(val) : null)}
+              placeholder="Select a space"
+              searchPlaceholder="Search spaces..."
+              emptyText="No spaces found."
+            />
           )}
         </CardContent>
       </Card>
@@ -122,18 +95,14 @@ export function FiltersPanel() {
             ) : !boards || boards.length === 0 ? (
               <p className="text-sm text-muted-foreground">No boards available</p>
             ) : (
-              <select
-                value={selectedBoardId ?? ''}
-                onChange={(e) => setSelectedBoard(e.target.value ? Number(e.target.value) : null)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="">Select a board</option>
-                {boards.map((board) => (
-                  <option key={board.id} value={board.id}>
-                    {board.name}
-                  </option>
-                ))}
-              </select>
+              <Combobox
+                options={boards.map((b) => ({ value: String(b.id), label: b.name }))}
+                value={selectedBoardId !== null ? String(selectedBoardId) : null}
+                onChange={(val) => setSelectedBoard(val ? Number(val) : null)}
+                placeholder="Select a board"
+                searchPlaceholder="Search boards..."
+                emptyText="No boards found."
+              />
             )}
           </CardContent>
         </Card>
@@ -159,18 +128,23 @@ export function FiltersPanel() {
             ) : (
               <div className="space-y-2">
                 {columns.map((column) => (
-                  <label
+                  <div
                     key={column.id}
                     className="flex items-center gap-2 p-2 rounded hover:bg-accent cursor-pointer"
+                    onClick={() => toggleColumn(column.id)}
                   >
-                    <input
-                      type="checkbox"
+                    <Checkbox
+                      id={`column-${column.id}`}
                       checked={selectedColumnIds.includes(column.id)}
-                      onChange={() => toggleColumn(column.id)}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      onCheckedChange={() => toggleColumn(column.id)}
                     />
-                    <span className="text-sm flex-1">{column.name}</span>
-                  </label>
+                    <Label
+                      htmlFor={`column-${column.id}`}
+                      className="flex-1 text-sm font-normal cursor-pointer"
+                    >
+                      {column.name}
+                    </Label>
+                  </div>
                 ))}
               </div>
             )}
@@ -185,58 +159,51 @@ export function FiltersPanel() {
           <CardDescription className="text-xs">Filter by user involvement</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Filter by Assignee */}
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="filter-assignee"
               checked={filterByAssignee}
-              onChange={(e) => setFilterByAssignee(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              onCheckedChange={(checked) => setFilterByAssignee(checked === true)}
             />
-            <span className="text-sm">Filter by Assignee</span>
-          </label>
+            <Label htmlFor="filter-assignee" className="text-sm font-normal cursor-pointer">
+              Filter by Assignee
+            </Label>
+          </div>
 
-          {/* Filter by Participant */}
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="filter-participant"
               checked={filterByParticipant}
-              onChange={(e) => setFilterByParticipant(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              onCheckedChange={(checked) => setFilterByParticipant(checked === true)}
             />
-            <span className="text-sm">Filter by Participant</span>
-          </label>
+            <Label htmlFor="filter-participant" className="text-sm font-normal cursor-pointer">
+              Filter by Participant
+            </Label>
+          </div>
 
-          {/* Filter Logic (AND/OR) */}
           {(filterByAssignee || filterByParticipant) && (
             <>
               <Separator />
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Filter Logic</Label>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="filterLogic"
-                      value="AND"
-                      checked={filterLogic === 'AND'}
-                      onChange={() => setFilterLogic('AND')}
-                      className="h-4 w-4 border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                    />
-                    <span className="text-sm">AND (match all)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="filterLogic"
-                      value="OR"
-                      checked={filterLogic === 'OR'}
-                      onChange={() => setFilterLogic('OR')}
-                      className="h-4 w-4 border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                    />
-                    <span className="text-sm">OR (match any)</span>
-                  </label>
-                </div>
+                <RadioGroup
+                  value={filterLogic}
+                  onValueChange={(val) => setFilterLogic(val as 'AND' | 'OR')}
+                  className="gap-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="AND" id="logic-and" />
+                    <Label htmlFor="logic-and" className="text-sm font-normal cursor-pointer">
+                      AND (match all)
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="OR" id="logic-or" />
+                    <Label htmlFor="logic-or" className="text-sm font-normal cursor-pointer">
+                      OR (match any)
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
             </>
           )}
