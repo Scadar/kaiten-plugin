@@ -1,0 +1,39 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude\\worktrees\\tasks\\001-fix-board-filter-selection-and-settings-pages/**)",
+      "Write(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude\\worktrees\\tasks\\001-fix-board-filter-selection-and-settings-pages/**)",
+      "Edit(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude\\worktrees\\tasks\\001-fix-board-filter-selection-and-settings-pages/**)",
+      "Glob(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude\\worktrees\\tasks\\001-fix-board-filter-selection-and-settings-pages/**)",
+      "Grep(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude\\worktrees\\tasks\\001-fix-board-filter-selection-and-settings-pages/**)",
+      "Read(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude\\worktrees\\tasks\\001-fix-board-filter-selection-and-settings-pages\\.auto-claude\\specs\\001-fix-board-filter-selection-and-settings-pages/**)",
+      "Write(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude\\worktrees\\tasks\\001-fix-board-filter-selection-and-settings-pages\\.auto-claude\\specs\\001-fix-board-filter-selection-and-settings-pages/**)",
+      "Edit(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude\\worktrees\\tasks\\001-fix-board-filter-selection-and-settings-pages\\.auto-claude\\specs\\001-fix-board-filter-selection-and-settings-pages/**)",
+      "Read(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude/**)",
+      "Write(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude/**)",
+      "Edit(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude/**)",
+      "Glob(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude/**)",
+      "Grep(C:\\Users\\teght\\IdeaProjects\\kaiten-jetbrains-plugin\\.auto-claude/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__query-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}
