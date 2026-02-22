@@ -62,7 +62,7 @@ function SettingsComponent() {
     try {
       // Use the bridge to test connection
       // This will call the IDE's test connection functionality
-      const response = await fetch(`${serverUrl.trim()}/api/v1/users/current`, {
+      const response = await fetch(`${serverUrl.trim()}/users/current`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${apiToken.trim()}`,
