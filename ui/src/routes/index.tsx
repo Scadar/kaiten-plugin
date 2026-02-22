@@ -3,8 +3,9 @@ import { useSyncedFields } from '@/hooks/useSyncedState';
 import { useSyncedReady } from '@/hooks/useSyncedState';
 import { Layout } from '@/components/Layout';
 import { Navigation } from '@/components/Navigation';
+import { FiltersPanel } from '@/components/FiltersPanel';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { RefreshCw, Settings } from 'lucide-react';
 
@@ -136,47 +137,7 @@ function Sidebar() {
       </div>
 
       {/* Filters Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-          <CardDescription className="text-xs">Filter tasks and boards</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="text-sm font-medium mb-2">Status</h3>
-            <div className="space-y-1 text-sm">
-              <div className="flex items-center gap-2 p-1 rounded hover:bg-accent cursor-pointer">
-                <div className="h-2 w-2 rounded-full bg-blue-500" />
-                <span>To Do</span>
-                <span className="ml-auto text-muted-foreground">12</span>
-              </div>
-              <div className="flex items-center gap-2 p-1 rounded hover:bg-accent cursor-pointer">
-                <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                <span>In Progress</span>
-                <span className="ml-auto text-muted-foreground">5</span>
-              </div>
-              <div className="flex items-center gap-2 p-1 rounded hover:bg-accent cursor-pointer">
-                <div className="h-2 w-2 rounded-full bg-green-500" />
-                <span>Done</span>
-                <span className="ml-auto text-muted-foreground">23</span>
-              </div>
-            </div>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium mb-2">Assignee</h3>
-            <div className="space-y-1 text-sm">
-              <div className="flex items-center gap-2 p-1 rounded hover:bg-accent cursor-pointer">
-                <span>All Users</span>
-                <span className="ml-auto text-muted-foreground">40</span>
-              </div>
-              <div className="flex items-center gap-2 p-1 rounded hover:bg-accent cursor-pointer">
-                <span>Unassigned</span>
-                <span className="ml-auto text-muted-foreground">3</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <FiltersPanel />
     </div>
   );
 }
