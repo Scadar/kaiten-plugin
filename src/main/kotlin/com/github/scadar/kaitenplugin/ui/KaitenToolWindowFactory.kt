@@ -15,6 +15,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
@@ -169,6 +170,11 @@ class KaitenToolWindowFactory : ToolWindowFactory {
         // Register getProjectPath RPC handler
         bridgeHandler.registerRPC("getProjectPath") { _ ->
             project.basePath
+        }
+
+        // Register getSelectedFile RPC handler
+        bridgeHandler.registerRPC("getSelectedFile") { _ ->
+            FileEditorManager.getInstance(project).selectedFiles.firstOrNull()?.path
         }
 
         // Register getProjectName RPC handler
