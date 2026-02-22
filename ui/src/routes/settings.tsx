@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useSettings } from '@/hooks/useSettings';
 import { bridge } from '@/bridge/JCEFBridge';
+import { KaitenApiClient } from '@/api/client';
 import { Layout } from '@/components/Layout';
 import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
@@ -60,24 +61,13 @@ function SettingsComponent() {
     setTestMessage('Testing connection...');
 
     try {
-      // Use the bridge to test connection
-      // This will call the IDE's test connection functionality
-      const response = await fetch(`${serverUrl.trim()}/users/current`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${apiToken.trim()}`,
-          'Content-Type': 'application/json',
-        },
+      const client = new KaitenApiClient({
+        serverUrl: serverUrl.trim(),
+        apiToken: apiToken.trim(),
       });
-
-      if (response.ok) {
-        const user = await response.json();
-        setTestStatus('success');
-        setTestMessage(`Connection successful! Logged in as: ${user.full_name}`);
-      } else {
-        setTestStatus('error');
-        setTestMessage(`Connection failed: ${response.status} ${response.statusText}`);
-      }
+      const user = await client.getCurrentUser();
+      setTestStatus('success');
+      setTestMessage(`Connection successful! Logged in as: ${user.name}`);
     } catch (error) {
       setTestStatus('error');
       setTestMessage(`Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);

@@ -1,7 +1,7 @@
 import { Link, useMatchRoute } from '@tanstack/react-router';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Home, ListTodo, LayoutDashboard, Settings, type LucideIcon } from 'lucide-react';
+import { Home, ListTodo, LayoutDashboard, Settings, ScrollText, type LucideIcon } from 'lucide-react';
 
 /**
  * Navigation item definition
@@ -58,6 +58,12 @@ const defaultNavItems: NavItem[] = [
     to: '/settings',
     icon: Settings,
     description: 'Plugin configuration',
+  },
+  {
+    label: 'Logs',
+    to: '/logs',
+    icon: ScrollText,
+    description: 'API requests and errors',
   },
 ];
 

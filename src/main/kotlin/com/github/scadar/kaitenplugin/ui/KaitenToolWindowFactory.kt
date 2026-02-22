@@ -1,9 +1,12 @@
 package com.github.scadar.kaitenplugin.ui
 
 import com.github.scadar.kaitenplugin.bridge.JCEFBridgeHandler
+import com.github.scadar.kaitenplugin.infrastructure.HttpClientProvider
+import com.github.scadar.kaitenplugin.settings.KaitenSettingsState
 import com.github.scadar.kaitenplugin.state.StateSyncService
 import com.github.scadar.kaitenplugin.timetracker.GitBranchListener
 import com.github.scadar.kaitenplugin.timetracker.IdeFocusTracker
+import com.google.gson.Gson
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
@@ -17,7 +20,12 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
 import git4idea.repo.GitRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.Request
 import java.io.File
+import java.io.IOException
+import java.net.SocketTimeoutException
 import java.nio.file.Paths
 
 /**
@@ -213,6 +221,30 @@ class KaitenToolWindowFactory : ToolWindowFactory {
             // TODO: Implement notification display using IntelliJ Notification API
             log.info("Notification requested ($type): $message")
             true
+        }
+
+        // Register apiRequest RPC handler — proxies HTTP calls through OkHttp to bypass JCEF CORS
+        val gson = Gson()
+        bridgeHandler.registerRPC("apiRequest") { params ->
+            @Suppress("UNCHECKED_CAST")
+            val url = (params as Map<String, Any>)["url"] as String
+            val settings = KaitenSettingsState.getInstance()
+            val httpClient = HttpClientProvider(settings.apiToken, settings.skipSslVerification).createClient()
+            val request = Request.Builder().url(url).get().build()
+            try {
+                val response = withContext(Dispatchers.IO) { httpClient.newCall(request).execute() }
+                val status = response.code
+                val body = response.body?.string() ?: ""
+                if (status == 200) {
+                    mapOf("ok" to true, "status" to status, "body" to gson.fromJson(body, Any::class.java))
+                } else {
+                    mapOf("ok" to false, "status" to status, "message" to response.message.ifEmpty { "HTTP Error $status" })
+                }
+            } catch (e: SocketTimeoutException) {
+                mapOf("ok" to false, "status" to 0, "message" to "Timeout: ${e.message}")
+            } catch (e: IOException) {
+                mapOf("ok" to false, "status" to 0, "message" to "Network error: ${e.message}")
+            }
         }
 
         log.debug("Registered RPC handlers for IDE operations")

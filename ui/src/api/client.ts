@@ -30,6 +30,12 @@ import {
   NetworkError,
   TimeoutError,
 } from './errors';
+import { useLogStore } from '@/state/logStore';
+import { bridge } from '@/bridge/JCEFBridge';
+
+type ApiRequestResult<T> =
+  | { ok: true; status: number; body: T }
+  | { ok: false; status: number; message: string };
 
 /**
  * API Configuration
@@ -49,106 +55,89 @@ export class KaitenApiClient {
   constructor(private readonly config: ApiConfig) {}
 
   /**
-   * Execute HTTP request with retry logic and error handling
+   * Execute HTTP request via Kotlin bridge (OkHttp) to bypass JCEF CORS restrictions.
+   * Direct fetch() from file:// origin is blocked by Chromium CORS policy.
    */
   private async executeRequest<T>(
     url: string,
     retryCount: number = 0
   ): Promise<T> {
     const startTime = Date.now();
+    const log = useLogStore.getState().addEntry;
+
+    if (retryCount === 0) {
+      log({ type: 'request', url, message: `GET ${url}` });
+    }
     console.log(`[Kaiten API] --> GET ${url}`);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.config.apiToken}`,
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
+      const result = await bridge.call('apiRequest', { url }) as ApiRequestResult<T>;
       const duration = Date.now() - startTime;
 
-      // Handle different response status codes
-      switch (response.status) {
-        case 200: {
-          console.log(`[Kaiten API] <-- GET ${url} ${response.status} OK (${duration}ms)`);
-          const body = await response.text();
-          if (!body) {
-            throw new ServerError('Empty response body');
-          }
-          return JSON.parse(body) as T;
-        }
-
-        case 401: {
-          console.warn(`[Kaiten API] <-- GET ${url} ${response.status} Unauthorized (${duration}ms)`);
-          throw new UnauthorizedError();
-        }
-
-        case 403: {
-          console.warn(`[Kaiten API] <-- GET ${url} ${response.status} Forbidden (${duration}ms)`);
-          throw new ForbiddenError();
-        }
-
-        case 404: {
-          console.warn(`[Kaiten API] <-- GET ${url} ${response.status} Not Found (${duration}ms)`);
-          throw new NotFoundError();
-        }
-
-        default: {
-          // Handle 5xx server errors with retry logic
-          if (response.status >= 500 && response.status <= 599) {
-            console.warn(
-              `[Kaiten API] <-- GET ${url} ${response.status} Server Error (${duration}ms), retry=${retryCount}`
-            );
-            if (retryCount < this.maxRetries) {
-              const delay = this.retryDelayMs * (retryCount + 1);
-              await new Promise(resolve => setTimeout(resolve, delay));
-              return this.executeRequest<T>(url, retryCount + 1);
-            } else {
-              throw new ServerError(`Server error: ${response.status}`);
-            }
-          }
-
-          // Unexpected error
-          console.warn(`[Kaiten API] <-- GET ${url} ${response.status} Unexpected (${duration}ms)`);
-          throw new ServerError(`Unexpected error: ${response.status}`);
-        }
+      if (result.ok) {
+        console.log(`[Kaiten API] <-- GET ${url} ${result.status} OK (${duration}ms)`);
+        log({ type: 'success', url, status: result.status, duration, message: '200 OK' });
+        return result.body;
       }
-    } catch (error) {
-      const duration = Date.now() - startTime;
 
-      // Handle AbortController timeout
-      if (error instanceof Error && error.name === 'AbortError') {
-        console.warn(`[Kaiten API] <-- GET ${url} TIMEOUT (${duration}ms), retry=${retryCount}`);
+      // HTTP error response from Kotlin
+      const { status, message } = result;
+      console.warn(`[Kaiten API] <-- GET ${url} ${status} (${duration}ms): ${message}`);
+
+      if (status === 401) {
+        log({ type: 'error', url, status, duration, message: '401 Unauthorized' });
+        throw new UnauthorizedError();
+      }
+      if (status === 403) {
+        log({ type: 'error', url, status, duration, message: '403 Forbidden' });
+        throw new ForbiddenError();
+      }
+      if (status === 404) {
+        log({ type: 'warning', url, status, duration, message: '404 Not Found' });
+        throw new NotFoundError();
+      }
+      if (status >= 500 && status <= 599) {
         if (retryCount < this.maxRetries) {
-          const delay = this.retryDelayMs * (retryCount + 1);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          log({ type: 'warning', url, status, duration, retryCount, message: `${status} Server Error — retry ${retryCount + 1}/${this.maxRetries}` });
+          await new Promise(resolve => setTimeout(resolve, this.retryDelayMs * (retryCount + 1)));
           return this.executeRequest<T>(url, retryCount + 1);
-        } else {
+        }
+        log({ type: 'error', url, status, duration, message: `${status} Server Error (max retries exceeded)` });
+        throw new ServerError(`Server error: ${status}`);
+      }
+      if (status === 0) {
+        // Network-level error (no HTTP response): timeout or connection failure
+        const isTimeout = message.startsWith('Timeout');
+        if (isTimeout) {
+          if (retryCount < this.maxRetries) {
+            log({ type: 'warning', url, duration, retryCount, message: `Timeout — retry ${retryCount + 1}/${this.maxRetries}` });
+            await new Promise(resolve => setTimeout(resolve, this.retryDelayMs * (retryCount + 1)));
+            return this.executeRequest<T>(url, retryCount + 1);
+          }
+          log({ type: 'error', url, duration, message: 'Timeout (max retries exceeded)' });
           throw new TimeoutError();
         }
+        log({ type: 'error', url, duration, message });
+        throw new NetworkError(message);
       }
 
-      // Handle network errors
-      if (error instanceof TypeError) {
-        console.warn(`[Kaiten API] <-- GET ${url} NETWORK_ERROR (${duration}ms): ${error.message}`);
-        throw new NetworkError(error.message);
-      }
+      log({ type: 'error', url, status, duration, message: `${status} Unexpected error: ${message}` });
+      throw new ServerError(`Unexpected error: ${status}`);
 
-      // Re-throw KaitenApiError instances
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      const stack = error instanceof Error ? error.stack : undefined;
+
+      // Already-typed API errors — rethrow without extra logging
       if (error instanceof KaitenApiError) {
         throw error;
       }
 
-      // Unexpected error
-      console.error(`[Kaiten API] <-- GET ${url} ERROR (${duration}ms):`, error);
-      throw new ServerError(error instanceof Error ? error.message : 'Unknown error');
+      // Bridge/RPC failure (e.g. bridge not ready, handler not found)
+      console.error(`[Kaiten API] <-- GET ${url} BRIDGE_ERROR (${duration}ms):`, error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      log({ type: 'error', url, duration, message: `Bridge error: ${message}`, stack });
+      throw new NetworkError(message);
     }
   }
 

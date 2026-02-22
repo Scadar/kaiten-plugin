@@ -293,6 +293,14 @@ export interface RPCMethods {
     params: void;
     result: string | null;
   };
+
+  // HTTP proxy — routes fetch through Kotlin/OkHttp to bypass JCEF CORS restrictions
+  apiRequest: {
+    params: { url: string };
+    result:
+      | { ok: true; status: number; body: unknown }
+      | { ok: false; status: number; message: string };
+  };
 }
 
 /**
