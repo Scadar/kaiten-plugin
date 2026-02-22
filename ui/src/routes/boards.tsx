@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettingsStatus } from '@/hooks/useSettings';
 import { useSpaces, useBoards } from '@/hooks/useKaitenQuery';
 import { useFilterStore } from '@/state/filterStore';
 import { Layout } from '@/components/Layout';
@@ -12,17 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RefreshCw, Settings, CheckCircle2 } from 'lucide-react';
 import type { Space, Board } from '@/api/types';
 
-/**
- * Boards route - dedicated board selection view.
- *
- * This route displays all spaces and their boards, allowing users to:
- * - Browse all available spaces and boards
- * - Select a board (which updates filterStore)
- * - Search for boards by name
- * - View which board is currently selected
- *
- * The path '/boards' is inferred from the filename 'boards.tsx' in file-based routing.
- */
 export const Route = createFileRoute('/boards')({
   component: BoardsComponent,
 });
@@ -30,18 +19,11 @@ export const Route = createFileRoute('/boards')({
 function BoardsComponent() {
   const [searchText, setSearchText] = useState('');
 
-  // Get settings
-  const settings = useSettings();
-  const config = { serverUrl: settings.serverUrl, apiToken: settings.apiToken };
-
+  const { isConfigured } = useSettingsStatus();
   const selectedBoardId = useFilterStore((state) => state.selectedBoardId);
   const setSelectedBoard = useFilterStore((state) => state.setSelectedBoard);
 
-  // Fetch spaces
-  const { data: spaces, isLoading: spacesLoading, error: spacesError } = useSpaces(config);
-
-  // Check if API is configured
-  const isConfigured = !!(settings.apiToken && settings.serverUrl);
+  const { data: spaces, isLoading: spacesLoading, error: spacesError } = useSpaces();
 
   return (
     <Layout
@@ -89,7 +71,6 @@ function BoardsComponent() {
               <SpaceSection
                 key={space.id}
                 space={space}
-                config={config}
                 searchText={searchText}
                 selectedBoardId={selectedBoardId}
                 onSelectBoard={setSelectedBoard}
@@ -104,21 +85,18 @@ function BoardsComponent() {
 
 interface SpaceSectionProps {
   space: Space;
-  config: { serverUrl: string; apiToken: string };
   searchText: string;
   selectedBoardId: number | null;
   onSelectBoard: (boardId: number | null) => void;
 }
 
-function SpaceSection({ space, config, searchText, selectedBoardId, onSelectBoard }: SpaceSectionProps) {
-  const { data: boards, isLoading: boardsLoading, error: boardsError } = useBoards(config, space.id);
+function SpaceSection({ space, searchText, selectedBoardId, onSelectBoard }: SpaceSectionProps) {
+  const { data: boards, isLoading: boardsLoading, error: boardsError } = useBoards(space.id);
 
-  // Filter boards by search text
   const filteredBoards = boards?.filter((board) =>
     board.name.toLowerCase().includes(searchText.toLowerCase())
   ) || [];
 
-  // Don't show space if no boards match search
   if (searchText && filteredBoards.length === 0) {
     return null;
   }
@@ -196,7 +174,6 @@ function Toolbar({ searchText, onSearchChange }: ToolbarProps) {
         Settings
       </Button>
 
-      {/* Search */}
       <div className="ml-4 flex-1">
         <Input
           placeholder="Search boards by name..."
@@ -212,13 +189,10 @@ function Toolbar({ searchText, onSearchChange }: ToolbarProps) {
 function Sidebar() {
   return (
     <div className="p-4 space-y-6">
-      {/* Navigation */}
       <div>
         <h2 className="mb-3 px-2 text-sm font-semibold text-muted-foreground">Navigation</h2>
         <Navigation />
       </div>
-
-      {/* Filters Section */}
       <FiltersPanel />
     </div>
   );

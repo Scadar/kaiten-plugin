@@ -11,7 +11,7 @@
  * Connects to filterStore for state management and uses React Query hooks for data fetching.
  */
 
-import { useSettings } from '@/hooks/useSettings';
+import { useSettingsStatus } from '@/hooks/useSettings';
 import { useSpaces, useBoards, useColumns } from '@/hooks/useKaitenQuery';
 import { useFilterStore } from '@/state/filterStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,8 +29,7 @@ import { Separator } from '@/components/ui/separator';
  * - Error handling with user-friendly messages
  */
 export function FiltersPanel() {
-  const settings = useSettings();
-  const config = { serverUrl: settings.serverUrl, apiToken: settings.apiToken };
+  const { isConfigured } = useSettingsStatus();
 
   // Filter state from Zustand store
   const selectedSpaceId = useFilterStore((state) => state.selectedSpaceId);
@@ -49,12 +48,9 @@ export function FiltersPanel() {
   const setFilterLogic = useFilterStore((state) => state.setFilterLogic);
 
   // Fetch data using React Query hooks
-  const { data: spaces, isLoading: spacesLoading, error: spacesError } = useSpaces(config);
-  const { data: boards, isLoading: boardsLoading, error: boardsError } = useBoards(config, selectedSpaceId);
-  const { data: columns, isLoading: columnsLoading, error: columnsError } = useColumns(config, selectedBoardId);
-
-  // Check if API is configured
-  const isConfigured = !!(settings.apiToken && settings.serverUrl);
+  const { data: spaces, isLoading: spacesLoading, error: spacesError } = useSpaces();
+  const { data: boards, isLoading: boardsLoading, error: boardsError } = useBoards(selectedSpaceId);
+  const { data: columns, isLoading: columnsLoading, error: columnsError } = useColumns(selectedBoardId);
 
   if (!isConfigured) {
     return (

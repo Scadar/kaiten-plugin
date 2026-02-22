@@ -7,7 +7,10 @@ import com.github.scadar.kaitenplugin.state.StateSyncService
 import com.github.scadar.kaitenplugin.timetracker.GitBranchListener
 import com.github.scadar.kaitenplugin.timetracker.IdeFocusTracker
 import com.google.gson.Gson
+import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -64,6 +67,14 @@ class KaitenToolWindowFactory : ToolWindowFactory {
 
             // Load React application
             loadReactApp(browser)
+
+            // Add DevTools button to the tool window title bar
+            val devToolsAction = object : AnAction("Open DevTools", "Open JCEF DevTools", AllIcons.General.Settings) {
+                override fun actionPerformed(e: AnActionEvent) {
+                    browser.openDevtools()
+                }
+            }
+            toolWindow.setTitleActions(listOf(devToolsAction))
 
             // Add browser component to tool window
             val contentFactory = ContentFactory.getInstance()
