@@ -54,6 +54,19 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
+      # Setup Node.js for React UI build
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      # Install npm dependencies for React UI
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: ui
+
       # Build plugin
       - name: Build plugin
         run: ./gradlew buildPlugin
@@ -194,6 +207,19 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
         with:
           cache-read-only: true
+
+      # Setup Node.js for React UI build
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      # Install npm dependencies for React UI
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: ui
 
       # Run Verify Plugin task and IntelliJ Plugin Verifier tool
       - name: Run Plugin Verification tasks

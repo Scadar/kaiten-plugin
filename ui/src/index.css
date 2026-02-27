@@ -1,0 +1,164 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ─── Geist Font Family ──────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'Geist';
+  src: url('../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GeistMono';
+  src: url('../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Breakpoints (compact for JetBrains plugin panel) */
+  --breakpoint-xs: 300px;
+  --breakpoint-sm: 400px;
+  --breakpoint-md: 560px;
+  --breakpoint-lg: 720px;
+  --breakpoint-xl: 960px;
+  --breakpoint-2xl: 1280px;
+
+  /* Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Radius — derived from IDE Component.arc */
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: max(calc(var(--radius) - 4px), 1px);
+  --radius-xs: max(calc(var(--radius) - 5px), 0px);
+
+  /* Animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+}
+
+@layer base {
+  :root {
+    /* IDE-matching fallbacks (overridden at runtime by ThemeProvider) */
+    --radius: 6px;
+
+    /* Font sizes — fallback values, overridden by IDE */
+    --ide-font-size: 13px;
+    --ide-font-size-sm: 12px;
+    --ide-font-size-xs: 11px;
+
+    /* Light theme — JetBrains New UI Light */
+    --background: #f2f2f2;
+    --foreground: #1a1a1a;
+    --card: #ffffff;
+    --card-foreground: #1a1a1a;
+    --popover: #ffffff;
+    --popover-foreground: #1a1a1a;
+    --primary: #2970d8;
+    --primary-foreground: #ffffff;
+    --secondary: #e8e8e8;
+    --secondary-foreground: #1a1a1a;
+    --muted: #e8e8e8;
+    --muted-foreground: #6c7178;
+    --accent: #dae4f7;
+    --accent-foreground: #1a1a1a;
+    --destructive: #e04343;
+    --destructive-foreground: #ffffff;
+    --border: #d1d3da;
+    --input: #ffffff;
+    --ring: #2970d8;
+  }
+
+  .dark {
+    /* Dark theme — JetBrains New UI Dark */
+    --background: #2b2d30;
+    --foreground: #dfe1e5;
+    --card: #1e1f22;
+    --card-foreground: #dfe1e5;
+    --popover: #2b2d30;
+    --popover-foreground: #dfe1e5;
+    --primary: #4e9cff;
+    --primary-foreground: #ffffff;
+    --secondary: #3c3f41;
+    --secondary-foreground: #dfe1e5;
+    --muted: #3c3f41;
+    --muted-foreground: #888d94;
+    --accent: #2e436e;
+    --accent-foreground: #dfe1e5;
+    --destructive: #e05252;
+    --destructive-foreground: #ffffff;
+    --border: #43454a;
+    --input: #3c3f41;
+    --ring: #4e9cff;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Geist', -apple-system, 'Segoe UI', system-ui, sans-serif;
+    font-size: var(--ide-font-size);
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code, kbd, samp, pre, .font-mono {
+    font-family: 'GeistMono', 'Menlo', 'Consolas', monospace;
+  }
+
+  /* Compact scrollbar — matches JetBrains thin scrollbar style */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+}

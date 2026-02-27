@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 238.42 238.55">
+  <defs>
+    <style>
+      .g{fill:#f11f24;}
+      .h{fill:#7d4ccf;}
+      .i{fill:#78ffc7;}
+    </style>
+  </defs>
+  <g>
+    <rect class="g" y="0" width="238.42" height="238.55" rx="62.33" ry="62.33"/>
+    <rect class="i" x="36.28" y="36.67" width="165.49" height="165.49" rx="33.96" ry="33.96" transform="translate(-49.58 119.14) rotate(-45)"/>
+    <ellipse class="h" cx="119.11" cy="119.31" rx="61.08" ry="58.98"/>
+  </g>
+</svg>

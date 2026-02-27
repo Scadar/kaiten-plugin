@@ -1,6 +1,10 @@
+import org.gradle.api.tasks.bundling.Zip
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 plugins {
     id("java") // Java support
@@ -33,6 +37,13 @@ repositories {
 dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.opentest4j)
+
+    // HTTP Client
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // JSON Serialization
+    implementation("com.google.code.gson:gson:2.11.0")
 
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
@@ -128,6 +139,136 @@ kover {
 }
 
 tasks {
+    val platformVersion = providers.gradleProperty("platformVersion")
+    val pluginName = providers.gradleProperty("pluginName")
+    val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+
+    register<Exec>("buildReactUI") {
+        description = "Builds the React UI with npm"
+        workingDir(layout.projectDirectory.dir("ui"))
+        if (isWindows) {
+            commandLine("cmd", "/c", "npm", "run", "build")
+        } else {
+            commandLine("npm", "run", "build")
+        }
+        inputs.dir(layout.projectDirectory.dir("ui/src"))
+        inputs.file(layout.projectDirectory.file("ui/package.json"))
+        inputs.file(layout.projectDirectory.file("ui/vite.config.ts"))
+        inputs.file(layout.projectDirectory.file("ui/tsconfig.json"))
+        outputs.dir(layout.projectDirectory.dir("ui/dist"))
+    }
+
+    register<Copy>("copyUiDist") {
+        description = "Copies the React UI build output into the plugin sandbox directory"
+        dependsOn("buildReactUI")
+        from(layout.projectDirectory.dir("ui/dist"))
+        into(layout.buildDirectory.dir(platformVersion.map { "idea-sandbox/IU-$it/plugins/${pluginName.get()}/ui/dist" }))
+    }
+
+    named("prepareSandbox") {
+        if (!project.hasProperty("dev")) {
+            finalizedBy("copyUiDist")
+        }
+    }
+
+    named<Zip>("buildPlugin") {
+        // copyUiDist only fills the sandbox (used by runIde).
+        // For the distribution ZIP we must add ui/dist directly, because buildPlugin
+        // in IntelliJ Platform Gradle Plugin 2.x archives its own input set and does
+        // not pick up files written to the sandbox after prepareSandbox completes.
+        dependsOn("buildReactUI")
+        from(layout.projectDirectory.dir("ui/dist")) {
+            into("ui/dist")
+        }
+    }
+
+    named("runIde") {
+        if (project.hasProperty("dev")) {
+            // Dev mode: automatically start/stop the Vite dev server alongside runIde.
+            (this as JavaExec).jvmArgs("-Dkaiten.ui.dev=true")
+
+            val uiDir = layout.projectDirectory.dir("ui").asFile
+            val isWin = isWindows
+
+            doFirst {
+                val tmpDir = System.getProperty("java.io.tmpdir")
+                val portFile = File(tmpDir, "kaiten-vite-dev.port")
+                val pidFile  = File(tmpDir, "kaiten-vite-dev.pid")
+
+                // Kill any leftover Vite process from a previous run that didn't clean up.
+                pidFile.takeIf { it.exists() }?.readText()?.trim()?.toLongOrNull()?.let { oldPid ->
+                    try {
+                        if (isWin) {
+                            ProcessBuilder("taskkill", "/F", "/T", "/PID", oldPid.toString())
+                                .start().waitFor(3, TimeUnit.SECONDS)
+                        } else {
+                            ProcessBuilder("kill", "-9", oldPid.toString())
+                                .start().waitFor(3, TimeUnit.SECONDS)
+                        }
+                        println("[Vite] Stopped previous dev server (PID $oldPid)")
+                    } catch (_: Exception) {}
+                    pidFile.delete()
+                    portFile.delete()
+                    Thread.sleep(500) // give OS time to release the port
+                }
+
+                val cmd = if (isWin) listOf("cmd", "/c", "npm", "run", "dev") else listOf("npm", "run", "dev")
+                val viteProcess = ProcessBuilder(cmd)
+                    .directory(uiDir)
+                    .redirectErrorStream(true)
+                    .start()
+
+                pidFile.writeText(viteProcess.pid().toString())
+
+                val portRegex = Regex("""Local:\s+http://[^:]+:(\d+)""")
+                val ready = CountDownLatch(1)
+                var detectedPort = 5173
+
+                Thread {
+                    try {
+                        viteProcess.inputStream.bufferedReader().use { reader ->
+                            reader.lineSequence().forEach { line ->
+                                println("[Vite] $line")
+                                if (ready.count != 0L) {
+                                    portRegex.find(line)?.groupValues?.get(1)?.toIntOrNull()?.let { port ->
+                                        detectedPort = port
+                                        portFile.writeText(port.toString())
+                                        ready.countDown()
+                                    }
+                                }
+                            }
+                        }
+                    } catch (_: Exception) {}
+                }.also { it.isDaemon = true }.start()
+
+                val started = ready.await(3, TimeUnit.SECONDS)
+                println(
+                    if (started) "[Vite] Dev server ready on port $detectedPort"
+                    else "[Vite] Warning: timed out waiting for Vite, using default port $detectedPort"
+                )
+
+                Runtime.getRuntime().addShutdownHook(Thread {
+                    try {
+                        println("[Vite] Shutting down dev server...")
+                        if (isWin) {
+                            ProcessBuilder("taskkill", "/F", "/T", "/PID", viteProcess.pid().toString())
+                                .start().waitFor(3, TimeUnit.SECONDS)
+                        } else {
+                            viteProcess.destroy()
+                            if (!viteProcess.waitFor(3, TimeUnit.SECONDS)) {
+                                viteProcess.destroyForcibly()
+                            }
+                        }
+                        portFile.delete()
+                        pidFile.delete()
+                    } catch (_: Exception) {}
+                })
+            }
+        } else {
+            dependsOn("buildReactUI")
+        }
+    }
+
     wrapper {
         gradleVersion = providers.gradleProperty("gradleVersion").get()
     }
