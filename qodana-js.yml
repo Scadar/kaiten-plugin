@@ -1,4 +1,4 @@
-# Qodana configuration:
+# Qodana configuration for JavaScript/TypeScript:
 # https://www.jetbrains.com/help/qodana/qodana-yaml.html
 
 version: "1.0"
@@ -7,3 +7,7 @@ profile:
   name: qodana.recommended
 include:
   - name: CheckDependencyLicenses
+exclude:
+  - name: All
+    paths:
+      - src
