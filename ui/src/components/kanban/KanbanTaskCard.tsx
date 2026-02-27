@@ -2,7 +2,7 @@ import { ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import { buildKaitenUrl } from '@/lib/format';
+import { buildKaitenUrl, stripHtml } from '@/lib/format';
 import { useSettings } from '@/hooks/useSettings';
 import { useFilterStore } from '@/state/filterStore';
 import { cn } from '@/lib/utils';
@@ -68,7 +68,7 @@ export function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
       {/* Description snippet */}
       {task.description && (
         <Text variant="secondary" as="p" className="line-clamp-2 mb-2 leading-relaxed">
-          {task.description.replace(/<[^>]+>/g, '').trim()}
+          {stripHtml(task.description)}
         </Text>
       )}
 

@@ -37,7 +37,8 @@ export const CONDITION_LABELS: Record<number, string> = {
 // ─── HTML ─────────────────────────────────────────────────────────────────────
 
 export function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return (doc.body.textContent ?? '').trim();
 }
 
 // ─── Dates ────────────────────────────────────────────────────────────────────
