@@ -48,6 +48,19 @@ jobs:
         with:
           cache-read-only: true
 
+      # Setup Node.js for React UI build
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      # Install npm dependencies for React UI
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: ui
+
       # Run IDEA prepared for UI testing
       - name: Run IDE
         run: ${{ matrix.runIde }}
