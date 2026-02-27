@@ -176,11 +176,26 @@ jobs:
           distribution: zulu
           java-version: 21
 
-      # Run Qodana inspections
-      - name: Qodana - Code Inspection
+      # Run Qodana inspections for Java
+      - name: Qodana - Code Inspection Java
         uses: JetBrains/qodana-action@v2025.3.1
         with:
-          cache-default-branch-only: true
+          pr-mode: false
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_811670028  }}
+          QODANA_ENDPOINT: 'https://qodana.cloud'
+
+      # Run Qodana inspections for JS
+      - name: Qodana - Code Inspection JS
+        uses: JetBrains/qodana-action@v2025.3.1
+        with:
+          pr-mode: false
+          args: |
+            --linter,qodana-js,
+            --within-docker,false
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_338694076  }}
+          QODANA_ENDPOINT: 'https://qodana.cloud'
 
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
