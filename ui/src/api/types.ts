@@ -506,6 +506,12 @@ export interface KaitenSettings {
   releaseBoardId: number | null;
   releaseColumnIds: number[];
   activeReleaseCardId: number | null;
+  // Connection verification — persisted error from the last failed check.
+  // Empty string means no error (credentials are valid or not yet tested).
+  lastConnectionError: string;
+  // Transient flag set by the IDE while a connection check is in progress.
+  // Never persisted; absent from the map when no check is running.
+  isVerifyingConnection?: boolean;
 }
 
 export function getDefaultSettings(): KaitenSettings {
@@ -527,5 +533,7 @@ export function getDefaultSettings(): KaitenSettings {
     releaseBoardId: null,
     releaseColumnIds: [],
     activeReleaseCardId: null,
+    lastConnectionError: '',
+    isVerifyingConnection: false,
   };
 }

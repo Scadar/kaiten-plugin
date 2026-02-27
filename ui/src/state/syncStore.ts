@@ -11,6 +11,9 @@
 import { create } from 'zustand';
 import { bridge } from '@/bridge/JCEFBridge';
 import type { AppState } from '@/bridge/types';
+import { queryClient } from '@/lib/cache';
+import { settingsKeys } from '@/api/endpoints';
+import type { KaitenSettings } from '@/api/types';
 
 /**
  * Store state interface extends AppState with loading/error states
@@ -162,6 +165,12 @@ function initializeBridgeSubscription(): void {
   unsubscribe = bridge.on('state:update', (updates: Partial<AppState>) => {
     // Update store with new state from IDE
     useSyncedStore.getState().updateFromIDE(updates);
+
+    // Keep the React Query settings cache in sync so components using
+    // useSettings() / useSettingsStatus() re-render immediately.
+    if (updates.settings) {
+      queryClient.setQueryData(settingsKeys.all(), updates.settings as unknown as KaitenSettings);
+    }
   });
 }
 

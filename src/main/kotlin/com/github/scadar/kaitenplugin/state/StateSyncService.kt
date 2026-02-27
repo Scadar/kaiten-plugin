@@ -1,6 +1,11 @@
 package com.github.scadar.kaitenplugin.state
 
+import com.github.scadar.kaitenplugin.api.KaitenApiClient
+import com.github.scadar.kaitenplugin.api.KaitenApiException
 import com.github.scadar.kaitenplugin.bridge.JCEFBridgeHandler
+import com.github.scadar.kaitenplugin.infrastructure.HttpClientProvider
+import com.github.scadar.kaitenplugin.settings.KaitenSettingsState
+import com.github.scadar.kaitenplugin.settings.SettingsMapper
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -98,6 +103,73 @@ class StateSyncService(private val project: Project) : Disposable {
         }
 
         log.debug("Settings change listener set up")
+    }
+
+    /**
+     * Push the latest settings from [KaitenSettingsState] to the React app immediately.
+     *
+     * Called after the IDE Settings dialog is applied so the UI updates without
+     * waiting for the next periodic reconciliation cycle.
+     */
+    fun refreshSettings() {
+        scope.launch {
+            try {
+                stateManager?.refreshSettings()
+            } catch (e: Exception) {
+                log.error("Error refreshing settings", e)
+            }
+        }
+    }
+
+    /**
+     * Validate [url]/[token] credentials by calling the current-user endpoint once,
+     * then push the result to the React UI.
+     *
+     * During the check, React receives `isVerifyingConnection = true` inside the
+     * settings object so it can show a "Connecting…" state.  On completion the
+     * regular settings map (without the transient flag) is pushed, carrying either
+     * the authenticated [KaitenSettingsState.currentUserId] or the
+     * [KaitenSettingsState.lastConnectionError] message.
+     *
+     * This method is fire-and-forget — callers don't need to await the result.
+     */
+    fun verifyConnectionAndRefresh(url: String, token: String) {
+        scope.launch {
+            log.info("Verifying connection to $url")
+
+            // Immediately signal "checking" to React (transient flag, not persisted).
+            val checkingMap = SettingsMapper.toMap(KaitenSettingsState.getInstance())
+                .toMutableMap()
+            checkingMap["isVerifyingConnection"] = true
+            stateManager?.updateField("settings", checkingMap)
+
+            val result = runCatching {
+                val client = HttpClientProvider(token).createClient()
+                KaitenApiClient(client, url).getCurrentUser()
+            }
+
+            // Write the outcome to persisted settings on EDT.
+            withContext(Dispatchers.Main) {
+                val s = KaitenSettingsState.getInstance()
+                if (result.isSuccess) {
+                    s.currentUserId = result.getOrThrow().id
+                    s.lastConnectionError = ""
+                    log.info("Connection verified, userId=${s.currentUserId}")
+                } else {
+                    s.currentUserId = null
+                    s.lastConnectionError = when (val e = result.exceptionOrNull()) {
+                        is KaitenApiException.Unauthorized -> "Неверный API токен"
+                        is KaitenApiException.NetworkError -> "Ошибка сети: ${e.message}"
+                        is KaitenApiException.TimeoutError -> "Превышено время ожидания"
+                        else -> "Ошибка подключения: ${result.exceptionOrNull()?.message ?: "неизвестная ошибка"}"
+                    }
+                    log.warn("Connection verification failed: ${s.lastConnectionError}")
+                }
+            }
+
+            // Push final settings (isVerifyingConnection absent = false).
+            stateManager?.refreshSettings()
+        }
     }
 
     /**

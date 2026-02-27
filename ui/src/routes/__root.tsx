@@ -4,6 +4,8 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
+import { useSettingsStatus } from '@/hooks/useSettings';
+import { SetupRequired } from '@/components/SetupRequired';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -11,13 +13,22 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   useFilterPersistence();
+  const { isConfigured, isLoading, isVerifying, connectionError } = useSettingsStatus();
+
+  // Show the main app only when settings are loaded, credentials are present,
+  // no connection error exists, and no check is in progress.
+  const showApp = !isLoading && isConfigured && !connectionError && !isVerifying;
 
   return (
     <ThemeProvider>
       <TooltipProvider delayDuration={400}>
-        <ErrorBoundary>
-          <Outlet />
-        </ErrorBoundary>
+        {showApp ? (
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
+        ) : !isLoading ? (
+          <SetupRequired isVerifying={isVerifying} connectionError={connectionError} />
+        ) : null}
         <Toaster position="bottom-center" />
       </TooltipProvider>
     </ThemeProvider>
