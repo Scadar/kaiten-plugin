@@ -4,6 +4,7 @@ import com.github.scadar.kaitenplugin.bridge.JCEFBridgeHandler
 import com.github.scadar.kaitenplugin.bridge.RPCMethodNames
 import com.github.scadar.kaitenplugin.infrastructure.BranchTimeEntriesState
 import com.github.scadar.kaitenplugin.infrastructure.HttpClientProvider
+import com.github.scadar.kaitenplugin.settings.KaitenSettingsConfigurable
 import com.github.scadar.kaitenplugin.settings.KaitenSettingsState
 import com.github.scadar.kaitenplugin.settings.SettingsMapper
 import com.github.scadar.kaitenplugin.timetracker.BranchTimeTrackingService
@@ -190,7 +191,7 @@ class IdeRpcHandlerRegistry(private val project: Project) {
         bridge.registerRPC(RPCMethodNames.OPEN_SETTINGS) { _ ->
             withContext(Dispatchers.Main) {
                 com.intellij.openapi.options.ShowSettingsUtil.getInstance()
-                    .showSettingsDialog(project, "com.github.scadar.kaitenplugin.settings.KaitenSettingsConfigurable")
+                    .showSettingsDialog(project, KaitenSettingsConfigurable::class.java.name)
             }
             true
         }

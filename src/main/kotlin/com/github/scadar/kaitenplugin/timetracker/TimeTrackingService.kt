@@ -53,16 +53,7 @@ class TimeTrackingService(private val project: Project) : Disposable {
     fun resumeTracking()            = tracker.resumeTracking()
     fun stopTracking()              = tracker.stopTracking()
 
-    fun getCurrentTaskId(): Long?      = tracker.currentId
     fun isCurrentlyTracking(): Boolean = tracker.isActive()
-    /** Returns accumulated seconds for the live session (not yet saved). */
-    fun getAccumulatedTime(): Long     = tracker.getAccumulatedSeconds()
-
-    fun getTimeEntriesForTask(taskId: Long): List<TaskTimeEntry> =
-        TimeEntriesState.getInstance(project).getEntriesByTask(taskId)
-
-    fun getTotalTimeForTask(taskId: Long): Long =
-        getTimeEntriesForTask(taskId).sumOf { it.durationSeconds }
 
     override fun dispose() {
         scope.cancel()

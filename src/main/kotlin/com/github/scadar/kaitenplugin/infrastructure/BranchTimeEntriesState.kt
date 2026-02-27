@@ -60,11 +60,6 @@ class BranchTimeEntriesState : PersistentStateComponent<BranchTimeEntriesState> 
     }
 
     @Synchronized
-    fun getEntriesByBranch(branchName: String): List<BranchTimeEntry> {
-        return entries.filter { it.branchName == branchName }.map { it.toDomain() }
-    }
-
-    @Synchronized
     fun getAllEntries(): Map<String, List<BranchTimeEntry>> {
         return entries.map { it.toDomain() }.groupBy { it.branchName }
     }

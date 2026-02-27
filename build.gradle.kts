@@ -188,7 +188,7 @@ tasks {
             (this as JavaExec).jvmArgs("-Dkaiten.ui.dev=true")
 
             val uiDir = layout.projectDirectory.dir("ui").asFile
-            val isWin = isWindows
+            @Suppress("UnnecessaryVariable") val isWin = isWindows  // required: doFirst{} can't capture tasks{} scope directly
 
             doFirst {
                 val tmpDir = System.getProperty("java.io.tmpdir")

@@ -10,8 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * StateSyncService - Service to handle state synchronization via bridge
@@ -19,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  * This service orchestrates state synchronization between the IDE and React by:
  * - Initializing StateManager with bridge handler
  * - Listening to IDE events (file selection, settings changes) and syncing to React
- * - Providing methods to trigger manual state synchronization
  * - Handling periodic state reconciliation to prevent desync
  * - Coordinating between StateManager and JCEFBridgeHandler
  *
@@ -40,28 +37,13 @@ class StateSyncService(private val project: Project) : Disposable {
     private var stateManager: StateManager? = null
 
     // Service state
-    private val isInitialized = AtomicBoolean(false)
-
-    // Conflated channel: keeps only the latest pending sync signal.
-    private val syncChannel = Channel<Unit>(capacity = Channel.CONFLATED)
+    private var isInitialized = false
 
     // Periodic reconciliation job
     private var reconciliationJob: Job? = null
 
     // Reconciliation interval (60 seconds)
     private val reconciliationIntervalMs = 60_000L
-
-    init {
-        log.info("StateSyncService initialized for project: ${project.name}")
-        // Single consumer for syncToReact signals.
-        scope.launch {
-            for (trigger in syncChannel) {
-                try { doSyncToReact() }
-                catch (e: ProcessCanceledException) { throw e }
-                catch (e: Exception) { log.error("Error syncing to React", e) }
-            }
-        }
-    }
 
     /**
      * Initialize the sync service with bridge handler and state manager
@@ -77,7 +59,8 @@ class StateSyncService(private val project: Project) : Disposable {
         bridgeHandler = bridge
         stateManager = StateManager.getInstance(project).also { it.setBridgeHandler(bridge) }
 
-        if (!isInitialized.getAndSet(true)) {
+        if (!isInitialized) {
+            isInitialized = true
             // Set up subscriptions only once — they are tied to the project-level scope.
             setupFileSelectionListener()
             setupSettingsChangeListener()
@@ -143,7 +126,7 @@ class StateSyncService(private val project: Project) : Disposable {
     /**
      * Sync selected file to React.
      */
-    private suspend fun syncSelectedFile(file: VirtualFile?) {
+    private fun syncSelectedFile(file: VirtualFile?) {
         try {
             val filePath = file?.path
             stateManager?.updateSelectedFile(filePath)
@@ -177,111 +160,10 @@ class StateSyncService(private val project: Project) : Disposable {
         log.debug("State reconciliation completed")
     }
 
-    /**
-     * Sync current IDE state to React.
-     *
-     * Uses a CONFLATED channel so rapid successive calls collapse into a single sync.
-     */
-    fun syncToReact() {
-        syncChannel.trySend(Unit)
-    }
-
-    private suspend fun doSyncToReact() {
-        val manager = stateManager ?: run {
-            log.warn("StateManager not initialized, cannot sync")
-            return
-        }
-        val currentState = manager.getState()
-        bridgeHandler?.updateState(currentState.filterValues { it != null }.mapValues { it.value!! })
-        log.debug("Synced IDE state to React: ${currentState.keys}")
-    }
-
-    /**
-     * Sync current settings to React.
-     */
-    fun syncSettings() {
-        scope.launch {
-            try {
-                stateManager?.refreshSettings()
-                log.debug("Settings synced to React")
-            } catch (e: ProcessCanceledException) {
-                throw e
-            } catch (e: Exception) {
-                log.error("Error syncing settings", e)
-            }
-        }
-    }
-
-    /**
-     * Sync current file selection to React.
-     *
-     * FIX: [FileEditorManager.getSelectedFiles] moved to [Dispatchers.Main] (EDT).
-     */
-    fun syncCurrentFileSelection() {
-        scope.launch {
-            try {
-                val selectedFile = withContext(Dispatchers.Main) {
-                    if (project.isDisposed) null
-                    else FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
-                }
-                syncSelectedFile(selectedFile)
-            } catch (e: ProcessCanceledException) {
-                throw e
-            } catch (e: Exception) {
-                log.error("Error syncing current file selection", e)
-            }
-        }
-    }
-
-    /**
-     * Reconcile state between IDE and React.
-     *
-     * Can be called from any thread — launches a coroutine that calls [doReconcileState].
-     */
-    fun reconcileState() {
-        scope.launch {
-            try {
-                doReconcileState()
-            } catch (e: ProcessCanceledException) {
-                throw e
-            } catch (e: Exception) {
-                log.error("Error during state reconciliation", e)
-            }
-        }
-    }
-
-    /**
-     * Force a full state refresh and sync to React.
-     */
-    fun forceRefresh() {
-        scope.launch {
-            try {
-                log.info("Force refreshing state")
-                stateManager?.reset()
-                doReconcileState()
-                log.info("Force refresh completed")
-            } catch (e: ProcessCanceledException) {
-                throw e
-            } catch (e: Exception) {
-                log.error("Error during force refresh", e)
-            }
-        }
-    }
-
-    /**
-     * Check if the sync service is initialized and ready
-     *
-     * @return True if service is initialized with bridge and state manager
-     */
-    fun isReady(): Boolean {
-        return isInitialized.get() && bridgeHandler != null && stateManager != null
-    }
-
     override fun dispose() {
-        syncChannel.close()
         reconciliationJob?.cancel()
         scope.cancel()
-        isInitialized.set(false)
+        isInitialized = false
         bridgeHandler = null
         stateManager = null
         log.info("StateSyncService disposed")
