@@ -212,6 +212,19 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
+      # Setup Node.js for ESLint
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      # Install npm dependencies (includes ESLint)
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: ui
+
       # Run Qodana inspections for JavaScript/TypeScript
       - name: Qodana Scan
         uses: JetBrains/qodana-action@v2025.3.1
