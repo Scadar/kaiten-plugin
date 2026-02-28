@@ -254,6 +254,41 @@ jobs:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_338694076 }}
           QODANA_ENDPOINT: 'https://qodana.cloud'
 
+  # Run ESLint and Prettier checks for UI
+  lintUi:
+    name: Lint UI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+
+      # Check out the current repository
+      - name: Fetch Sources
+        uses: actions/checkout@v6
+
+      # Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      # Install npm dependencies
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: ui
+
+      # Run ESLint
+      - name: Run ESLint
+        run: npm run lint
+        working-directory: ui
+
+      # Run Prettier check
+      - name: Run Prettier check
+        run: npm run format:check
+        working-directory: ui
+
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
     name: Verify plugin
@@ -317,7 +352,7 @@ jobs:
   releaseDraft:
     name: Release draft
     if: github.event_name != 'pull_request'
-    needs: [ build, test, inspectCodeJava, inspectCodeJs, verify ]
+    needs: [ build, test, inspectCodeJava, inspectCodeJs, lintUi, verify ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
