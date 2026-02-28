@@ -43,30 +43,32 @@ describe('RPC Call Flow', () => {
   });
 
   describe('React → IDE → React flow', () => {
-    it('should send RPC request and receive response', async () => {
-      // Mock __jcef_send__ function
-      const sendMock = vi.fn();
+    let sendMock: ReturnType<typeof vi.fn>;
+    let bridge: ReturnType<typeof createJCEFBridge>;
+    let receiveFunction: (message: string) => void;
+
+    beforeEach(async () => {
+      sendMock = vi.fn();
       (window as any).__jcef_send__ = sendMock;
 
-      // Create bridge instance
-      const bridge = createJCEFBridge({ debug: false });
+      bridge = createJCEFBridge({ debug: false });
       bridges.push(bridge);
 
-      // Simulate IDE ready handshake
-      const receiveFunction = (window as any).__jcef_receive__;
-      expect(receiveFunction).toBeDefined();
-
+      receiveFunction = (window as any).__jcef_receive__;
       receiveFunction(
         JSON.stringify({
           type: 'bridge:ready',
           source: 'ide',
           version: '1.0.0',
           timestamp: Date.now(),
-        })
+        }),
       );
 
-      // Wait for bridge to be ready
       await bridge.ready();
+    });
+
+    it('should send RPC request and receive response', async () => {
+      expect(receiveFunction).toBeDefined();
 
       // Make RPC call
       const callPromise = bridge.call('getProjectPath', undefined);
@@ -85,7 +87,7 @@ describe('RPC Call Flow', () => {
           id: sentMessage.id,
           result: '/path/to/project',
           timestamp: Date.now(),
-        })
+        }),
       );
 
       // Wait for response
@@ -96,27 +98,6 @@ describe('RPC Call Flow', () => {
     });
 
     it('should handle multiple concurrent RPC calls', async () => {
-      // Mock __jcef_send__ function
-      const sendMock = vi.fn();
-      (window as any).__jcef_send__ = sendMock;
-
-      // Create bridge instance
-      const bridge = createJCEFBridge({ debug: false });
-      bridges.push(bridge);
-
-      // Simulate IDE ready handshake
-      const receiveFunction = (window as any).__jcef_receive__;
-      receiveFunction(
-        JSON.stringify({
-          type: 'bridge:ready',
-          source: 'ide',
-          version: '1.0.0',
-          timestamp: Date.now(),
-        })
-      );
-
-      await bridge.ready();
-
       // Make multiple RPC calls
       const call1 = bridge.call('getProjectPath', undefined);
       const call2 = bridge.call('getSettings', undefined);
@@ -143,7 +124,7 @@ describe('RPC Call Flow', () => {
           id: id2,
           result: { theme: 'dark' },
           timestamp: Date.now(),
-        })
+        }),
       );
 
       receiveFunction(
@@ -152,7 +133,7 @@ describe('RPC Call Flow', () => {
           id: id1,
           result: '/path/to/project',
           timestamp: Date.now(),
-        })
+        }),
       );
 
       receiveFunction(
@@ -161,7 +142,7 @@ describe('RPC Call Flow', () => {
           id: id3,
           result: '/path/to/selected-file.ts',
           timestamp: Date.now(),
-        })
+        }),
       );
 
       // Wait for all responses
@@ -171,31 +152,9 @@ describe('RPC Call Flow', () => {
       expect(result1).toBe('/path/to/project');
       expect(result2).toEqual({ theme: 'dark' });
       expect(result3).toBe('/path/to/selected-file.ts');
-
     });
 
     it('should handle RPC errors from IDE', async () => {
-      // Mock __jcef_send__ function
-      const sendMock = vi.fn();
-      (window as any).__jcef_send__ = sendMock;
-
-      // Create bridge instance
-      const bridge = createJCEFBridge({ debug: false });
-      bridges.push(bridge);
-
-      // Simulate IDE ready handshake
-      const receiveFunction = (window as any).__jcef_receive__;
-      receiveFunction(
-        JSON.stringify({
-          type: 'bridge:ready',
-          source: 'ide',
-          version: '1.0.0',
-          timestamp: Date.now(),
-        })
-      );
-
-      await bridge.ready();
-
       // Make RPC call
       const callPromise = bridge.call('getProjectPath', undefined);
 
@@ -212,43 +171,25 @@ describe('RPC Call Flow', () => {
             message: 'No project is currently open',
           },
           timestamp: Date.now(),
-        })
+        }),
       );
 
       // Verify error is thrown
-      await expect(callPromise).rejects.toThrow('No project is currently open');
-
+      const caughtError = await callPromise.catch((e: unknown) => e as Error);
+      expect(caughtError).toBeInstanceOf(Error);
+      expect(caughtError.message).toContain('No project is currently open');
     });
 
     it('should timeout if IDE does not respond', async () => {
-      // Mock __jcef_send__ function
-      (window as any).__jcef_send__ = vi.fn();
-
-      // Create bridge instance
-      const bridge = createJCEFBridge({ debug: false });
-      bridges.push(bridge);
-
-      // Simulate IDE ready handshake
-      const receiveFunction = (window as any).__jcef_receive__;
-      receiveFunction(
-        JSON.stringify({
-          type: 'bridge:ready',
-          source: 'ide',
-          version: '1.0.0',
-          timestamp: Date.now(),
-        })
-      );
-
-      await bridge.ready();
-
       // Make RPC call with short timeout
       const callPromise = bridge.call('getProjectPath', undefined, { timeout: 100 });
 
       // Don't send response - let it timeout
 
       // Verify timeout error
-      await expect(callPromise).rejects.toThrow('timed out');
-
+      const caughtError = await callPromise.catch((e: unknown) => e as Error);
+      expect(caughtError).toBeInstanceOf(Error);
+      expect(caughtError.message).toContain('timed out');
     });
   });
 

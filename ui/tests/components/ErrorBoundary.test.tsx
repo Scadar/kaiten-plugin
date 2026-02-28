@@ -3,15 +3,17 @@
  * Verifies error catching, fallback rendering, error reporting to IDE, and recovery
  */
 
+import React, { useState } from 'react';
+
 import { render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import * as JCEFBridge from '../../src/bridge/JCEFBridge';
-import { ErrorBoundary } from '../../src/components/ErrorBoundary';
+import * as JCEFBridge from '@/bridge/JCEFBridge';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Mock the bridge module
-vi.mock('../../src/bridge/JCEFBridge', () => ({
+vi.mock('@/bridge/JCEFBridge', () => ({
   bridge: {
     reportError: vi.fn(),
     isReady: vi.fn(() => true),
@@ -28,7 +30,7 @@ function ThrowError({ shouldThrow }: { shouldThrow: boolean }) {
 
 // Component that throws on button click
 function ThrowOnClick() {
-  const [shouldThrow, setShouldThrow] = React.useState(false);
+  const [shouldThrow, setShouldThrow] = useState(false);
 
   if (shouldThrow) {
     throw new Error('Click error');
@@ -40,9 +42,6 @@ function ThrowOnClick() {
     </button>
   );
 }
-
-// Import React after other imports
-import React from 'react';
 
 describe('ErrorBoundary', () => {
   // Suppress console.error in tests to avoid noise
