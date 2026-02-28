@@ -1,0 +1,36 @@
+# GitHub Actions Workflow for scanning the built plugin artifact with VirusTotal.
+# Triggered after the Build workflow completes on the main branch.
+# Requires the VT_API_KEY secret to be set in the repository settings.
+
+name: VirusTotal Scan
+on:
+  workflow_run:
+    workflows: [ "Build" ]
+    branches: [ main ]
+    types: [ completed ]
+
+jobs:
+
+  virustotal:
+    name: VirusTotal Scan
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+
+      # Download the plugin artifact from the triggering Build workflow
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v8
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts
+
+      # Scan all files in the artifacts directory with VirusTotal
+      - name: VirusTotal Scan
+        uses: crazy-max/ghaction-virustotal@v4
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          files: |
+            artifacts/**/*
