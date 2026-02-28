@@ -1,6 +1,7 @@
 # Kaiten JetBrains Plugin
 
 ![Build](https://github.com/Scadar/kaiten-plugin/workflows/Build/badge.svg)
+![VirusTotal Scan](https://github.com/Scadar/kaiten-plugin/actions/workflows/virustotal.yml/badge.svg)
 [![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 
