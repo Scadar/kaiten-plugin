@@ -175,9 +175,9 @@ describe('RPC Call Flow', () => {
       );
 
       // Verify error is thrown
-      const caughtError = await callPromise.catch((e: unknown) => e as Error);
+      const caughtError = await callPromise.catch((e: unknown) => e);
       expect(caughtError).toBeInstanceOf(Error);
-      expect(caughtError.message).toContain('No project is currently open');
+      expect((caughtError as Error).message).toContain('No project is currently open');
     });
 
     it('should timeout if IDE does not respond', async () => {
@@ -187,9 +187,9 @@ describe('RPC Call Flow', () => {
       // Don't send response - let it timeout
 
       // Verify timeout error
-      const caughtError = await callPromise.catch((e: unknown) => e as Error);
+      const caughtError = await callPromise.catch((e: unknown) => e);
       expect(caughtError).toBeInstanceOf(Error);
-      expect(caughtError.message).toContain('timed out');
+      expect((caughtError as Error).message).toContain('timed out');
     });
   });
 
