@@ -140,13 +140,6 @@ function IndexComponent() {
           />
         </Card>
       )}
-
-      <Card variant="island" padding="sm">
-        <Text variant="dimmed" className="leading-relaxed">
-          JetBrains IDE integration for Kaiten project management.
-          Use the tabs above to navigate between Tasks, Boards, and Settings.
-        </Text>
-      </Card>
     </Layout>
   );
 }

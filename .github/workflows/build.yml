@@ -125,9 +125,27 @@ jobs:
         with:
           cache-read-only: true
 
-      # Run tests
+      # Setup Node.js for UI tests
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      # Install npm dependencies for UI tests
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: ui
+
+      # Run Gradle tests
       - name: Run Tests
         run: ./gradlew check
+
+      # Run UI tests
+      - name: Run UI Tests
+        run: npm test -- --run
+        working-directory: ui
 
       # Collect Tests Result of failed tests
       - name: Collect Tests Result
