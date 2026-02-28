@@ -18,7 +18,6 @@ import { Label } from '@/components/ui/label';
 import { Stack } from '@/components/ui/stack';
 import { ComboboxSelect } from '@/components/ui/combobox-select';
 import { MultiCombobox } from '@/components/ui/multi-combobox';
-import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { FilterBuilder } from './FilterBuilder';
 import type { User, Board } from '@/api/types';
@@ -60,7 +59,6 @@ export function FilterConfigModal({
   const [draftName,       setDraftName]       = useState('');
   const [draftBoardId,    setDraftBoardId]     = useState<number | null>(null);
   const [draftColumnIds,  setDraftColumnIds]   = useState<number[]>([]);
-  const [draftNoGrouping, setDraftNoGrouping]  = useState(false);
   const [draftGroup,      setDraftGroup]       = useState<FilterGroup>(createRootGroup);
 
   const { data: tags        = [] } = useTags(spaceId);
@@ -72,7 +70,6 @@ export function FilterConfigModal({
     setDraftName('New filter');
     setDraftBoardId(null);
     setDraftColumnIds([]);
-    setDraftNoGrouping(false);
     setDraftGroup(createRootGroup());
     setEditing({ mode: 'new' });
   }
@@ -81,7 +78,6 @@ export function FilterConfigModal({
     setDraftName(filter.name);
     setDraftBoardId(filter.boardId ?? null);
     setDraftColumnIds(filter.columnIds ?? []);
-    setDraftNoGrouping(filter.noGrouping ?? false);
     setDraftGroup(structuredClone(filter.group));
     setEditing({ mode: 'edit', filterId: filter.id });
   }
@@ -93,11 +89,10 @@ export function FilterConfigModal({
   function saveDraft() {
     const trimmed = draftName.trim() || 'Untitled filter';
     const base = {
-      name:       trimmed,
-      boardId:    draftBoardId,
-      columnIds:  draftColumnIds.length > 0 ? draftColumnIds : undefined,
-      noGrouping: draftNoGrouping || undefined,
-      group:      draftGroup,
+      name:      trimmed,
+      boardId:   draftBoardId,
+      columnIds: draftColumnIds.length > 0 ? draftColumnIds : undefined,
+      group:     draftGroup,
     };
 
     if (editing.mode === 'new') {
@@ -282,19 +277,6 @@ export function FilterConfigModal({
                     />
                   </Stack>
                 )}
-
-                {/* No grouping */}
-                <Stack direction="row" align="center" spacing="2">
-                  <Checkbox
-                    id="draft-no-grouping"
-                    checked={draftNoGrouping}
-                    onCheckedChange={(checked) => setDraftNoGrouping(checked === true)}
-                    className="h-3.5 w-3.5"
-                  />
-                  <Label htmlFor="draft-no-grouping" className="text-xs font-normal cursor-pointer">
-                    Без группировки (flat list)
-                  </Label>
-                </Stack>
 
                 {/* Conditions */}
                 <Stack spacing="1">

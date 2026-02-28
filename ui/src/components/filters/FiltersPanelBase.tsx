@@ -42,7 +42,7 @@ export function FiltersPanelBase({
           {savedFilters.map((f) => {
             const isActive        = f.id === activeFilterId;
             const boardName       = f.boardId ? boards.find((b) => b.id === f.boardId)?.name : null;
-            const hasViewSettings = f.noGrouping || (f.columnIds && f.columnIds.length > 0);
+            const hasViewSettings = f.columnIds && f.columnIds.length > 0;
             return (
               <Button
                 key={f.id}
@@ -53,10 +53,7 @@ export function FiltersPanelBase({
                   !isActive && 'border border-border'
                 )}
                 onClick={() => onSetActiveFilter(isActive ? null : f.id)}
-                title={hasViewSettings ? [
-                  f.noGrouping ? 'Flat list' : '',
-                  f.columnIds?.length ? `${f.columnIds.length} column(s)` : '',
-                ].filter(Boolean).join(' · ') : undefined}
+                title={hasViewSettings ? `${f.columnIds?.length} column(s)` : undefined}
               >
                 <Text variant="body">{f.name}</Text>
                 {boardName && <Text variant="dimmed">· {boardName}</Text>}

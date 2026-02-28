@@ -13,6 +13,8 @@ export interface TasksToolbarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onRefresh: () => void;
+  noGrouping?: boolean;
+  onNoGroupingChange?: (value: boolean) => void;
 }
 
 const VIEW_MODES: { mode: ViewMode; icon: ReactNode; label: string }[] = [
@@ -26,6 +28,8 @@ export function TasksToolbar({
   viewMode,
   onViewModeChange,
   onRefresh,
+  noGrouping = false,
+  onNoGroupingChange,
 }: TasksToolbarProps) {
   return (
     <>
@@ -33,6 +37,28 @@ export function TasksToolbar({
       <Text variant="body" className="flex-1">Tasks</Text>
       {taskCount !== undefined && (
         <Text variant="dimmed">{taskCount}</Text>
+      )}
+
+      {/* Flat list toggle — only visible in list view */}
+      {viewMode === 'list' && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="xs"
+              className={cn(
+                'text-xs px-2',
+                noGrouping
+                  ? 'bg-primary/[0.12] text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+              )}
+              onClick={() => onNoGroupingChange?.(!noGrouping)}
+            >
+              Flat list
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Show as flat list without grouping</TooltipContent>
+        </Tooltip>
       )}
 
       {/* View mode button group */}

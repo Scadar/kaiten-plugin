@@ -20,8 +20,10 @@ export const Route = createFileRoute('/tasks')({
 });
 
 function TasksComponent() {
-  const viewMode    = useUIStore((s) => s.tasksViewMode);
-  const setViewMode = useUIStore((s) => s.setTasksViewMode);
+  const viewMode             = useUIStore((s) => s.tasksViewMode);
+  const setViewMode          = useUIStore((s) => s.setTasksViewMode);
+  const noGrouping           = useUIStore((s) => s.tasksListNoGrouping);
+  const setNoGrouping        = useUIStore((s) => s.setTasksListNoGrouping);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -73,8 +75,6 @@ function TasksComponent() {
     [boards, boardIdForKanban]
   );
 
-  const noGrouping = activeFilter?.noGrouping ?? false;
-
   return (
     <Layout
       header={
@@ -83,6 +83,8 @@ function TasksComponent() {
           viewMode={viewMode}
           onViewModeChange={canUseKanban ? setViewMode : (mode) => setViewMode(mode === 'kanban' ? 'table' : mode)}
           onRefresh={handleRefresh}
+          noGrouping={noGrouping}
+          onNoGroupingChange={setNoGrouping}
         />
       }
     >

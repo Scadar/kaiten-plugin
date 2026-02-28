@@ -231,7 +231,7 @@ class IdeRpcHandlerRegistry(private val project: Project) {
             try {
                 val response = withContext(Dispatchers.IO) { http.newCall(request).execute() }
                 val status   = response.code
-                val body     = response.body?.string() ?: ""
+                val body     = response.body.string()
                 if (status == 200) {
                     mapOf("ok" to true,  "status" to status, "body" to gson.fromJson(body, Any::class.java))
                 } else {

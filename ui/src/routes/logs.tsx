@@ -48,7 +48,7 @@ function LogsComponent() {
     getScrollElement: () => parentRef.current,
     estimateSize: () => 32,
     measureElement: (el) => el.getBoundingClientRect().height,
-    getItemKey: (index) => visible[index].id,
+    getItemKey: (index) => visible[index]!.id,
     overscan: 5,
   });
 
@@ -132,7 +132,7 @@ function LogsComponent() {
                         transform: `translateY(${vRow.start}px)`,
                       }}
                     >
-                      <LogRow entry={visible[vRow.index]} />
+                      <LogRow entry={visible[vRow.index]!} />
                     </div>
                   ))}
                 </div>

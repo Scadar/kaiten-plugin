@@ -104,8 +104,6 @@ export interface SavedFilter {
   boardId?: number | null;
   /** Column IDs to show (client-side filter; empty = all columns) */
   columnIds?: number[];
-  /** Show tasks as a flat list without board/lane/column grouping */
-  noGrouping?: boolean;
   /** Root filter group */
   group: FilterGroup;
 }

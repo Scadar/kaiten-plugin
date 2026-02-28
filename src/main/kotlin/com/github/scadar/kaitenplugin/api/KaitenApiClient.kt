@@ -46,8 +46,7 @@ class KaitenApiClient(private val client: OkHttpClient, private val baseUrl: Str
                 when (val code = response.code) {
                     200 -> {
                         log.info("[Kaiten API] <-- GET $url $code OK (${duration}ms)")
-                        val body = response.body?.string()
-                            ?: throw KaitenApiException.ServerError("Empty response body")
+                        val body = response.body.string()
                         gson.fromJson<T>(body, type)
                     }
                     401 -> {
