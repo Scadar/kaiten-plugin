@@ -1,6 +1,6 @@
 <!-- Keep a Changelog guide -> https://keepachangelog.com -->
 
-# Kaiten Plugin Changelog
+# Kaiten Integration Changelog
 
 ## [Unreleased]
 
@@ -24,11 +24,11 @@
 - **Theme synchronization**: React UI adopts the IDE color scheme (light/dark) including fonts, colors, and border radius
 - **Persistent settings**: server URL, selected spaces/boards/columns, filter state, branch patterns, and release settings are saved between sessions
 - **Secure token storage**: API token stored in OS credential store (PasswordSafe), never written to disk in plain text
-- **Settings UI**: configurable via **Settings → Tools → Kaiten** with connection test button
+- **Settings UI**: configurable via **Settings → Tools → Kaiten Integration** with connection test button
 - **In-app settings page**: settings accessible from within the tool window
 - **Notification system**: IDE balloon notifications for errors, warnings, and informational messages
 - **URL validation**: external links opened via `BrowserUtil` with scheme check (http/https only)
 - **Origin validation**: API proxy restricted to the configured Kaiten server origin
 
-[Unreleased]: https://github.com/Scadar/kaiten-plugin/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/Scadar/kaiten-plugin/commits/v1.0.0
+[Unreleased]: https://github.com/Scadar/kaiten-integration/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Scadar/kaiten-integration/commits/v1.0.0

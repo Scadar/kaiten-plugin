@@ -64,7 +64,7 @@ function IndexComponent() {
     <Layout
       header={
         <>
-          <Text variant="body">Kaiten Plugin</Text>
+          <Text variant="body">Kaiten Integration</Text>
           <Stack
             direction="row"
             align="center"

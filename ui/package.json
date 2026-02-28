@@ -1,9 +1,9 @@
 {
-  "name": "kaiten-plugin-ui",
+  "name": "kaiten-integration-ui",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "React 19 UI for Kaiten JetBrains Plugin",
+  "description": "React 19 UI for Kaiten Integration JetBrains Plugin",
   "scripts": {
     "dev": "vite",
     "build": "vite build && tsc --noEmit",

@@ -1,7 +1,7 @@
-# Kaiten JetBrains Plugin
+# Kaiten Integration JetBrains Plugin
 
-![Build](https://github.com/Scadar/kaiten-plugin/workflows/Build/badge.svg)
-![VirusTotal Scan](https://github.com/Scadar/kaiten-plugin/actions/workflows/virustotal.yml/badge.svg)
+![Build](https://github.com/Scadar/kaiten-integration/workflows/Build/badge.svg)
+![VirusTotal Scan](https://github.com/Scadar/kaiten-integration/actions/workflows/virustotal.yml/badge.svg)
 [![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 
@@ -27,7 +27,7 @@ JetBrains IDE integration with [Kaiten](https://kaiten.ru) project management sy
 
 **From Marketplace:** Settings → Plugins → Marketplace → search "Kaiten" → Install
 
-**Manually:** download the [latest release](https://github.com/Scadar/kaiten-plugin/releases/latest), then Settings → Plugins → ⚙️ → Install Plugin from Disk
+**Manually:** download the [latest release](https://github.com/Scadar/kaiten-integration/releases/latest), then Settings → Plugins → ⚙️ → Install Plugin from Disk
 
 ## Configuration
 
@@ -46,7 +46,7 @@ Tracking pauses when the IDE loses focus and resumes when it regains it.
 
 ## Support
 
-- Bug reports: [GitHub Issues](https://github.com/Scadar/kaiten-plugin/issues)
+- Bug reports: [GitHub Issues](https://github.com/Scadar/kaiten-integration/issues)
 - Kaiten API docs: [developers.kaiten.ru](https://developers.kaiten.ru/)
 
 ## License
