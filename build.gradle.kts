@@ -11,7 +11,6 @@ plugins {
     alias(libs.plugins.kotlin) // Kotlin support
     alias(libs.plugins.intelliJPlatform) // IntelliJ Platform Gradle Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
-    alias(libs.plugins.qodana) // Gradle Qodana Plugin
     alias(libs.plugins.kover) // Gradle Kover Plugin
 }
 
@@ -53,10 +52,10 @@ dependencies {
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
 
         // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
-        plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
+        plugins(providers.gradleProperty("platformPlugins").map { it.split(',').filter(String::isNotBlank) })
 
         // Module Dependencies. Uses `platformBundledModules` property from the gradle.properties file for bundled IntelliJ Platform modules.
-        bundledModules(providers.gradleProperty("platformBundledModules").map { it.split(',') })
+        bundledModules(providers.gradleProperty("platformBundledModules").map { it.split(',').filter(String::isNotBlank) })
 
         testFramework(TestFrameworkType.Platform)
     }
@@ -188,29 +187,33 @@ tasks {
             (this as JavaExec).jvmArgs("-Dkaiten.ui.dev=true")
 
             val uiDir = layout.projectDirectory.dir("ui").asFile
-            @Suppress("UnnecessaryVariable") val isWin = isWindows  // required: doFirst{} can't capture tasks{} scope directly
+            @Suppress("UnnecessaryVariable") val isWin = isWindows  // required: doFirst{}/doLast{} can't capture tasks{} scope directly
 
-            doFirst {
+            fun killViteByPidFile() {
                 val tmpDir = System.getProperty("java.io.tmpdir")
                 val portFile = File(tmpDir, "kaiten-vite-dev.port")
                 val pidFile  = File(tmpDir, "kaiten-vite-dev.pid")
 
-                // Kill any leftover Vite process from a previous run that didn't clean up.
-                pidFile.takeIf { it.exists() }?.readText()?.trim()?.toLongOrNull()?.let { oldPid ->
+                pidFile.takeIf { it.exists() }?.readText()?.trim()?.toLongOrNull()?.let { pid ->
                     try {
                         if (isWin) {
-                            ProcessBuilder("taskkill", "/F", "/T", "/PID", oldPid.toString())
-                                .start().waitFor(3, TimeUnit.SECONDS)
+                            ProcessBuilder("taskkill", "/F", "/T", "/PID", pid.toString())
+                                .start().waitFor(5, TimeUnit.SECONDS)
                         } else {
-                            ProcessBuilder("kill", "-9", oldPid.toString())
-                                .start().waitFor(3, TimeUnit.SECONDS)
+                            ProcessBuilder("kill", "-9", pid.toString())
+                                .start().waitFor(5, TimeUnit.SECONDS)
                         }
-                        println("[Vite] Stopped previous dev server (PID $oldPid)")
+                        println("[Vite] Stopped dev server (PID $pid)")
                     } catch (_: Exception) {}
                     pidFile.delete()
                     portFile.delete()
-                    Thread.sleep(500) // give OS time to release the port
                 }
+            }
+
+            doFirst {
+                // Kill any leftover Vite process from a previous run that didn't clean up.
+                killViteByPidFile()
+                Thread.sleep(500) // give OS time to release the port
 
                 val cmd = if (isWin) listOf("cmd", "/c", "npm", "run", "dev") else listOf("npm", "run", "dev")
                 val viteProcess = ProcessBuilder(cmd)
@@ -218,7 +221,8 @@ tasks {
                     .redirectErrorStream(true)
                     .start()
 
-                pidFile.writeText(viteProcess.pid().toString())
+                val tmpDir = System.getProperty("java.io.tmpdir")
+                File(tmpDir, "kaiten-vite-dev.pid").writeText(viteProcess.pid().toString())
 
                 val portRegex = Regex("""Local:\s+http://[^:]+:(\d+)""")
                 val ready = CountDownLatch(1)
@@ -232,7 +236,7 @@ tasks {
                                 if (ready.count != 0L) {
                                     portRegex.find(line)?.groupValues?.get(1)?.toIntOrNull()?.let { port ->
                                         detectedPort = port
-                                        portFile.writeText(port.toString())
+                                        File(tmpDir, "kaiten-vite-dev.port").writeText(port.toString())
                                         ready.countDown()
                                     }
                                 }
@@ -246,23 +250,14 @@ tasks {
                     if (started) "[Vite] Dev server ready on port $detectedPort"
                     else "[Vite] Warning: timed out waiting for Vite, using default port $detectedPort"
                 )
+            }
 
-                Runtime.getRuntime().addShutdownHook(Thread {
-                    try {
-                        println("[Vite] Shutting down dev server...")
-                        if (isWin) {
-                            ProcessBuilder("taskkill", "/F", "/T", "/PID", viteProcess.pid().toString())
-                                .start().waitFor(3, TimeUnit.SECONDS)
-                        } else {
-                            viteProcess.destroy()
-                            if (!viteProcess.waitFor(3, TimeUnit.SECONDS)) {
-                                viteProcess.destroyForcibly()
-                            }
-                        }
-                        portFile.delete()
-                        pidFile.delete()
-                    } catch (_: Exception) {}
-                })
+            // doLast fires when runIde completes (IDE closed normally).
+            // For abnormal termination (Stop button, crash), the PID file
+            // cleanup in doFirst handles it on the next run.
+            doLast {
+                println("[Vite] Shutting down dev server...")
+                killViteByPidFile()
             }
         } else {
             dependsOn("buildReactUI")
@@ -275,26 +270,5 @@ tasks {
 
     publishPlugin {
         dependsOn(patchChangelog)
-    }
-}
-
-intellijPlatformTesting {
-    runIde {
-        register("runIdeForUiTests") {
-            task {
-                jvmArgumentProviders += CommandLineArgumentProvider {
-                    listOf(
-                        "-Drobot-server.port=8082",
-                        "-Dide.mac.message.dialogs.as.sheets=false",
-                        "-Djb.privacy.policy.text=<!--999.999-->",
-                        "-Djb.consents.confirmation.enabled=false",
-                    )
-                }
-            }
-
-            plugins {
-                robotServerPlugin()
-            }
-        }
     }
 }
