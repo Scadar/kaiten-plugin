@@ -65,7 +65,7 @@
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/ui": "^4.0.18",
     "babel-plugin-react-compiler": "^1.0.0",
-    "eslint": "^9.18.0",
+    "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import-x": "^4.16.1",
     "eslint-plugin-react-hooks": "^7.0.1",
