@@ -1,6 +1,4 @@
-import { useCardComments, useCardFiles, useColumns } from '@/hooks/useKaitenQuery';
-import { useSettings } from '@/hooks/useSettings';
-import { buildKaitenUrl } from '@/lib/format';
+import { useTaskDetailData } from '@/hooks/useTaskDetailData';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Stack } from '@/components/ui/stack';
@@ -18,18 +16,8 @@ export interface DetailContentProps {
 }
 
 export function DetailContent({ task, onBack }: DetailContentProps) {
-  const { data: columns } = useColumns(task.boardId);
-  const {
-    data: comments,
-    isLoading: commentsLoading,
-    error: commentsError,
-    refetch: refetchComments,
-  } = useCardComments(task.id);
-  const { data: allFiles = [] } = useCardFiles(task.id);
-  const settings = useSettings();
-
-  const columnName = columns?.find((c) => c.id === task.columnId)?.name;
-  const kaitenUrl  = buildKaitenUrl(settings.serverUrl, task.spaceId, task.id);
+  const { columnName, kaitenUrl, comments, commentsLoading, commentsError, refetchComments, allFiles } =
+    useTaskDetailData(task);
 
   return (
     <div>

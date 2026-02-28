@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { bridge } from '@/bridge/JCEFBridge';
 import { timeTrackerKeys } from '@/api/endpoints';
-import { formatDuration } from '@/lib/format';
+import { aggregateDailySeconds, formatDuration } from '@/lib/format';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -50,18 +50,10 @@ function TimeTrackerComponent() {
   }, [queryClient]);
 
   // Aggregate daily data across all branches for the activity chart
-  const aggregatedDaily = useMemo(() => {
-    if (!branchEntries) return [];
-    const dayMap = new Map<string, number>();
-    for (const data of Object.values(branchEntries)) {
-      for (const day of data.daily) {
-        dayMap.set(day.date, (dayMap.get(day.date) ?? 0) + day.seconds);
-      }
-    }
-    return Array.from(dayMap.entries())
-      .map(([date, seconds]) => ({ date, seconds }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [branchEntries]);
+  const aggregatedDaily = useMemo(
+    () => (branchEntries ? aggregateDailySeconds(branchEntries) : []),
+    [branchEntries],
+  );
 
   // If a branch is selected, show its detail view
   if (selectedBranch && branchEntries) {

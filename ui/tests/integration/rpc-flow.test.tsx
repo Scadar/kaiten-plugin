@@ -229,7 +229,7 @@ describe('RPC Call Flow', () => {
       );
 
       // Verify error is thrown
-      await (expect(callPromise).rejects.toThrow('No project is currently open') as unknown as Promise<void>);
+      await expect(callPromise).rejects.toThrow('No project is currently open');
 
     });
 
@@ -260,7 +260,7 @@ describe('RPC Call Flow', () => {
       // Don't send response - let it timeout
 
       // Verify timeout error
-      await (expect(callPromise).rejects.toThrow('timed out') as unknown as Promise<void>);
+      await expect(callPromise).rejects.toThrow('timed out');
 
     });
   });

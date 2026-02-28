@@ -283,7 +283,6 @@ describe('FallbackUI', () => {
       render(<FallbackUI />);
 
       const retryButton = screen.getByText('Try Again');
-      const resetButton = screen.getByText('Reset Application');
 
       // Check for primary button styling
       expect(retryButton).toHaveClass('bg-primary');

@@ -8,10 +8,8 @@ import { TaskComments } from '@/components/task-detail/TaskComments';
 import { TaskMeta } from '@/components/task-detail/TaskMeta';
 import { CustomPropertiesSection } from '@/components/task-detail/CustomPropertiesSection';
 import { CardFilesSection } from '@/components/task-detail/CardFilesSection';
-import { buildKaitenUrl } from '@/lib/format';
 import { RichTextContent } from '@/components/task-detail/RichTextContent';
-import { useCardComments, useCardFiles, useColumns } from '@/hooks/useKaitenQuery';
-import { useSettings } from '@/hooks/useSettings';
+import { useTaskDetailData } from '@/hooks/useTaskDetailData';
 import type { TaskDetail } from '@/api/types';
 
 interface DialogDetailContentProps {
@@ -22,19 +20,9 @@ interface DialogDetailContentProps {
  * Task detail body rendered inside the card dialog.
  */
 export function DialogDetailContent({ task }: DialogDetailContentProps) {
-  const { data: columns } = useColumns(task.boardId);
-  const {
-    data: comments,
-    isLoading: commentsLoading,
-    error: commentsError,
-    refetch: refetchComments,
-  } = useCardComments(task.id);
-  const { data: allFiles = [] } = useCardFiles(task.id);
-  const settings = useSettings();
-
-  const columnName     = columns?.find((c) => c.id === task.columnId)?.name;
-  const kaitenUrl      = buildKaitenUrl(settings.serverUrl, task.spaceId, task.id);
-  const fileUids       = allFiles.map((f) => f.uid);
+  const { columnName, kaitenUrl, comments, commentsLoading, commentsError, refetchComments, allFiles } =
+    useTaskDetailData(task);
+  const fileUids = allFiles.map((f) => f.uid);
 
 
   return (

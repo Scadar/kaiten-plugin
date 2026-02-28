@@ -120,7 +120,7 @@ function walkNode(
 // ── Markdown link parsing ─────────────────────────────────────────────────────
 
 // Matches  ![alt](url)  and  [text](url)  with optional "title" attribute
-const MD_RE = /(!?\[([^\]]*)\])\(([^)\s"]+)(?:\s+"[^"]*")?\)/g;
+const MD_RE = /(!?\[([^\]]*)])\(([^)\s"]+)(?:\s+"[^"]*")?\)/g;
 
 function parseMdLinks(
   text: string,

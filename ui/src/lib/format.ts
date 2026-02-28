@@ -81,6 +81,20 @@ export function formatDuration(seconds: number): string {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
+export function aggregateDailySeconds(
+  branchEntries: Record<string, { daily: { date: string; seconds: number }[] }>,
+): { date: string; seconds: number }[] {
+  const dayMap = new Map<string, number>();
+  for (const data of Object.values(branchEntries)) {
+    for (const day of data.daily) {
+      dayMap.set(day.date, (dayMap.get(day.date) ?? 0) + day.seconds);
+    }
+  }
+  return Array.from(dayMap.entries())
+    .map(([date, seconds]) => ({ date, seconds }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export function formatRelativeDate(dateStr: string | null): string {
   if (!dateStr) return '';
   const date = new Date(dateStr);

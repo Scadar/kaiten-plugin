@@ -11,6 +11,7 @@ import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
 import { InfoRow } from '@/components/home/InfoRow';
 import { ActivityHeatmap } from '@/components/time-tracker/ActivityHeatmap';
+import { aggregateDailySeconds } from '@/lib/format';
 import { FolderOpen, FileCode2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
@@ -37,18 +38,10 @@ function IndexComponent() {
   });
 
   // Aggregate daily data across all branches for the heatmap
-  const aggregatedDaily = useMemo(() => {
-    if (!branchEntries) return [];
-    const dayMap = new Map<string, number>();
-    for (const data of Object.values(branchEntries)) {
-      for (const day of data.daily) {
-        dayMap.set(day.date, (dayMap.get(day.date) ?? 0) + day.seconds);
-      }
-    }
-    return Array.from(dayMap.entries())
-      .map(([date, seconds]) => ({ date, seconds }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [branchEntries]);
+  const aggregatedDaily = useMemo(
+    () => (branchEntries ? aggregateDailySeconds(branchEntries) : []),
+    [branchEntries],
+  );
 
   // Aggregate commits per date for commit heatmap
   const aggregatedCommits = useMemo(() => {
