@@ -7,7 +7,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   // Ignored files
-  { ignores: ['dist', 'node_modules', '*.config.*'] },
+  { ignores: ['dist', 'node_modules', '*.config.*', 'src/routeTree.gen.ts'] },
 
   // Base rules
   js.configs.recommended,

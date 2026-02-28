@@ -42,4 +42,3 @@ dist-ssr
 
 # TanStack Router
 .tanstack/
-routeTree.gen.ts
