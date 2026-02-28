@@ -1,0 +1,38 @@
+name: Setup Environment
+description: Setup Java, Gradle, and Node.js for the project
+
+inputs:
+  gradle-cache-read-only:
+    description: Whether Gradle cache is read-only
+    default: 'false'
+  setup-node:
+    description: Whether to setup Node.js and install npm dependencies
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Java
+      uses: actions/setup-java@v5
+      with:
+        distribution: zulu
+        java-version: 21
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v5
+      with:
+        cache-read-only: ${{ inputs.gradle-cache-read-only }}
+
+    - name: Setup Node.js
+      if: ${{ inputs.setup-node == 'true' }}
+      uses: actions/setup-node@v6
+      with:
+        node-version: 20
+        cache: npm
+        cache-dependency-path: ui/package-lock.json
+
+    - name: Install npm dependencies
+      if: ${{ inputs.setup-node == 'true' }}
+      run: npm ci
+      working-directory: ui
+      shell: bash

@@ -9,6 +9,10 @@ on:
     branches: [ main, develop ]
     types: [ completed ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
 jobs:
 
   virustotal:
@@ -19,13 +23,14 @@ jobs:
       contents: read
     steps:
 
-      # Download the plugin artifact from the triggering Build workflow
+      # Download only the plugin artifact from the triggering Build workflow
       - name: Download Build Artifact
         uses: actions/download-artifact@v8
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: artifacts
+          pattern: "Kaiten*"
 
       # Scan all files in the artifacts directory with VirusTotal
       - name: VirusTotal Scan

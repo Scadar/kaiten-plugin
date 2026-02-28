@@ -17,8 +17,18 @@ on:
   # Trigger the workflow on pushes to only the 'main' branch (this avoids duplicate checks being run e.g., for dependabot pull requests)
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
   # Trigger the workflow on any pull request
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -26,9 +36,9 @@ concurrency:
 
 jobs:
 
-  # Prepare the environment and build the plugin
+  # Build the plugin and run tests
   build:
-    name: Build
+    name: Build & Test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -45,34 +55,40 @@ jobs:
       # Check out the current repository
       - name: Fetch Sources
         uses: actions/checkout@v6
-
-      # Set up the Java environment for the next steps
-      - name: Setup Java
-        uses: actions/setup-java@v5
         with:
-          distribution: zulu
-          java-version: 21
+          fetch-depth: 1
 
-      # Setup Gradle
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+      # Setup Java, Gradle, and Node.js
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
 
-      # Setup Node.js for React UI build
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: ui/package-lock.json
+      # Run Gradle tests
+      - name: Run Tests
+        run: ./gradlew check
 
-      # Install npm dependencies for React UI
-      - name: Install npm dependencies
-        run: npm ci
+      # Run UI tests
+      - name: Run UI Tests
+        run: npm test -- --run
         working-directory: ui
 
-      # Build plugin
+      # Build plugin (uses Gradle build cache — compilation is already done by check)
       - name: Build plugin
         run: ./gradlew buildPlugin
+
+      # Collect Tests Result of failed tests
+      - name: Collect Tests Result
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: tests-result
+          path: ${{ github.workspace }}/build/reports/tests
+
+      # Upload the Kover report to CodeCov
+      - name: Upload Code Coverage Report
+        uses: codecov/codecov-action@v5
+        with:
+          files: ${{ github.workspace }}/build/reports/kover/report.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       # Prepare plugin archive content for creating artifact
       - name: Prepare Plugin Artifact
@@ -92,80 +108,9 @@ jobs:
           name: ${{ steps.artifact.outputs.filename }}
           path: ./build/distributions/content/*/*
 
-  # Run tests and upload a code coverage report
-  test:
-    name: Test
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-
-      # Free GitHub Actions Environment Disk Space
-      - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@v1.3.1
-        with:
-          tool-cache: false
-          large-packages: false
-
-      # Check out the current repository
-      - name: Fetch Sources
-        uses: actions/checkout@v6
-
-      # Set up the Java environment for the next steps
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: zulu
-          java-version: 21
-
-      # Setup Gradle
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
-        with:
-          cache-read-only: true
-
-      # Setup Node.js for UI tests
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: ui/package-lock.json
-
-      # Install npm dependencies for UI tests
-      - name: Install npm dependencies
-        run: npm ci
-        working-directory: ui
-
-      # Run Gradle tests
-      - name: Run Tests
-        run: ./gradlew check
-
-      # Run UI tests
-      - name: Run UI Tests
-        run: npm test -- --run
-        working-directory: ui
-
-      # Collect Tests Result of failed tests
-      - name: Collect Tests Result
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: tests-result
-          path: ${{ github.workspace }}/build/reports/tests
-
-      # Upload the Kover report to CodeCov
-      - name: Upload Code Coverage Report
-        uses: codecov/codecov-action@v5
-        with:
-          files: ${{ github.workspace }}/build/reports/kover/report.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   # Run Qodana inspections for Java/Kotlin
   inspectCodeJava:
     name: Inspect Java code
-    needs: [ build ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -187,7 +132,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      # Set up the Java environment for the next steps
+      # Set up the Java environment for Qodana
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -208,20 +153,12 @@ jobs:
   # Run Qodana inspections for JavaScript/TypeScript
   inspectCodeJs:
     name: Inspect JS code
-    needs: [ build ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       checks: write
       pull-requests: write
     steps:
-
-      # Free GitHub Actions Environment Disk Space
-      - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@v1.3.1
-        with:
-          tool-cache: false
-          large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
@@ -265,6 +202,8 @@ jobs:
       # Check out the current repository
       - name: Fetch Sources
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       # Setup Node.js
       - name: Setup Node.js
@@ -292,7 +231,6 @@ jobs:
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
     name: Verify plugin
-    needs: [ build ]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -308,32 +246,14 @@ jobs:
       # Check out the current repository
       - name: Fetch Sources
         uses: actions/checkout@v6
-
-      # Set up the Java environment for the next steps
-      - name: Setup Java
-        uses: actions/setup-java@v5
         with:
-          distribution: zulu
-          java-version: 21
+          fetch-depth: 1
 
-      # Setup Gradle
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+      # Setup Java, Gradle, and Node.js
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
         with:
-          cache-read-only: true
-
-      # Setup Node.js for React UI build
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: ui/package-lock.json
-
-      # Install npm dependencies for React UI
-      - name: Install npm dependencies
-        run: npm ci
-        working-directory: ui
+          gradle-cache-read-only: 'true'
 
       # Run Verify Plugin task and IntelliJ Plugin Verifier tool
       - name: Run Plugin Verification tasks
@@ -352,7 +272,7 @@ jobs:
   releaseDraft:
     name: Release draft
     if: github.event_name != 'pull_request'
-    needs: [ build, test, inspectCodeJava, inspectCodeJs, lintUi, verify ]
+    needs: [ build, inspectCodeJava, inspectCodeJs, lintUi, verify ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -361,19 +281,15 @@ jobs:
       # Check out the current repository
       - name: Fetch Sources
         uses: actions/checkout@v6
-
-      # Set up the Java environment for the next steps
-      - name: Setup Java
-        uses: actions/setup-java@v5
         with:
-          distribution: zulu
-          java-version: 21
+          fetch-depth: 1
 
-      # Setup Gradle
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+      # Setup Java and Gradle (no Node.js needed for release draft)
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
         with:
-          cache-read-only: true
+          gradle-cache-read-only: 'true'
+          setup-node: 'false'
 
       # Remove old release drafts by using the curl request for the available releases with a draft flag
       - name: Remove Old Release Drafts
