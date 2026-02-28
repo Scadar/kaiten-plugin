@@ -73,8 +73,4 @@ const Typography = React.forwardRef<HTMLElement, TypographyProps>(
 )
 Typography.displayName = "Typography"
 
-/** Ergonomic alias — prefer `<Text variant="...">` in new code */
-const Text = Typography
-Text.displayName = "Text"
-
-export { Typography, Text, typographyVariants }
+export { Typography, Typography as Text, typographyVariants }

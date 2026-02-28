@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
@@ -14,7 +15,7 @@ export interface TasksToolbarProps {
   onRefresh: () => void;
 }
 
-const VIEW_MODES: { mode: ViewMode; icon: React.ReactNode; label: string }[] = [
+const VIEW_MODES: { mode: ViewMode; icon: ReactNode; label: string }[] = [
   { mode: 'table',  icon: <Table2 size={13} />,     label: 'Table view'  },
   { mode: 'list',   icon: <LayoutList size={13} />,  label: 'List view'   },
   { mode: 'kanban', icon: <LayoutGrid size={13} />,  label: 'Kanban view' },

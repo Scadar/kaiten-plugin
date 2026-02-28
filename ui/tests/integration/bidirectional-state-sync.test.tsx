@@ -161,7 +161,7 @@ describe('Bidirectional State Synchronization Integration', () => {
   describe('Circular Update Prevention', () => {
     it('should not sync IDE-initiated updates back to IDE', async () => {
       const syncStateSpy = vi.spyOn(bridge, 'syncState');
-      const { result } = renderHook(() => useSyncedState());
+      renderHook(() => useSyncedState());
 
       // IDE updates state
       act(() => {

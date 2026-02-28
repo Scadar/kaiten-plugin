@@ -102,7 +102,7 @@ describe('ErrorBoundary', () => {
     });
 
     it('should update state with error details', () => {
-      const { container } = render(
+      render(
         <ErrorBoundary>
           <ThrowError shouldThrow={true} />
         </ErrorBoundary>
@@ -284,7 +284,7 @@ describe('ErrorBoundary', () => {
 
   describe('Error recovery', () => {
     it('should recover when children stop throwing errors', () => {
-      const { rerender } = render(
+      render(
         <ErrorBoundary>
           <ThrowError shouldThrow={true} />
         </ErrorBoundary>

@@ -229,14 +229,13 @@ describe('RPC Call Flow', () => {
       );
 
       // Verify error is thrown
-      await expect(callPromise).rejects.toThrow('No project is currently open');
+      await (expect(callPromise).rejects.toThrow('No project is currently open') as unknown as Promise<void>);
 
     });
 
     it('should timeout if IDE does not respond', async () => {
       // Mock __jcef_send__ function
-      const sendMock = vi.fn();
-      (window as any).__jcef_send__ = sendMock;
+      (window as any).__jcef_send__ = vi.fn();
 
       // Create bridge instance
       const bridge = createJCEFBridge({ debug: false });
@@ -261,7 +260,7 @@ describe('RPC Call Flow', () => {
       // Don't send response - let it timeout
 
       // Verify timeout error
-      await expect(callPromise).rejects.toThrow('timed out');
+      await (expect(callPromise).rejects.toThrow('timed out') as unknown as Promise<void>);
 
     });
   });
@@ -272,8 +271,7 @@ describe('RPC Call Flow', () => {
       // If this compiles, type safety is working
 
       // Mock __jcef_send__ to prevent errors
-      const sendMock = vi.fn();
-      (window as any).__jcef_send__ = sendMock;
+      (window as any).__jcef_send__ = vi.fn();
 
       const bridge = createJCEFBridge({ debug: false });
       bridges.push(bridge);

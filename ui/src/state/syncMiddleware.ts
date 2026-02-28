@@ -164,8 +164,8 @@ function extractAppState(state: unknown): AppState {
  * This is a Zustand middleware that intercepts setState calls
  */
 export const syncMiddleware = <T extends object>(
-  config: StateCreator<T, [], []>
-): StateCreator<T, [], []> => {
+  config: StateCreator<T>
+): StateCreator<T> => {
   return (set, get, api) => {
     // Track previous state
     let previousState = extractAppState(get());
@@ -252,12 +252,12 @@ export interface SyncMiddlewareConfig {
 /**
  * Create configured sync middleware
  *
- * @param config - Middleware configuration
+ * @param _config - Middleware configuration
  * @returns Configured sync middleware
  */
 export function createSyncMiddleware<T extends object>(
   _config: SyncMiddlewareConfig = {}
-): (stateCreator: StateCreator<T, [], []>) => StateCreator<T, [], []> {
+): (stateCreator: StateCreator<T>) => StateCreator<T> {
   // TODO: Apply custom configuration if needed
   // For now, we use the default configuration
   return syncMiddleware;

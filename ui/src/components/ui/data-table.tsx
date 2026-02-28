@@ -100,7 +100,7 @@ export function DataTableViewOptions<TData>({ table }: { table: TanTable<TData> 
               key={col.id}
               className="capitalize"
               checked={col.getIsVisible()}
-              onCheckedChange={(value) => col.toggleVisibility(!!value)}
+              onCheckedChange={(value) => col.toggleVisibility(value)}
             >
               {col.id}
             </DropdownMenuCheckboxItem>

@@ -196,7 +196,7 @@ function ReleasesListTab({ settings, releaseFiltersConfigured }: ReleasesListTab
       const isActive = row.original.id === activeReleaseCardId;
       return (
         <button
-          onClick={(e) => { e.stopPropagation(); handleSetActive(row.original.id); }}
+          onClick={(e) => { e.stopPropagation(); void handleSetActive(row.original.id); }}
           title={isActive ? 'Remove as active release' : 'Set as active release'}
           className={cn(
             'flex items-center justify-center transition-colors',
@@ -551,7 +551,7 @@ function ActiveReleaseContent({ cardId, serverUrl, releaseSpaceId, branchPattern
           {releaseBranch && !branchesLoading && !branchesError && branchResults && (
             <Text variant="dimmed" className="text-muted-foreground">
               {(childTasks ?? []).filter((t) =>
-                branchPatterns.some((p) => branchResults[p.replace('{id}', String(t.id))] === true)
+                branchPatterns.some((p) => branchResults[p.replace('{id}', String(t.id))])
               ).length} / {(childTasks ?? []).length} задач добавлены в{' '}
               <span className="font-mono">{releaseBranch}</span>
             </Text>

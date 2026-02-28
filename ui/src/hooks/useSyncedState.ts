@@ -81,7 +81,6 @@ export interface UseSyncedStateReturn {
 /**
  * Main hook with optional selector for accessing synced state
  *
- * @param selector - Optional selector function to extract specific state slice
  * @returns Selected state or full state with actions
  *
  * @example
@@ -222,7 +221,7 @@ export function useSyncedReady(autoInitialize = false): {
     if (autoInitialize && !hasInitialized.current) {
       hasInitialized.current = true;
       // Call initialize directly from store to avoid dependency issues
-      useSyncedStore.getState().initialize();
+      void useSyncedStore.getState().initialize();
     }
     // Only depend on autoInitialize to prevent re-running on every render
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -273,7 +272,7 @@ export function useSyncedStateEffect<K extends keyof AppState>(
     // Initialize previous value on mount
     previousValueRef.current = useSyncedStore.getState()[field];
 
-    const unsubscribe = useSyncedStore.subscribe((state) => {
+    return useSyncedStore.subscribe((state) => {
       const currentValue = state[field];
       const previousValue = previousValueRef.current;
 
@@ -283,8 +282,6 @@ export function useSyncedStateEffect<K extends keyof AppState>(
         previousValueRef.current = currentValue;
       }
     });
-
-    return unsubscribe;
   }, [field]);
 }
 
@@ -339,7 +336,7 @@ export function useSyncedFields<K extends keyof AppState>(
   const previousRef = useRef<Pick<AppState, K> | null>(null);
 
   // Select fields from store
-  const result = useSyncedStore((state) => {
+  return useSyncedStore((state) => {
     const newResult = {} as Pick<AppState, K>;
     for (const field of fields) {
       newResult[field] = state[field];
@@ -354,8 +351,6 @@ export function useSyncedFields<K extends keyof AppState>(
     previousRef.current = newResult;
     return newResult;
   });
-
-  return result;
 }
 
 /**

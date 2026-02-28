@@ -249,7 +249,7 @@ function serializeNode(node: FilterNode): object {
 export function encodeFilter(group: FilterGroup): string {
   const normalized = normalizeGroup(group);
   const payload    = JSON.stringify(serializeNode(normalized));
-  return btoa(unescape(encodeURIComponent(payload)));
+  return btoa(encodeURIComponent(payload).replace(/%([0-9A-F]{2})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16))));
 }
 
 // ---------------------------------------------------------------------------

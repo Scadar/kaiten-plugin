@@ -13,8 +13,43 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { bridge } from '@/bridge/JCEFBridge';
-import { useSyncedStore, disposeSyncStore } from '@/state/syncStore';
+import { useSyncedStore } from '@/state/syncStore';
 import type { EventMessage, AppState } from '@/bridge/types';
+
+/**
+ * Helper: Simulate IDE emitting an event
+ */
+function simulateIDEEvent<T>(eventName: string, payload: T): void {
+  const message: EventMessage<T> = {
+    type: 'event',
+    timestamp: Date.now(),
+    event: eventName,
+    payload,
+  };
+
+  act(() => {
+    if (window.__jcef_receive__) {
+      window.__jcef_receive__(JSON.stringify(message));
+    }
+  });
+}
+
+/**
+ * Helper: Simulate IDE sending state update
+ */
+function simulateStateUpdate(updates: Partial<AppState>): void {
+  const message = {
+    type: 'state:update',
+    timestamp: Date.now(),
+    updates,
+  };
+
+  act(() => {
+    if (window.__jcef_receive__) {
+      window.__jcef_receive__(JSON.stringify(message));
+    }
+  });
+}
 
 describe('Event Propagation: IDE → React', () => {
   beforeEach(() => {
@@ -25,43 +60,6 @@ describe('Event Propagation: IDE → React', () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
-
-  /**
-   * Helper: Simulate IDE emitting an event
-   */
-  function simulateIDEEvent<T>(eventName: string, payload: T): void {
-    const message: EventMessage<T> = {
-      type: 'event',
-      timestamp: Date.now(),
-      event: eventName,
-      payload,
-    };
-
-    // Simulate IDE sending event to React
-    act(() => {
-      if (window.__jcef_receive__) {
-        window.__jcef_receive__(JSON.stringify(message));
-      }
-    });
-  }
-
-  /**
-   * Helper: Simulate IDE sending state update
-   */
-  function simulateStateUpdate(updates: Partial<AppState>): void {
-    const message = {
-      type: 'state:update',
-      timestamp: Date.now(),
-      updates,
-    };
-
-    // Simulate IDE sending state update to React
-    act(() => {
-      if (window.__jcef_receive__) {
-        window.__jcef_receive__(JSON.stringify(message));
-      }
-    });
-  }
 
   it('should receive generic event from IDE and invoke subscribed handlers', async () => {
     const handler = vi.fn();
@@ -272,41 +270,6 @@ describe('E2E Event Flow: task:updated scenario', () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
-
-  /**
-   * Helper: Simulate IDE emitting an event
-   */
-  function simulateIDEEvent<T>(eventName: string, payload: T): void {
-    const message: EventMessage<T> = {
-      type: 'event',
-      timestamp: Date.now(),
-      event: eventName,
-      payload,
-    };
-
-    act(() => {
-      if (window.__jcef_receive__) {
-        window.__jcef_receive__(JSON.stringify(message));
-      }
-    });
-  }
-
-  /**
-   * Helper: Simulate IDE sending state update
-   */
-  function simulateStateUpdate(updates: Partial<AppState>): void {
-    const message = {
-      type: 'state:update',
-      timestamp: Date.now(),
-      updates,
-    };
-
-    act(() => {
-      if (window.__jcef_receive__) {
-        window.__jcef_receive__(JSON.stringify(message));
-      }
-    });
-  }
 
   it('should complete full event flow: IDE emits task:updated → React updates state → UI reflects change', async () => {
     const { result } = renderHook(() => useSyncedStore());

@@ -46,7 +46,7 @@ function TimeTrackerComponent() {
   });
 
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: timeTrackerKeys.branches() });
+    void queryClient.invalidateQueries({ queryKey: timeTrackerKeys.branches() });
   }, [queryClient]);
 
   // Aggregate daily data across all branches for the activity chart

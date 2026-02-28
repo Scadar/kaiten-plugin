@@ -23,7 +23,7 @@ export function useFilterPersistence(): void {
   // Subscribe to space-selection changes and persist to IDE settings.
   // The `saving` flag prevents an unnecessary save during initialization.
   useEffect(() => {
-    const unsubscribe = useFilterStore.subscribe((state) => {
+    return useFilterStore.subscribe((state) => {
       if (saving.current || !initialized.current) return;
 
       bridge
@@ -36,8 +36,6 @@ export function useFilterPersistence(): void {
           console.error('[useFilterPersistence] Failed to save filter state:', err)
         );
     });
-
-    return unsubscribe;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initialize filterStore from persisted settings (once, when settings arrive).

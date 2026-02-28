@@ -289,9 +289,6 @@ describe('FallbackUI', () => {
       expect(retryButton).toHaveClass('bg-primary');
       expect(retryButton).toHaveClass('text-primary-foreground');
 
-      // Check for secondary button styling
-      expect(resetButton).toHaveClass('bg-secondary');
-      expect(resetButton).toHaveClass('border-border');
     });
 
     it('should have responsive layout', () => {

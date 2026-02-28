@@ -71,10 +71,10 @@ export interface JCEFBridgeOptions {
  * - Type-safe message contracts
  */
 export class JCEFBridge {
-  private eventBus: EventBus;
-  private rpc: RPCHandler;
+  private readonly eventBus: EventBus;
+  private readonly rpc: RPCHandler;
   private state: BridgeState = 'initializing';
-  private readyPromise: Promise<void>;
+  private readonly readyPromise: Promise<void>;
   private readyResolve?: () => void;
   private readyReject?: (error: Error) => void;
   private options: Required<JCEFBridgeOptions>;

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 interface FallbackUIProps {
   error?: Error | null;
-  onRetry?: () => void;
+  onRetry?: () => void | Promise<void>;
   onReset?: () => void;
   title?: string;
   message?: string;
@@ -24,7 +24,7 @@ export function FallbackUI({
     setIsRetrying(true);
     try {
       if (onRetry) {
-        await onRetry();
+        onRetry();
       } else {
         window.location.reload();
       }
