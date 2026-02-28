@@ -47,9 +47,6 @@ class JCEFBridgeHandler(
     // State sync callback
     private var stateSyncCallback: ((Map<String, Any>) -> Unit)? = null
 
-    // Error report callback
-    private var errorReportCallback: ((ErrorDetails) -> Unit)? = null
-
     // Bridge state
     @Volatile
     private var isReady = false
@@ -267,11 +264,7 @@ class JCEFBridgeHandler(
     private fun handleErrorReport(json: JsonObject) {
         try {
             val message = gson.fromJson(json, ErrorReportMessage::class.java)
-            val callback = errorReportCallback
-
             log.error("Error reported from React: ${message.error.message}", Throwable(message.error.stack ?: ""))
-
-            callback?.invoke(message.error)
         } catch (e: Exception) {
             log.error("Error handling error report", e)
         }
@@ -427,7 +420,6 @@ class JCEFBridgeHandler(
         rpcHandlers.clear()
         eventListeners.clear()
         stateSyncCallback = null
-        errorReportCallback = null
         scope.cancel()
         log.info("Bridge disposed")
     }

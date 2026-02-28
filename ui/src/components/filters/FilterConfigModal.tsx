@@ -1,27 +1,25 @@
 import { useState } from 'react';
+
 import { Plus, Check, Pencil, Trash2, ArrowLeft } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  type SavedFilter,
-  type FilterGroup,
-  createRootGroup,
-} from '@/lib/advancedFilters';
-import { useTags, useCardTypes, useColumns, useCustomPropertiesWithValues } from '@/hooks/useKaitenQuery';
+
+import type { User, Board } from '@/api/types';
 import { Button } from '@/components/ui/button';
+import { ComboboxSelect } from '@/components/ui/combobox-select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Stack } from '@/components/ui/stack';
-import { ComboboxSelect } from '@/components/ui/combobox-select';
 import { MultiCombobox } from '@/components/ui/multi-combobox';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Stack } from '@/components/ui/stack';
+import {
+  useTags,
+  useCardTypes,
+  useColumns,
+  useCustomPropertiesWithValues,
+} from '@/hooks/useKaitenQuery';
+import { type SavedFilter, type FilterGroup, createRootGroup } from '@/lib/advancedFilters';
 import { cn } from '@/lib/utils';
+
 import { FilterBuilder } from './FilterBuilder';
-import type { User, Board } from '@/api/types';
 
 interface FilterConfigModalProps {
   open: boolean;
@@ -37,10 +35,7 @@ interface FilterConfigModalProps {
   spaceId: number | null;
 }
 
-type EditingState =
-  | { mode: 'none' }
-  | { mode: 'new' }
-  | { mode: 'edit'; filterId: string };
+type EditingState = { mode: 'none' } | { mode: 'new' } | { mode: 'edit'; filterId: string };
 
 export function FilterConfigModal({
   open,
@@ -57,22 +52,20 @@ export function FilterConfigModal({
 }: FilterConfigModalProps) {
   const [editing, setEditing] = useState<EditingState>({ mode: 'none' });
 
-  const [draftName,       setDraftName]       = useState('');
-  const [draftBoardId,    setDraftBoardId]     = useState<number | null>(null);
-  const [draftColumnIds,  setDraftColumnIds]   = useState<number[]>([]);
-  const [draftNoGrouping, setDraftNoGrouping]  = useState(false);
-  const [draftGroup,      setDraftGroup]       = useState<FilterGroup>(createRootGroup);
+  const [draftName, setDraftName] = useState('');
+  const [draftBoardId, setDraftBoardId] = useState<number | null>(null);
+  const [draftColumnIds, setDraftColumnIds] = useState<number[]>([]);
+  const [draftGroup, setDraftGroup] = useState<FilterGroup>(createRootGroup);
 
-  const { data: tags        = [] } = useTags(spaceId);
-  const { data: cardTypes   = [] } = useCardTypes(spaceId);
+  const { data: tags = [] } = useTags(spaceId);
+  const { data: cardTypes = [] } = useCardTypes(spaceId);
   const { data: boardColumns = [] } = useColumns(draftBoardId);
-  const { data: customProperties = [] } = useCustomPropertiesWithValues();
+  const { data: customProperties } = useCustomPropertiesWithValues();
 
   function startNew() {
     setDraftName('New filter');
     setDraftBoardId(null);
     setDraftColumnIds([]);
-    setDraftNoGrouping(false);
     setDraftGroup(createRootGroup());
     setEditing({ mode: 'new' });
   }
@@ -81,7 +74,6 @@ export function FilterConfigModal({
     setDraftName(filter.name);
     setDraftBoardId(filter.boardId ?? null);
     setDraftColumnIds(filter.columnIds ?? []);
-    setDraftNoGrouping(filter.noGrouping ?? false);
     setDraftGroup(structuredClone(filter.group));
     setEditing({ mode: 'edit', filterId: filter.id });
   }
@@ -93,11 +85,10 @@ export function FilterConfigModal({
   function saveDraft() {
     const trimmed = draftName.trim() || 'Untitled filter';
     const base = {
-      name:       trimmed,
-      boardId:    draftBoardId,
-      columnIds:  draftColumnIds.length > 0 ? draftColumnIds : undefined,
-      noGrouping: draftNoGrouping || undefined,
-      group:      draftGroup,
+      name: trimmed,
+      boardId: draftBoardId,
+      columnIds: draftColumnIds.length > 0 ? draftColumnIds : undefined,
+      group: draftGroup,
     };
 
     if (editing.mode === 'new') {
@@ -118,26 +109,24 @@ export function FilterConfigModal({
     onDeleteFilter(id);
   }
 
-  const isEditing    = editing.mode !== 'none';
+  const isEditing = editing.mode !== 'none';
   const editingFilter =
-    editing.mode === 'edit'
-      ? savedFilters.find((f) => f.id === editing.filterId)
-      : null;
+    editing.mode === 'edit' ? savedFilters.find((f) => f.id === editing.filterId) : null;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="px-4 pt-4 pb-3 border-b border-border shrink-0">
+      <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col overflow-hidden p-0">
+        <DialogHeader className="border-border shrink-0 border-b px-4 pt-4 pb-3">
           <DialogTitle className="text-sm font-semibold">Filter settings</DialogTitle>
         </DialogHeader>
 
         <Stack direction="row" className="flex-1 overflow-hidden">
           {/* ── Left sidebar: list of saved filters (hidden while editing) ── */}
           {!isEditing && (
-            <Stack className="w-full border-border overflow-hidden">
+            <Stack className="border-border w-full overflow-hidden">
               <div className="flex-1 overflow-y-auto py-1">
                 {savedFilters.length === 0 && (
-                  <p className="px-3 py-2 text-xs text-muted-foreground">No saved filters</p>
+                  <p className="text-muted-foreground px-3 py-2 text-xs">No saved filters</p>
                 )}
 
                 {savedFilters.map((f) => {
@@ -149,17 +138,17 @@ export function FilterConfigModal({
                       direction="row"
                       align="center"
                       spacing="1"
-                      className="group px-2 py-1.5 rounded-sm mx-1 cursor-pointer transition-colors hover:bg-accent/50"
+                      className="group hover:bg-accent/50 mx-1 cursor-pointer rounded-sm px-2 py-1.5 transition-colors"
                     >
                       {/* Active toggle */}
                       <Button
                         variant="ghost"
                         size="icon"
                         className={cn(
-                          'shrink-0 h-4 w-4 rounded border p-0 transition-colors',
+                          'h-4 w-4 shrink-0 rounded border p-0 transition-colors',
                           isActive
                             ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90'
-                            : 'border-border hover:border-primary/60'
+                            : 'border-border hover:border-primary/60',
                         )}
                         onClick={() => onSetActiveFilter(isActive ? null : f.id)}
                         title={isActive ? 'Deactivate filter' : 'Activate filter'}
@@ -168,7 +157,7 @@ export function FilterConfigModal({
                       </Button>
 
                       <span
-                        className="flex-1 min-w-0 truncate text-xs"
+                        className="min-w-0 flex-1 truncate text-xs"
                         onClick={() => startEdit(f)}
                       >
                         {f.name}
@@ -177,7 +166,7 @@ export function FilterConfigModal({
                       <Button
                         variant="ghost"
                         size="icon-xs"
-                        className="opacity-0 group-hover:opacity-100 shrink-0 p-0.5"
+                        className="shrink-0 p-0.5 opacity-0 group-hover:opacity-100"
                         onClick={() => startEdit(f)}
                         title="Edit filter"
                       >
@@ -187,7 +176,7 @@ export function FilterConfigModal({
                       <Button
                         variant="ghost"
                         size="icon-xs"
-                        className="opacity-0 group-hover:opacity-100 shrink-0 p-0.5 hover:text-destructive"
+                        className="hover:text-destructive shrink-0 p-0.5 opacity-0 group-hover:opacity-100"
                         onClick={() => handleDelete(f.id)}
                         title="Delete filter"
                       >
@@ -198,11 +187,11 @@ export function FilterConfigModal({
                 })}
               </div>
 
-              <div className="shrink-0 border-t border-border p-2">
+              <div className="border-border shrink-0 border-t p-2">
                 <Button
                   variant="ghost"
                   size="xs"
-                  className="w-full justify-center gap-1 text-muted-foreground"
+                  className="text-muted-foreground w-full justify-center gap-1"
                   onClick={startNew}
                 >
                   <Plus size={12} />
@@ -221,7 +210,7 @@ export function FilterConfigModal({
                   <Button
                     variant="ghost"
                     size="xs"
-                    className="gap-1 px-2 -ml-1 text-muted-foreground"
+                    className="text-muted-foreground -ml-1 gap-1 px-2"
                     onClick={cancelEdit}
                   >
                     <ArrowLeft size={12} />
@@ -245,7 +234,9 @@ export function FilterConfigModal({
                 <Stack spacing="1">
                   <Label className="text-xs font-medium">
                     Board{' '}
-                    <span className="font-normal text-muted-foreground">(optional — enables Kanban view)</span>
+                    <span className="text-muted-foreground font-normal">
+                      (optional — enables Kanban view)
+                    </span>
                   </Label>
                   <ComboboxSelect
                     options={boards.map((b) => ({ value: String(b.id), label: b.name }))}
@@ -266,7 +257,9 @@ export function FilterConfigModal({
                   <Stack spacing="1">
                     <Label className="text-xs font-medium">
                       Columns{' '}
-                      <span className="font-normal text-muted-foreground">(optional — limits visible columns)</span>
+                      <span className="text-muted-foreground font-normal">
+                        (optional — limits visible columns)
+                      </span>
                     </Label>
                     <MultiCombobox
                       options={boardColumns
@@ -282,19 +275,6 @@ export function FilterConfigModal({
                     />
                   </Stack>
                 )}
-
-                {/* No grouping */}
-                <Stack direction="row" align="center" spacing="2">
-                  <Checkbox
-                    id="draft-no-grouping"
-                    checked={draftNoGrouping}
-                    onCheckedChange={(checked) => setDraftNoGrouping(checked === true)}
-                    className="h-3.5 w-3.5"
-                  />
-                  <Label htmlFor="draft-no-grouping" className="text-xs font-normal cursor-pointer">
-                    Без группировки (flat list)
-                  </Label>
-                </Stack>
 
                 {/* Conditions */}
                 <Stack spacing="1">
@@ -315,7 +295,7 @@ export function FilterConfigModal({
                     <Button
                       variant="ghost"
                       size="xs"
-                      className="mr-auto text-destructive hover:text-destructive hover:bg-destructive/10"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 mr-auto"
                       onClick={() => handleDelete(editingFilter.id)}
                     >
                       <Trash2 size={12} className="mr-1" />

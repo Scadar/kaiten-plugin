@@ -1,10 +1,12 @@
 import { useState } from 'react';
+
 import { Loader2 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 
 interface FallbackUIProps {
   error?: Error | null;
-  onRetry?: () => void;
+  onRetry?: () => void | Promise<void>;
   onReset?: () => void;
   title?: string;
   message?: string;
@@ -17,8 +19,8 @@ export function FallbackUI({
   title = 'Something went wrong',
   message = 'An unexpected error occurred. Please try again or reset the application.',
 }: FallbackUIProps) {
-  const [isRetrying,   setIsRetrying]   = useState(false);
-  const [showDetails,  setShowDetails]  = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   const handleRetry = async () => {
     setIsRetrying(true);
@@ -44,14 +46,14 @@ export function FallbackUI({
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="bg-background flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Error Icon */}
         <div className="flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+          <div className="bg-destructive/10 flex h-16 w-16 items-center justify-center rounded-full">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-destructive"
+              className="text-destructive h-8 w-8"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -68,12 +70,12 @@ export function FallbackUI({
 
         {/* Error Title */}
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+          <h1 className="text-foreground text-2xl font-bold">{title}</h1>
         </div>
 
         {/* Error Message */}
-        <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">{message}</p>
+        <div className="border-border bg-card rounded-lg border p-4">
+          <p className="text-muted-foreground text-sm">{message}</p>
         </div>
 
         {/* Error Details (Dev Mode Only) */}
@@ -82,22 +84,22 @@ export function FallbackUI({
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start text-sm text-muted-foreground"
+              className="text-muted-foreground w-full justify-start text-sm"
               onClick={() => setShowDetails(!showDetails)}
             >
               {showDetails ? '▼' : '▶'} Technical Details
             </Button>
             {showDetails && (
-              <div className="rounded-lg border border-border bg-muted p-4">
+              <div className="border-border bg-muted rounded-lg border p-4">
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Error Message:</p>
-                    <p className="font-mono text-xs text-foreground break-all">{error.message}</p>
+                    <p className="text-muted-foreground mb-1 text-xs font-medium">Error Message:</p>
+                    <p className="text-foreground font-mono text-xs break-all">{error.message}</p>
                   </div>
                   {error.stack && (
                     <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Stack Trace:</p>
-                      <pre className="font-mono text-xs text-foreground overflow-x-auto whitespace-pre-wrap break-all">
+                      <p className="text-muted-foreground mb-1 text-xs font-medium">Stack Trace:</p>
+                      <pre className="text-foreground overflow-x-auto font-mono text-xs break-all whitespace-pre-wrap">
                         {error.stack}
                       </pre>
                     </div>
@@ -110,11 +112,7 @@ export function FallbackUI({
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <Button
-            className="w-full"
-            onClick={handleRetry}
-            disabled={isRetrying}
-          >
+          <Button className="w-full" onClick={handleRetry} disabled={isRetrying}>
             {isRetrying ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -125,19 +123,16 @@ export function FallbackUI({
             )}
           </Button>
 
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleReset}
-          >
+          <Button variant="outline" className="w-full" onClick={handleReset}>
             Reset Application
           </Button>
         </div>
 
         {/* Help Text */}
         <div className="text-center">
-          <p className="text-xs text-muted-foreground">
-            If the problem persists, please contact support or check the IDE logs for more information.
+          <p className="text-muted-foreground text-xs">
+            If the problem persists, please contact support or check the IDE logs for more
+            information.
           </p>
         </div>
       </div>

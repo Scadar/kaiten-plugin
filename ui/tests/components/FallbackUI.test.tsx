@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import { FallbackUI } from '@/components/FallbackUI';
 
 describe('FallbackUI', () => {
@@ -10,11 +11,11 @@ describe('FallbackUI', () => {
   beforeEach(() => {
     // Mock window.location.reload
     delete (window as any).location;
-    window.location = { ...originalLocation, reload: vi.fn() };
+    (window as any).location = { ...originalLocation, reload: vi.fn() };
   });
 
   afterEach(() => {
-    window.location = originalLocation;
+    (window as any).location = originalLocation;
     vi.clearAllMocks();
   });
 
@@ -283,15 +284,11 @@ describe('FallbackUI', () => {
       render(<FallbackUI />);
 
       const retryButton = screen.getByText('Try Again');
-      const resetButton = screen.getByText('Reset Application');
 
       // Check for primary button styling
       expect(retryButton).toHaveClass('bg-primary');
       expect(retryButton).toHaveClass('text-primary-foreground');
 
-      // Check for secondary button styling
-      expect(resetButton).toHaveClass('bg-secondary');
-      expect(resetButton).toHaveClass('border-border');
     });
 
     it('should have responsive layout', () => {

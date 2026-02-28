@@ -1,11 +1,11 @@
-import { ComboboxSelect } from '@/components/ui/combobox-select';
+import type { User } from '@/api/types';
+import { FilterSection } from '@/components/filters/FilterSection';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ComboboxSelect } from '@/components/ui/combobox-select';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Stack } from '@/components/ui/stack';
-import { FilterSection } from '@/components/filters/FilterSection';
-import type { User } from '@/api/types';
 
 export interface UserFilterProps {
   users: User[] | undefined;
@@ -38,9 +38,9 @@ export function UserFilter({
     <FilterSection title="User" defaultOpen={false}>
       <Stack spacing="2">
         {isLoading ? (
-          <p className="text-xs text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground text-xs">Loading...</p>
         ) : !users?.length ? (
-          <p className="text-xs text-muted-foreground">No users</p>
+          <p className="text-muted-foreground text-xs">No users</p>
         ) : (
           <ComboboxSelect
             options={users.map((u) => ({ value: String(u.id), label: u.name }))}
@@ -60,7 +60,7 @@ export function UserFilter({
                 direction="row"
                 align="center"
                 spacing="2"
-                className="rounded-md px-1.5 py-1 hover:bg-accent/40 cursor-pointer transition-colors"
+                className="hover:bg-accent/40 cursor-pointer rounded-md px-1.5 py-1 transition-colors"
                 onClick={() => onSetFilterAsMember(!filterAsMember)}
               >
                 <Checkbox
@@ -68,7 +68,7 @@ export function UserFilter({
                   checked={filterAsMember}
                   onCheckedChange={(c) => onSetFilterAsMember(c === true)}
                 />
-                <Label htmlFor="filter-member" className="text-xs font-normal cursor-pointer">
+                <Label htmlFor="filter-member" className="cursor-pointer text-xs font-normal">
                   Member
                 </Label>
               </Stack>
@@ -76,7 +76,7 @@ export function UserFilter({
                 direction="row"
                 align="center"
                 spacing="2"
-                className="rounded-md px-1.5 py-1 hover:bg-accent/40 cursor-pointer transition-colors"
+                className="hover:bg-accent/40 cursor-pointer rounded-md px-1.5 py-1 transition-colors"
                 onClick={() => onSetFilterAsResponsible(!filterAsResponsible)}
               >
                 <Checkbox
@@ -84,7 +84,7 @@ export function UserFilter({
                   checked={filterAsResponsible}
                   onCheckedChange={(c) => onSetFilterAsResponsible(c === true)}
                 />
-                <Label htmlFor="filter-responsible" className="text-xs font-normal cursor-pointer">
+                <Label htmlFor="filter-responsible" className="cursor-pointer text-xs font-normal">
                   Responsible
                 </Label>
               </Stack>
@@ -100,13 +100,13 @@ export function UserFilter({
                 >
                   <Stack direction="row" align="center" spacing="2">
                     <RadioGroupItem value="OR" id="logic-or" />
-                    <Label htmlFor="logic-or" className="text-xs font-normal cursor-pointer">
+                    <Label htmlFor="logic-or" className="cursor-pointer text-xs font-normal">
                       OR — any role
                     </Label>
                   </Stack>
                   <Stack direction="row" align="center" spacing="2">
                     <RadioGroupItem value="AND" id="logic-and" />
-                    <Label htmlFor="logic-and" className="text-xs font-normal cursor-pointer">
+                    <Label htmlFor="logic-and" className="cursor-pointer text-xs font-normal">
                       AND — both roles
                     </Label>
                   </Stack>

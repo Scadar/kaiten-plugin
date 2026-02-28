@@ -11,9 +11,11 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { useFilterStore } from '@/state/filterStore';
-import { useSettings } from './useSettings';
+
 import { bridge } from '@/bridge/JCEFBridge';
+import { useFilterStore } from '@/state/filterStore';
+
+import { useSettings } from './useSettings';
 
 export function useFilterPersistence(): void {
   const settings = useSettings();
@@ -23,7 +25,7 @@ export function useFilterPersistence(): void {
   // Subscribe to space-selection changes and persist to IDE settings.
   // The `saving` flag prevents an unnecessary save during initialization.
   useEffect(() => {
-    const unsubscribe = useFilterStore.subscribe((state) => {
+    return useFilterStore.subscribe((state) => {
       if (saving.current || !initialized.current) return;
 
       bridge
@@ -32,13 +34,11 @@ export function useFilterPersistence(): void {
             selectedSpaceId: state.selectedSpaceId,
           },
         })
-        .catch((err) =>
-          console.error('[useFilterPersistence] Failed to save filter state:', err)
+        .catch((err: unknown) =>
+          console.error('[useFilterPersistence] Failed to save filter state:', err),
         );
     });
-
-    return unsubscribe;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Initialize filterStore from persisted settings (once, when settings arrive).
   useEffect(() => {

@@ -45,7 +45,7 @@ class KaitenToolWindowFactory : ToolWindowFactory {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         if (!JBCefApp.isSupported()) {
-            log.error("JCEF is not supported in this environment. Kaiten plugin requires JCEF support.")
+            log.error("JCEF is not supported in this environment. Kaiten Integration plugin requires JCEF support.")
             return
         }
 
@@ -86,7 +86,7 @@ class KaitenToolWindowFactory : ToolWindowFactory {
 
             initializeTimeTracking(project, toolWindow)
         } catch (e: Exception) {
-            log.error("Failed to create JCEF browser for Kaiten tool window", e)
+            log.error("Failed to create JCEF browser for Kaiten Integration tool window", e)
         }
     }
 

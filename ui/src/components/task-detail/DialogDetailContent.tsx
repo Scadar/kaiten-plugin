@@ -1,18 +1,18 @@
 import * as React from 'react';
+
 import { AlertTriangle, ExternalLink, Link as LinkIcon } from 'lucide-react';
+
+import type { TaskDetail } from '@/api/types';
+import { CardFilesSection } from '@/components/task-detail/CardFilesSection';
+import { CustomPropertiesSection } from '@/components/task-detail/CustomPropertiesSection';
+import { RichTextContent } from '@/components/task-detail/RichTextContent';
+import { TaskComments } from '@/components/task-detail/TaskComments';
+import { TaskMeta } from '@/components/task-detail/TaskMeta';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import { TaskComments } from '@/components/task-detail/TaskComments';
-import { TaskMeta } from '@/components/task-detail/TaskMeta';
-import { CustomPropertiesSection } from '@/components/task-detail/CustomPropertiesSection';
-import { CardFilesSection } from '@/components/task-detail/CardFilesSection';
-import { buildKaitenUrl } from '@/lib/format';
-import { RichTextContent } from '@/components/task-detail/RichTextContent';
-import { useCardComments, useCardFiles, useColumns } from '@/hooks/useKaitenQuery';
-import { useSettings } from '@/hooks/useSettings';
-import type { TaskDetail } from '@/api/types';
+import { useTaskDetailData } from '@/hooks/useTaskDetailData';
 
 interface DialogDetailContentProps {
   task: TaskDetail;
@@ -22,26 +22,27 @@ interface DialogDetailContentProps {
  * Task detail body rendered inside the card dialog.
  */
 export function DialogDetailContent({ task }: DialogDetailContentProps) {
-  const { data: columns } = useColumns(task.boardId);
   const {
-    data: comments,
-    isLoading: commentsLoading,
-    error: commentsError,
-    refetch: refetchComments,
-  } = useCardComments(task.id);
-  const { data: allFiles = [] } = useCardFiles(task.id);
-  const settings = useSettings();
-
-  const columnName     = columns?.find((c) => c.id === task.columnId)?.name;
-  const kaitenUrl      = buildKaitenUrl(settings.serverUrl, task.spaceId, task.id);
-  const fileUids       = allFiles.map((f) => f.uid);
-
+    columnName,
+    kaitenUrl,
+    comments,
+    commentsLoading,
+    commentsError,
+    refetchComments,
+    allFiles,
+  } = useTaskDetailData(task);
+  const fileUids = allFiles.map((f) => f.uid);
 
   return (
     <Stack>
       {/* ── Header ── */}
-      <Stack direction="row" align="start" spacing="3" className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b border-border px-4 py-3">
-        <Stack className="flex-1 min-w-0">
+      <Stack
+        direction="row"
+        align="start"
+        spacing="3"
+        className="bg-card/95 border-border sticky top-0 z-10 border-b px-4 py-3 backdrop-blur-sm"
+      >
+        <Stack className="min-w-0 flex-1">
           <Stack direction="row" wrap="wrap" align="center" spacing="2" className="mb-1.5">
             <Text variant="dimmed">{task.id}</Text>
             {columnName && (
@@ -64,7 +65,7 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
             href={kaitenUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="shrink-0 flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors mt-0.5"
+            className="text-muted-foreground hover:text-primary mt-0.5 flex shrink-0 items-center gap-1 text-xs transition-colors"
             title="Open in Kaiten"
           >
             <ExternalLink size={12} />
@@ -92,9 +93,9 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
 
         {/* ── Block reason ── */}
         {task.blocked && task.blockReason && (
-          <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2">
-            <AlertTriangle size={12} className="mt-0.5 shrink-0 text-destructive" />
-            <p className="text-sm text-destructive leading-relaxed">{task.blockReason}</p>
+          <div className="border-destructive/40 bg-destructive/5 flex items-start gap-2 rounded-lg border px-3 py-2">
+            <AlertTriangle size={12} className="text-destructive mt-0.5 shrink-0" />
+            <p className="text-destructive text-sm leading-relaxed">{task.blockReason}</p>
           </div>
         )}
 
@@ -122,7 +123,7 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
             <Separator />
             <div>
               <SectionHeading>Description</SectionHeading>
-              <p className="mt-2 text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap break-words">
+              <p className="text-foreground/90 mt-2 text-sm leading-relaxed break-words whitespace-pre-wrap">
                 <RichTextContent html={task.description} excludeUids={fileUids} />
               </p>
             </div>
@@ -146,19 +147,19 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
               <Stack spacing="1.5">
                 {task.externalLinks.map((link, i) => (
                   <Stack key={i} direction="row" align="start" spacing="1.5">
-                    <LinkIcon size={11} className="mt-0.5 shrink-0 text-muted-foreground" />
+                    <LinkIcon size={11} className="text-muted-foreground mt-0.5 shrink-0" />
                     <div className="min-w-0">
                       <a
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline truncate block"
+                        className="text-primary block truncate text-sm hover:underline"
                         title={link.url}
                       >
-                        {link.description || link.url}
+                        {link.description ?? link.url}
                       </a>
                       {link.description && (
-                        <span className="text-xs text-muted-foreground truncate block">
+                        <span className="text-muted-foreground block truncate text-xs">
                           {link.url}
                         </span>
                       )}
@@ -180,7 +181,7 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
                 href={kaitenUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-muted-foreground hover:text-primary transition-colors truncate"
+                className="text-muted-foreground hover:text-primary truncate text-xs transition-colors"
                 title={kaitenUrl}
               >
                 {kaitenUrl}

@@ -10,6 +10,7 @@
 
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
+
 import type { SavedFilter } from '@/lib/advancedFilters';
 
 // ---------------------------------------------------------------------------
@@ -17,7 +18,7 @@ import type { SavedFilter } from '@/lib/advancedFilters';
 // ---------------------------------------------------------------------------
 
 interface PersistedState {
-  savedFilters:   SavedFilter[];
+  savedFilters: SavedFilter[];
   activeFilterId: string | null;
 }
 
@@ -50,15 +51,15 @@ function persist(state: PersistedState): void {
 // ---------------------------------------------------------------------------
 
 interface ReleaseFilterStoreState {
-  savedFilters:   SavedFilter[];
+  savedFilters: SavedFilter[];
   activeFilterId: string | null;
 }
 
 interface ReleaseFilterStoreActions {
-  addSavedFilter:    (filter: SavedFilter) => void;
+  addSavedFilter: (filter: SavedFilter) => void;
   updateSavedFilter: (filter: SavedFilter) => void;
   deleteSavedFilter: (id: string) => void;
-  setActiveFilter:   (id: string | null) => void;
+  setActiveFilter: (id: string | null) => void;
 }
 
 type ReleaseFilterStore = ReleaseFilterStoreState & ReleaseFilterStoreActions;
@@ -70,11 +71,11 @@ type ReleaseFilterStore = ReleaseFilterStoreState & ReleaseFilterStoreActions;
 const initial = load();
 
 export const useReleaseFilterStore = create<ReleaseFilterStore>((set, get) => ({
-  savedFilters:   initial.savedFilters,
+  savedFilters: initial.savedFilters,
   activeFilterId: initial.activeFilterId,
 
   addSavedFilter: (filter) => {
-    const savedFilters   = [...get().savedFilters, filter];
+    const savedFilters = [...get().savedFilters, filter];
     const activeFilterId = filter.id; // auto-activate newly created filter
     persist({ savedFilters, activeFilterId });
     set({ savedFilters, activeFilterId });
@@ -87,7 +88,7 @@ export const useReleaseFilterStore = create<ReleaseFilterStore>((set, get) => ({
   },
 
   deleteSavedFilter: (id) => {
-    const savedFilters   = get().savedFilters.filter((f) => f.id !== id);
+    const savedFilters = get().savedFilters.filter((f) => f.id !== id);
     const activeFilterId = get().activeFilterId === id ? null : get().activeFilterId;
     persist({ savedFilters, activeFilterId });
     set({ savedFilters, activeFilterId });
@@ -106,20 +107,20 @@ export const useReleaseFilterStore = create<ReleaseFilterStore>((set, get) => ({
 export function useReleaseFilterState() {
   return useReleaseFilterStore(
     useShallow((s) => ({
-      savedFilters:   s.savedFilters,
+      savedFilters: s.savedFilters,
       activeFilterId: s.activeFilterId,
-    }))
+    })),
   );
 }
 
 export function useReleaseFilterActions() {
   return useReleaseFilterStore(
     useShallow((s) => ({
-      addSavedFilter:    s.addSavedFilter,
+      addSavedFilter: s.addSavedFilter,
       updateSavedFilter: s.updateSavedFilter,
       deleteSavedFilter: s.deleteSavedFilter,
-      setActiveFilter:   s.setActiveFilter,
-    }))
+      setActiveFilter: s.setActiveFilter,
+    })),
   );
 }
 

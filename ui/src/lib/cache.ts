@@ -138,9 +138,10 @@ export const cacheUtils = {
    * @param queryKey - The query key to retrieve
    * @returns The cached data or undefined if not found/stale
    */
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
   get: <T>(queryKey: unknown[]): T | undefined => {
     const query = queryClient.getQueryState(queryKey);
-    if (!query || !query.data) {
+    if (!query?.data) {
       return undefined;
     }
 
@@ -162,6 +163,7 @@ export const cacheUtils = {
    * @param queryKey - The query key
    * @param data - The data to cache
    */
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
   put: <T>(queryKey: unknown[], data: T) => {
     queryClient.setQueryData(queryKey, data);
   },

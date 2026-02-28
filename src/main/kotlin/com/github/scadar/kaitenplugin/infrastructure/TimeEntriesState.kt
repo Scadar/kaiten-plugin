@@ -7,19 +7,12 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
-import java.time.LocalDate
 
 data class TimeEntryData(
     var taskId: Long = 0,
     var date: String = "",
     var durationSeconds: Long = 0
 ) {
-    fun toDomain() = TaskTimeEntry(
-        taskId = taskId,
-        date = LocalDate.parse(date),
-        durationSeconds = durationSeconds
-    )
-
     companion object {
         fun fromDomain(entry: TaskTimeEntry) = TimeEntryData(
             taskId = entry.taskId,
@@ -45,7 +38,6 @@ class TimeEntriesState : PersistentStateComponent<TimeEntriesState> {
 
     // FIX: All methods that touch `entries` are @Synchronized because:
     // - addEntry() is called from the checkpoint timer (Dispatchers.Default) and dispose() (project close thread).
-    // - getEntriesByTask() / getAllEntries() are called from RPC handlers (Dispatchers.Default).
     // - loadState() is called by the IntelliJ persistence framework (background thread).
     // Plain ArrayList is not thread-safe; @Synchronized on `this` prevents CME.
 
@@ -57,16 +49,6 @@ class TimeEntriesState : PersistentStateComponent<TimeEntriesState> {
         } else {
             entries.add(TimeEntryData.fromDomain(entry))
         }
-    }
-
-    @Synchronized
-    fun getEntriesByTask(taskId: Long): List<TaskTimeEntry> {
-        return entries.filter { it.taskId == taskId }.map { it.toDomain() }
-    }
-
-    @Synchronized
-    fun getAllEntries(): Map<Long, List<TaskTimeEntry>> {
-        return entries.map { it.toDomain() }.groupBy { it.taskId }
     }
 
     companion object {

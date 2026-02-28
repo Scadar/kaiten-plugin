@@ -10,11 +10,11 @@ import javax.net.ssl.SSLContext
 
 class HttpClientProvider(private val token: String) {
 
-    private val LOG = Logger.getInstance(HttpClientProvider::class.java)
+    private val log = Logger.getInstance(HttpClientProvider::class.java)
 
     fun createClient(): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor { message ->
-            LOG.debug("[OkHttp] $message")
+            log.debug("[OkHttp] $message")
         }.apply {
             level = HttpLoggingInterceptor.Level.BASIC
         }

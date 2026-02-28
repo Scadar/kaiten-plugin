@@ -1,7 +1,8 @@
+import { CheckCircle2, Loader2, Save, XCircle } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import { CheckCircle2, Loader2, Save, XCircle } from 'lucide-react';
 
 export interface SaveSectionProps {
   hasChanges: boolean;
@@ -14,30 +15,29 @@ export interface SaveSectionProps {
 export function SaveSection({ hasChanges, isSaving, saveStatus, onSave }: SaveSectionProps) {
   return (
     <Stack direction="row" align="center" spacing="3" className="px-3 py-3">
-      <Button
-        size="xs"
-        onClick={onSave}
-        disabled={!hasChanges || isSaving}
-      >
+      <Button size="xs" onClick={onSave} disabled={!hasChanges || isSaving}>
         {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
         Save
       </Button>
 
       {saveStatus === 'success' && (
-        <Stack direction="row" align="center" spacing="1" className="text-xs text-green-600 dark:text-green-500">
+        <Stack
+          direction="row"
+          align="center"
+          spacing="1"
+          className="text-xs text-green-600 dark:text-green-500"
+        >
           <CheckCircle2 size={12} />
           <span>Saved</span>
         </Stack>
       )}
       {saveStatus === 'error' && (
-        <Stack direction="row" align="center" spacing="1" className="text-xs text-destructive">
+        <Stack direction="row" align="center" spacing="1" className="text-destructive text-xs">
           <XCircle size={12} />
           <span>Failed</span>
         </Stack>
       )}
-      {hasChanges && saveStatus === 'idle' && (
-        <Text variant="dimmed">Unsaved changes</Text>
-      )}
+      {hasChanges && saveStatus === 'idle' && <Text variant="dimmed">Unsaved changes</Text>}
     </Stack>
   );
 }

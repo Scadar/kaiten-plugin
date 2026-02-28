@@ -27,7 +27,7 @@ class KaitenSettingsComponent {
 
     val panel: JPanel = FormBuilder.createFormBuilder()
         .addLabeledComponent(JBLabel("Server URL:"), serverUrlField, 1, false)
-        .addLabeledComponent(JBLabel("API Token:"), apiTokenField, 1, false)
+        .addLabeledComponent(JBLabel("API token:"), apiTokenField, 1, false)
         .addComponent(testConnectionButton)
         .addComponent(connectionStatusLabel)
         .addComponentFillVertically(JPanel(), 0)

@@ -36,9 +36,6 @@ class TimeTracker<ID>(
     @Volatile
     private var checkpointedMs: Long = 0L
 
-    /** True when a session has been started (regardless of pause state). */
-    val isTracking: Boolean get() = session.isTracking
-
     fun startTracking(id: ID) = synchronized(this) {
         if (currentId == id && session.isActive()) {
             log.debug("Already tracking $entityLabel '$id'")

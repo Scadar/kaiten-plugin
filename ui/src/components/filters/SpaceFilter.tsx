@@ -1,6 +1,6 @@
-import { ComboboxSelect } from '@/components/ui/combobox-select';
-import { FilterSection } from '@/components/filters/FilterSection';
 import type { Space } from '@/api/types';
+import { FilterSection } from '@/components/filters/FilterSection';
+import { ComboboxSelect } from '@/components/ui/combobox-select';
 
 export interface SpaceFilterProps {
   spaces: Space[] | undefined;
@@ -13,9 +13,9 @@ export function SpaceFilter({ spaces, isLoading, selectedSpaceId, onSelect }: Sp
   return (
     <FilterSection title="Space">
       {isLoading ? (
-        <p className="text-xs text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground text-xs">Loading...</p>
       ) : !spaces?.length ? (
-        <p className="text-xs text-muted-foreground">No spaces</p>
+        <p className="text-muted-foreground text-xs">No spaces</p>
       ) : (
         <ComboboxSelect
           options={spaces.map((s) => ({ value: String(s.id), label: s.name }))}

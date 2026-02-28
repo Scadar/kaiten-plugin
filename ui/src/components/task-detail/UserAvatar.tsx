@@ -13,7 +13,7 @@ export function UserAvatar({ name }: UserAvatarProps) {
     .toUpperCase();
 
   return (
-    <Avatar className="h-6 w-6 shrink-0 shadow-island-sm">
+    <Avatar className="shadow-island-sm h-6 w-6 shrink-0">
       <AvatarFallback className="bg-primary/15 text-primary text-xs font-semibold">
         {initials}
       </AvatarFallback>

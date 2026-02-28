@@ -8,13 +8,14 @@
  * using the StateSyncVerification component in the IDE environment.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useSyncedState, useSyncedField, useSyncedFields } from '@/hooks/useSyncedState';
-import { useSyncedStore, disposeSyncStore } from '@/state/syncStore';
-import { flushPendingChanges, clearPendingChanges } from '@/state/syncMiddleware';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import { bridge } from '@/bridge/JCEFBridge';
 import type { AppState } from '@/bridge/types';
+import { useSyncedState, useSyncedField, useSyncedFields } from '@/hooks/useSyncedState';
+import { flushPendingChanges, clearPendingChanges } from '@/state/syncMiddleware';
+import { useSyncedStore, disposeSyncStore } from '@/state/syncStore';
 
 describe('Bidirectional State Synchronization Integration', () => {
   beforeEach(() => {
@@ -161,7 +162,7 @@ describe('Bidirectional State Synchronization Integration', () => {
   describe('Circular Update Prevention', () => {
     it('should not sync IDE-initiated updates back to IDE', async () => {
       const syncStateSpy = vi.spyOn(bridge, 'syncState');
-      const { result } = renderHook(() => useSyncedState());
+      renderHook(() => useSyncedState());
 
       // IDE updates state
       act(() => {

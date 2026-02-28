@@ -9,29 +9,28 @@
 
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
+
 import type { KaitenSettings } from '@/api/types';
-import {
-  type SavedFilter,
-} from '@/lib/advancedFilters';
+import { type SavedFilter } from '@/lib/advancedFilters';
 
 // ---------------------------------------------------------------------------
 // State & action interfaces
 // ---------------------------------------------------------------------------
 
 export interface FilterStoreState {
-  selectedSpaceId:  number | null;
-  savedFilters:     SavedFilter[];
-  activeFilterId:   string | null;
+  selectedSpaceId: number | null;
+  savedFilters: SavedFilter[];
+  activeFilterId: string | null;
 }
 
 export interface FilterStoreActions {
-  setSelectedSpace:   (spaceId: number | null) => void;
-  setSavedFilters:    (filters: SavedFilter[]) => void;
-  addSavedFilter:     (filter: SavedFilter) => void;
-  updateSavedFilter:  (filter: SavedFilter) => void;
-  deleteSavedFilter:  (id: string) => void;
-  setActiveFilter:    (id: string | null) => void;
-  reset:              () => void;
+  setSelectedSpace: (spaceId: number | null) => void;
+  setSavedFilters: (filters: SavedFilter[]) => void;
+  addSavedFilter: (filter: SavedFilter) => void;
+  updateSavedFilter: (filter: SavedFilter) => void;
+  deleteSavedFilter: (id: string) => void;
+  setActiveFilter: (id: string | null) => void;
+  reset: () => void;
   /** Called once on startup — restores space selection from persisted IDE settings */
   initializeFromSettings: (settings: KaitenSettings) => void;
 }
@@ -45,7 +44,7 @@ export type FilterStore = FilterStoreState & FilterStoreActions;
 const LS_KEY = 'kaiten:savedFilters';
 
 interface PersistedFilterState {
-  savedFilters:   SavedFilter[];
+  savedFilters: SavedFilter[];
   activeFilterId: string | null;
 }
 
@@ -82,8 +81,8 @@ const persisted = loadPersistedState();
 
 const initialState: FilterStoreState = {
   selectedSpaceId: null,
-  savedFilters:    persisted.savedFilters,
-  activeFilterId:  persisted.activeFilterId,
+  savedFilters: persisted.savedFilters,
+  activeFilterId: persisted.activeFilterId,
 };
 
 // ---------------------------------------------------------------------------
@@ -158,22 +157,22 @@ export function useFilterState() {
   return useFilterStore(
     useShallow((s) => ({
       selectedSpaceId: s.selectedSpaceId,
-      savedFilters:    s.savedFilters,
-      activeFilterId:  s.activeFilterId,
-    }))
+      savedFilters: s.savedFilters,
+      activeFilterId: s.activeFilterId,
+    })),
   );
 }
 
 export function useFilterActions() {
   return useFilterStore(
     useShallow((s) => ({
-      setSelectedSpace:  s.setSelectedSpace,
-      setSavedFilters:   s.setSavedFilters,
-      addSavedFilter:    s.addSavedFilter,
+      setSelectedSpace: s.setSelectedSpace,
+      setSavedFilters: s.setSavedFilters,
+      addSavedFilter: s.addSavedFilter,
       updateSavedFilter: s.updateSavedFilter,
       deleteSavedFilter: s.deleteSavedFilter,
-      setActiveFilter:   s.setActiveFilter,
-    }))
+      setActiveFilter: s.setActiveFilter,
+    })),
   );
 }
 

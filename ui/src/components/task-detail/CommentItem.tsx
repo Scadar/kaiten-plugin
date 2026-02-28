@@ -1,10 +1,10 @@
-import { UserAvatar } from '@/components/task-detail/UserAvatar';
+import type { Comment, CardFile } from '@/api/types';
 import { CardFilesSection } from '@/components/task-detail/CardFilesSection';
 import { RichTextContent } from '@/components/task-detail/RichTextContent';
+import { UserAvatar } from '@/components/task-detail/UserAvatar';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
 import { formatDateTime } from '@/lib/format';
-import type { Comment, CardFile } from '@/api/types';
 
 export interface CommentItemProps {
   comment: Comment;
@@ -23,7 +23,7 @@ export function CommentItem({ comment, files = [] }: CommentItemProps) {
           <span className="text-sm font-medium">{comment.author.fullName}</span>
           <Text variant="dimmed">{formatDateTime(comment.createdAt)}</Text>
         </Stack>
-        <p className="mt-0.5 text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">
+        <p className="text-foreground/90 mt-0.5 text-sm leading-relaxed break-words whitespace-pre-wrap">
           <RichTextContent html={comment.text} excludeUids={excludeUids} />
         </p>
         {files.length > 0 && (

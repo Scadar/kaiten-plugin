@@ -48,11 +48,19 @@ export const tasksKeys = {
   all: () => ['tasks'] as const,
   byColumn: (columnId: number) => ['tasks', { columnId }] as const,
   byBoard: (boardId: number, memberId?: number | null) =>
-    memberId != null
-      ? ['tasks', { boardId, memberId }] as const
-      : ['tasks', { boardId }] as const,
-  bySpace: (spaceId: number, filter?: string | null, boardId?: number | null, columnIds?: number[] | null) =>
-    ['tasks', { spaceId, filter: filter ?? null, boardId: boardId ?? null, columnIds: columnIds ?? null }] as const,
+    memberId !== null
+      ? (['tasks', { boardId, memberId }] as const)
+      : (['tasks', { boardId }] as const),
+  bySpace: (
+    spaceId: number,
+    filter?: string | null,
+    boardId?: number | null,
+    columnIds?: number[] | null,
+  ) =>
+    [
+      'tasks',
+      { spaceId, filter: filter ?? null, boardId: boardId ?? null, columnIds: columnIds ?? null },
+    ] as const,
   detail: (id: number) => ['tasks', id] as const,
   detailExtended: (id: number) => ['tasks', id, 'detail'] as const,
 };

@@ -297,34 +297,34 @@ export interface IdeTheme {
 export interface RPCMethods {
   // IDE theme
   getIdeTheme: {
-    params: void;
+    params: undefined;
     result: IdeTheme;
   };
 
   // Settings operations (IDE configuration)
   getSettings: {
-    params: void;
+    params: undefined;
     result: unknown; // Will be cast to KaitenSettings in useSettings hook
   };
   updateSettings: {
     params: { settings: unknown }; // Will be KaitenSettings
-    result: void;
+    result: undefined;
   };
   openSettings: {
-    params: void;
-    result: void;
+    params: undefined;
+    result: undefined;
   };
 
   // File operations (IDE integration)
   openFile: {
     params: { path: string; line?: number };
-    result: void;
+    result: undefined;
   };
 
   // Open a URL in the system default browser
   openUrl: {
     params: { url: string };
-    result: void;
+    result: undefined;
   };
 
   // Notification operations (IDE notifications)
@@ -334,16 +334,16 @@ export interface RPCMethods {
       type?: 'info' | 'warning' | 'error';
       title?: string;
     };
-    result: void;
+    result: undefined;
   };
 
   // Project operations (IDE context)
   getProjectPath: {
-    params: void;
+    params: undefined;
     result: string | null;
   };
   getSelectedFile: {
-    params: void;
+    params: undefined;
     result: string | null;
   };
 
@@ -357,11 +357,11 @@ export interface RPCMethods {
 
   // Branch time tracking
   getBranchTimeEntries: {
-    params: void;
+    params: undefined;
     result: Record<string, BranchTimeData>;
   };
   getCurrentBranch: {
-    params: void;
+    params: undefined;
     result: { branch: string | null; isTracking: boolean; accumulatedSeconds: number };
   };
   clearBranchEntries: {
@@ -420,24 +420,16 @@ export type RPCResult<M extends RPCMethodName> = RPCMethods[M]['result'];
 /**
  * Available event types that can be emitted from IDE to React
  *
- * IDE-SPECIFIC EVENTS - Push notifications from IDE about context changes
- * Task/user/board data events removed - data fetching now handled in React
+ * Mirrors Kotlin EventNames — only events defined there are valid here.
+ * State updates arrive via StateUpdateMessage (type: 'state:update'), which the
+ * bridge re-emits on the EventBus under the 'state:update' key.
  */
 export interface EventTypes {
-  // IDE theme change (fires when user switches IDE Look-and-Feel)
+  // IDE theme change — fired when the user switches the IDE Look-and-Feel
+  // Kotlin: EventNames.THEME_CHANGED = "theme:changed"
   'theme:changed': IdeTheme;
 
-  // Settings events (IDE settings changes)
-  'settings:changed': { key: string; value: unknown };
-
-  // Project events (IDE project context)
-  'project:opened': { projectPath: string };
-  'project:closed': void;
-
-  // File events (IDE file selection)
-  'file:selected': { filePath: string };
-
-  // State events (IDE state synchronization)
+  // State synchronisation — emitted by JCEFBridge when a StateUpdateMessage arrives
   'state:update': Partial<AppState>;
 }
 

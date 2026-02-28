@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import type { Task, Board, Column, Lane } from '@/api/types';
 import { TaskCard } from '@/components/tasks/TaskCard';
 import {
   Accordion,
@@ -9,8 +9,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
+import { cn } from '@/lib/utils';
 import { useUIStore } from '@/state/uiStore';
-import type { Task, Board, Column, Lane } from '@/api/types';
 
 export interface TaskListProps {
   tasks?: Task[];
@@ -52,7 +52,7 @@ interface BoardGroup {
 function groupTasks(
   tasks: Task[],
   boards: Board[],
-  columnsByBoard: Record<number, Column[]>
+  columnsByBoard: Record<number, Column[]>,
 ): BoardGroup[] {
   const boardMap = new Map<number, Board>(boards.map((b) => [b.id, b]));
 
@@ -66,9 +66,9 @@ function groupTasks(
   const boardGroups: BoardGroup[] = [];
 
   for (const [boardId, boardTasks] of tasksByBoard) {
-    const board = boardId != null ? (boardMap.get(boardId) ?? null) : null;
+    const board = boardId !== null ? (boardMap.get(boardId) ?? null) : null;
     const laneMap = new Map<number, Lane>(board?.lanes.map((l) => [l.id, l]) ?? []);
-    const columns = boardId != null ? (columnsByBoard[boardId] ?? []) : [];
+    const columns = boardId !== null ? (columnsByBoard[boardId] ?? []) : [];
     const sortedColumns = [...columns].sort((a, b) => a.position - b.position);
 
     const tasksByLane = new Map<number | null, Task[]>();
@@ -81,7 +81,7 @@ function groupTasks(
     const laneGroups: LaneGroup[] = [];
 
     for (const [laneId, laneTasks] of tasksByLane) {
-      const lane = laneId != null ? (laneMap.get(laneId) ?? null) : null;
+      const lane = laneId !== null ? (laneMap.get(laneId) ?? null) : null;
       const columnGroups: ColumnGroup[] = [];
 
       if (sortedColumns.length > 0) {
@@ -135,10 +135,10 @@ function computeOpenItems(allIds: string[], closedIds: string[]): string[] {
 function deriveNewClosed(
   allGroupIds: string[],
   newOpenIds: string[],
-  prevClosed: string[]
+  prevClosed: string[],
 ): string[] {
-  const openSet   = new Set(newOpenIds);
-  const groupSet  = new Set(allGroupIds);
+  const openSet = new Set(newOpenIds);
+  const groupSet = new Set(allGroupIds);
   // Items in this group that are now closed
   const nowClosed = allGroupIds.filter((id) => !openSet.has(id));
   // Items from other groups in the store stay unchanged
@@ -174,7 +174,9 @@ export function TaskList({
   if (error) {
     return (
       <div className={cn('px-3 py-4', className)}>
-        <Text variant="secondary" className="text-destructive">{error.message}</Text>
+        <Text variant="secondary" className="text-destructive">
+          {error.message}
+        </Text>
       </div>
     );
   }
@@ -228,7 +230,7 @@ export function TaskList({
 
         // Lane-level accordion IDs for this board
         const allLaneIds = bg.laneGroups.map(
-          (lg) => `${boardValue}-lane-${lg.lane?.id ?? 'default'}`
+          (lg) => `${boardValue}-lane-${lg.lane?.id ?? 'default'}`,
         );
         const openLaneIds = computeOpenItems(allLaneIds, closedAccordionIds);
 
@@ -241,33 +243,29 @@ export function TaskList({
             {/* ── Board header ────────────────────────────────────────── */}
             <AccordionTrigger
               className={cn(
-                'rounded-lg border border-primary/25 bg-primary/8 px-3 py-2',
-                'border-l-[3px] border-l-primary',
+                'border-primary/25 bg-primary/8 rounded-lg border px-3 py-2',
+                'border-l-primary border-l-[3px]',
                 'hover:bg-primary/12 hover:border-primary/40',
-                'hover:no-underline transition-all duration-150',
+                'transition-all duration-150 hover:no-underline',
               )}
             >
               <Stack direction="row" spacing="1">
                 <Text className="truncate">{boardLabel}</Text>
-                <Badge variant="secondary" size="sm" className="shrink-0 mr-1">
+                <Badge variant="secondary" size="sm" className="mr-1 shrink-0">
                   {bg.totalTasks}
                 </Badge>
               </Stack>
             </AccordionTrigger>
 
-            <AccordionContent className="pb-0 pt-0">
-              <Accordion
-                type="multiple"
-                value={openLaneIds}
-                onValueChange={handleLaneChange}
-              >
+            <AccordionContent className="pt-0 pb-0">
+              <Accordion type="multiple" value={openLaneIds} onValueChange={handleLaneChange}>
                 {bg.laneGroups.map((lg) => {
                   const laneValue = `${boardValue}-lane-${lg.lane?.id ?? 'default'}`;
                   const laneLabel = lg.lane?.name ?? 'Lane';
 
                   // Column-level accordion IDs for this lane
                   const allColIds = lg.columnGroups.map(
-                    (cg) => `${laneValue}-col-${cg.column?.id ?? 'ungrouped'}`
+                    (cg) => `${laneValue}-col-${cg.column?.id ?? 'ungrouped'}`,
                   );
                   const openColIds = computeOpenItems(allColIds, closedAccordionIds);
 
@@ -280,25 +278,22 @@ export function TaskList({
                       {/* ── Lane header ──────────────────────────────── */}
                       <AccordionTrigger
                         className={cn(
-                          'ml-1 my-1',
+                          'my-1 ml-1',
                           'rounded-md border border-indigo-400/20 bg-indigo-500/6 px-3 py-1.5',
                           'border-l-[2px] border-l-indigo-400/70',
-                          'hover:bg-indigo-500/10 hover:border-indigo-400/40',
-                          'hover:no-underline transition-all duration-150',
+                          'hover:border-indigo-400/40 hover:bg-indigo-500/10',
+                          'transition-all duration-150 hover:no-underline',
                         )}
                       >
                         <Stack direction="row" spacing="1" align="center">
                           <Text className="truncate">{laneLabel}</Text>
-                          <Badge
-                            variant="outline"
-                            size="sm"
-                          >
+                          <Badge variant="outline" size="sm">
                             {lg.totalTasks}
                           </Badge>
                         </Stack>
                       </AccordionTrigger>
 
-                      <AccordionContent className="pb-0 pt-0">
+                      <AccordionContent className="pt-0 pb-0">
                         <Accordion
                           type="multiple"
                           value={openColIds}
@@ -317,24 +312,23 @@ export function TaskList({
                                 {/* ── Column header ──────────────────── */}
                                 <AccordionTrigger
                                   className={cn(
-                                    'ml-2 my-1',
-                                    'rounded border-0 border-l-[2px] border-l-border/60 pl-2 pr-2 py-0.5',
-                                    'bg-transparent hover:bg-accent/30',
-                                    'hover:no-underline transition-all duration-150',
+                                    'my-1 ml-2',
+                                    'border-l-border/60 rounded border-0 border-l-[2px] py-0.5 pr-2 pl-2',
+                                    'hover:bg-accent/30 bg-transparent',
+                                    'transition-all duration-150 hover:no-underline',
                                   )}
                                 >
                                   <Stack direction="row" spacing="1" align="center">
-                                  <Text className="truncate" variant="dimmed">{colLabel}</Text>
-                                  <Badge
-                                    variant="outline"
-                                    size="xs"
-                                  >
-                                    {cg.tasks.length}
-                                  </Badge>
+                                    <Text className="truncate" variant="dimmed">
+                                      {colLabel}
+                                    </Text>
+                                    <Badge variant="outline" size="xs">
+                                      {cg.tasks.length}
+                                    </Badge>
                                   </Stack>
                                 </AccordionTrigger>
 
-                                <AccordionContent className="pb-0 pt-0">
+                                <AccordionContent className="pt-0 pb-0">
                                   <div>
                                     {cg.tasks.map((task) => (
                                       <TaskCard

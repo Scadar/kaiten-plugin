@@ -20,15 +20,15 @@
 // ---------------------------------------------------------------------------
 
 export type StaticFilterKey =
-  | 'id'          // Card ID
+  | 'id' // Card ID
   | 'responsible' // Responsible user
-  | 'member'      // Member of the card
-  | 'tag'         // Tag
-  | 'asap'        // ASAP / urgent
-  | 'state'       // Card state (workflow state)
-  | 'type_id'     // Card type
-  | 'source'      // Source (integration)
-  | 'condition';  // Card condition: 1=active, 2=done, 3=archived
+  | 'member' // Member of the card
+  | 'tag' // Tag
+  | 'asap' // ASAP / urgent
+  | 'state' // Card state (workflow state)
+  | 'type_id' // Card type
+  | 'source' // Source (integration)
+  | 'condition'; // Card condition: 1=active, 2=done, 3=archived
 
 /**
  * FilterKey extends the static keys with custom property keys (id_<number>).
@@ -44,9 +44,8 @@ export function isCustomPropertyKey(key: FilterKey): boolean {
 
 /** Extracts the numeric custom property ID from a key like "id_45" */
 export function customPropertyIdFromKey(key: FilterKey): number | null {
-  const match = key.match(/^id_(\d+)$/);
+  const match = /^id_(\d+)$/.exec(key);
   return match ? parseInt(match[1]!, 10) : null;
-
 }
 
 /** Builds a custom property filter key from a numeric ID */
@@ -55,13 +54,13 @@ export function customPropertyKey(id: number): string {
 }
 
 export type FilterComparison =
-  | 'eq'       // equals
-  | 'ne'       // not equals
-  | 'in'       // value is in array
-  | 'not_in'   // value is not in array
-  | 'true'     // flag is true
-  | 'false'    // flag is false
-  | 'known'    // has a value
+  | 'eq' // equals
+  | 'ne' // not equals
+  | 'in' // value is in array
+  | 'not_in' // value is not in array
+  | 'true' // flag is true
+  | 'false' // flag is false
+  | 'known' // has a value
   | 'unknown'; // has no value
 
 // ---------------------------------------------------------------------------
@@ -104,8 +103,6 @@ export interface SavedFilter {
   boardId?: number | null;
   /** Column IDs to show (client-side filter; empty = all columns) */
   columnIds?: number[];
-  /** Show tasks as a flat list without board/lane/column grouping */
-  noGrouping?: boolean;
   /** Root filter group */
   group: FilterGroup;
 }
@@ -248,8 +245,12 @@ function serializeNode(node: FilterNode): object {
  */
 export function encodeFilter(group: FilterGroup): string {
   const normalized = normalizeGroup(group);
-  const payload    = JSON.stringify(serializeNode(normalized));
-  return btoa(unescape(encodeURIComponent(payload)));
+  const payload = JSON.stringify(serializeNode(normalized));
+  return btoa(
+    encodeURIComponent(payload).replace(/%([0-9A-F]{2})/gi, (_, hex: string) =>
+      String.fromCharCode(parseInt(hex, 16)),
+    ),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -257,39 +258,39 @@ export function encodeFilter(group: FilterGroup): string {
 // ---------------------------------------------------------------------------
 
 export const FILTER_KEY_LABELS: Record<StaticFilterKey, string> = {
-  id:          'Card ID',
+  id: 'Card ID',
   responsible: 'Responsible',
-  member:      'Member',
-  tag:         'Tag',
-  asap:        'Urgent (ASAP)',
-  state:       'State',
-  type_id:     'Card type',
-  source:      'Source',
-  condition:   'Condition',
+  member: 'Member',
+  tag: 'Tag',
+  asap: 'Urgent (ASAP)',
+  state: 'State',
+  type_id: 'Card type',
+  source: 'Source',
+  condition: 'Condition',
 };
 
 export const COMPARISON_LABELS: Record<FilterComparison, string> = {
-  eq:      'is',
-  ne:      'is not',
-  in:      'is one of',
-  not_in:  'is not one of',
-  true:    'is true',
-  false:   'is false',
-  known:   'is set',
+  eq: 'is',
+  ne: 'is not',
+  in: 'is one of',
+  not_in: 'is not one of',
+  true: 'is true',
+  false: 'is false',
+  known: 'is set',
   unknown: 'is not set',
 };
 
 /** Valid comparisons for each static filter key */
 export const KEY_COMPARISONS: Record<StaticFilterKey, FilterComparison[]> = {
-  id:          ['eq', 'ne', 'in', 'not_in'],
+  id: ['eq', 'ne', 'in', 'not_in'],
   responsible: ['eq', 'ne', 'known', 'unknown'],
-  member:      ['eq', 'ne', 'known', 'unknown'],
-  tag:         ['eq', 'ne', 'known', 'unknown'],
-  asap:        ['true', 'false'],
-  state:       ['eq', 'ne'],
-  type_id:     ['eq', 'ne'],
-  source:      ['eq', 'ne', 'known', 'unknown'],
-  condition:   ['eq'],
+  member: ['eq', 'ne', 'known', 'unknown'],
+  tag: ['eq', 'ne', 'known', 'unknown'],
+  asap: ['true', 'false'],
+  state: ['eq', 'ne'],
+  type_id: ['eq', 'ne'],
+  source: ['eq', 'ne', 'known', 'unknown'],
+  condition: ['eq'],
 };
 
 /** Returns valid comparisons for any FilterKey including custom property keys */
@@ -297,15 +298,17 @@ export function getKeyComparisons(key: FilterKey): FilterComparison[] {
   if (isCustomPropertyKey(key)) {
     return ['eq', 'ne', 'in', 'not_in', 'known', 'unknown'];
   }
-  return KEY_COMPARISONS[key as StaticFilterKey] ?? ['eq'];
+  return KEY_COMPARISONS[key as StaticFilterKey];
 }
 
 /** Whether a comparison requires the user to supply a value */
 export function needsValue(_key: FilterKey, comparison: FilterComparison): boolean {
-  return comparison !== 'true'
-    && comparison !== 'false'
-    && comparison !== 'known'
-    && comparison !== 'unknown';
+  return (
+    comparison !== 'true' &&
+    comparison !== 'false' &&
+    comparison !== 'known' &&
+    comparison !== 'unknown'
+  );
 }
 
 /** Condition codes (for `condition` key) */

@@ -12,6 +12,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
 import { createJCEFBridge } from '@/bridge/JCEFBridge';
 
 describe('RPC Call Flow', () => {
@@ -42,37 +43,39 @@ describe('RPC Call Flow', () => {
   });
 
   describe('React → IDE → React flow', () => {
-    it('should send RPC request and receive response', async () => {
-      // Mock __jcef_send__ function
-      const sendMock = vi.fn();
+    let sendMock: ReturnType<typeof vi.fn>;
+    let bridge: ReturnType<typeof createJCEFBridge>;
+    let receiveFunction: (message: string) => void;
+
+    beforeEach(async () => {
+      sendMock = vi.fn();
       (window as any).__jcef_send__ = sendMock;
 
-      // Create bridge instance
-      const bridge = createJCEFBridge({ debug: false });
+      bridge = createJCEFBridge({ debug: false });
       bridges.push(bridge);
 
-      // Simulate IDE ready handshake
-      const receiveFunction = (window as any).__jcef_receive__;
-      expect(receiveFunction).toBeDefined();
-
+      receiveFunction = (window as any).__jcef_receive__;
       receiveFunction(
         JSON.stringify({
           type: 'bridge:ready',
           source: 'ide',
           version: '1.0.0',
           timestamp: Date.now(),
-        })
+        }),
       );
 
-      // Wait for bridge to be ready
       await bridge.ready();
+    });
+
+    it('should send RPC request and receive response', async () => {
+      expect(receiveFunction).toBeDefined();
 
       // Make RPC call
       const callPromise = bridge.call('getProjectPath', undefined);
 
       // Verify RPC request was sent
       expect(sendMock).toHaveBeenCalled();
-      const sentMessage = JSON.parse(sendMock.mock.calls[sendMock.mock.calls.length - 1][0]);
+      const sentMessage = JSON.parse(sendMock.mock.calls[sendMock.mock.calls.length - 1]![0] as string);
       expect(sentMessage.type).toBe('rpc_request');
       expect(sentMessage.method).toBe('getProjectPath');
       expect(sentMessage.id).toBeDefined();
@@ -84,7 +87,7 @@ describe('RPC Call Flow', () => {
           id: sentMessage.id,
           result: '/path/to/project',
           timestamp: Date.now(),
-        })
+        }),
       );
 
       // Wait for response
@@ -95,31 +98,10 @@ describe('RPC Call Flow', () => {
     });
 
     it('should handle multiple concurrent RPC calls', async () => {
-      // Mock __jcef_send__ function
-      const sendMock = vi.fn();
-      (window as any).__jcef_send__ = sendMock;
-
-      // Create bridge instance
-      const bridge = createJCEFBridge({ debug: false });
-      bridges.push(bridge);
-
-      // Simulate IDE ready handshake
-      const receiveFunction = (window as any).__jcef_receive__;
-      receiveFunction(
-        JSON.stringify({
-          type: 'bridge:ready',
-          source: 'ide',
-          version: '1.0.0',
-          timestamp: Date.now(),
-        })
-      );
-
-      await bridge.ready();
-
       // Make multiple RPC calls
       const call1 = bridge.call('getProjectPath', undefined);
-      const call2 = bridge.call('getProjectName', undefined);
-      const call3 = bridge.call('getState', undefined);
+      const call2 = bridge.call('getSettings', undefined);
+      const call3 = bridge.call('getSelectedFile', undefined);
 
       // Verify all requests were sent
       expect(sendMock).toHaveBeenCalledTimes(4); // 1 ready + 3 RPC requests
@@ -140,9 +122,9 @@ describe('RPC Call Flow', () => {
         JSON.stringify({
           type: 'rpc_response',
           id: id2,
-          result: 'MyProject',
+          result: { theme: 'dark' },
           timestamp: Date.now(),
-        })
+        }),
       );
 
       receiveFunction(
@@ -151,23 +133,16 @@ describe('RPC Call Flow', () => {
           id: id1,
           result: '/path/to/project',
           timestamp: Date.now(),
-        })
+        }),
       );
 
       receiveFunction(
         JSON.stringify({
           type: 'rpc_response',
           id: id3,
-          result: {
-            projectPath: '/path/to/project',
-            selectedFile: null,
-            settings: {},
-            user: null,
-            tasks: [],
-            filters: {},
-          },
+          result: '/path/to/selected-file.ts',
           timestamp: Date.now(),
-        })
+        }),
       );
 
       // Wait for all responses
@@ -175,45 +150,16 @@ describe('RPC Call Flow', () => {
 
       // Verify results match the correct requests
       expect(result1).toBe('/path/to/project');
-      expect(result2).toBe('MyProject');
-      expect(result3).toEqual({
-        projectPath: '/path/to/project',
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
-      });
-
+      expect(result2).toEqual({ theme: 'dark' });
+      expect(result3).toBe('/path/to/selected-file.ts');
     });
 
     it('should handle RPC errors from IDE', async () => {
-      // Mock __jcef_send__ function
-      const sendMock = vi.fn();
-      (window as any).__jcef_send__ = sendMock;
-
-      // Create bridge instance
-      const bridge = createJCEFBridge({ debug: false });
-      bridges.push(bridge);
-
-      // Simulate IDE ready handshake
-      const receiveFunction = (window as any).__jcef_receive__;
-      receiveFunction(
-        JSON.stringify({
-          type: 'bridge:ready',
-          source: 'ide',
-          version: '1.0.0',
-          timestamp: Date.now(),
-        })
-      );
-
-      await bridge.ready();
-
       // Make RPC call
       const callPromise = bridge.call('getProjectPath', undefined);
 
       // Get request ID
-      const sentMessage = JSON.parse(sendMock.mock.calls[sendMock.mock.calls.length - 1][0]);
+      const sentMessage = JSON.parse(sendMock.mock.calls[sendMock.mock.calls.length - 1]![0] as string);
 
       // Simulate IDE error response
       receiveFunction(
@@ -225,44 +171,25 @@ describe('RPC Call Flow', () => {
             message: 'No project is currently open',
           },
           timestamp: Date.now(),
-        })
+        }),
       );
 
       // Verify error is thrown
-      await expect(callPromise).rejects.toThrow('No project is currently open');
-
+      const caughtError = await callPromise.catch((e: unknown) => e);
+      expect(caughtError).toBeInstanceOf(Error);
+      expect((caughtError as Error).message).toContain('No project is currently open');
     });
 
     it('should timeout if IDE does not respond', async () => {
-      // Mock __jcef_send__ function
-      const sendMock = vi.fn();
-      (window as any).__jcef_send__ = sendMock;
-
-      // Create bridge instance
-      const bridge = createJCEFBridge({ debug: false });
-      bridges.push(bridge);
-
-      // Simulate IDE ready handshake
-      const receiveFunction = (window as any).__jcef_receive__;
-      receiveFunction(
-        JSON.stringify({
-          type: 'bridge:ready',
-          source: 'ide',
-          version: '1.0.0',
-          timestamp: Date.now(),
-        })
-      );
-
-      await bridge.ready();
-
       // Make RPC call with short timeout
       const callPromise = bridge.call('getProjectPath', undefined, { timeout: 100 });
 
       // Don't send response - let it timeout
 
       // Verify timeout error
-      await expect(callPromise).rejects.toThrow('timed out');
-
+      const caughtError = await callPromise.catch((e: unknown) => e);
+      expect(caughtError).toBeInstanceOf(Error);
+      expect((caughtError as Error).message).toContain('timed out');
     });
   });
 
@@ -272,8 +199,7 @@ describe('RPC Call Flow', () => {
       // If this compiles, type safety is working
 
       // Mock __jcef_send__ to prevent errors
-      const sendMock = vi.fn();
-      (window as any).__jcef_send__ = sendMock;
+      (window as any).__jcef_send__ = vi.fn();
 
       const bridge = createJCEFBridge({ debug: false });
       bridges.push(bridge);
@@ -282,8 +208,8 @@ describe('RPC Call Flow', () => {
       // We don't await these - just checking they compile
       // Suppress unhandled rejections by catching them
       bridge.call('getProjectPath', undefined).catch(() => {});
-      bridge.call('getProjectName', undefined).catch(() => {});
-      bridge.call('getState', undefined).catch(() => {});
+      bridge.call('getSettings', undefined).catch(() => {});
+      bridge.call('getSelectedFile', undefined).catch(() => {});
 
       // TypeScript should catch invalid methods at compile time
       // Uncomment to test:

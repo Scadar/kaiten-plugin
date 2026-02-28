@@ -4,31 +4,44 @@
  */
 
 import axios from 'axios';
+
+import { useLogStore } from '@/state/logStore';
+
+import { createKaitenAxios } from './axiosInstance';
 import {
-  SpaceDto,
-  BoardDto,
-  ColumnDto,
-  TaskDto,
-  TaskDetailDto,
-  CommentDto,
-  FileDto,
-  UserDto,
-  TagDto,
-  CardTypeDto,
-  CustomPropertyDto,
-  CustomPropertySelectValueDto,
-  Space,
-  Board,
-  Column,
-  Task,
-  TaskDetail,
-  Comment,
-  CardFile,
-  User,
-  Tag,
-  CardType,
-  CustomProperty,
-  CustomPropertySelectValue,
+  KaitenApiError,
+  UnauthorizedError,
+  ForbiddenError,
+  NotFoundError,
+  ServerError,
+  NetworkError,
+  TimeoutError,
+} from './errors';
+import {
+  type SpaceDto,
+  type BoardDto,
+  type ColumnDto,
+  type TaskDto,
+  type TaskDetailDto,
+  type CommentDto,
+  type FileDto,
+  type UserDto,
+  type TagDto,
+  type CardTypeDto,
+  type CustomPropertyDto,
+  type CustomPropertySelectValueDto,
+  type Space,
+  type Board,
+  type Column,
+  type Task,
+  type TaskDetail,
+  type Comment,
+  type CardFile,
+  type User,
+  type Tag,
+  type CardType,
+  type CustomProperty,
+  type CustomPropertySelectValue,
   spaceDtoToDomain,
   boardDtoToDomain,
   columnDtoToDomain,
@@ -42,18 +55,6 @@ import {
   customPropertyDtoToDomain,
   customPropertySelectValueDtoToDomain,
 } from './types';
-
-import {
-  KaitenApiError,
-  UnauthorizedError,
-  ForbiddenError,
-  NotFoundError,
-  ServerError,
-  NetworkError,
-  TimeoutError,
-} from './errors';
-import { useLogStore } from '@/state/logStore';
-import { createKaitenAxios } from './axiosInstance';
 
 /**
  * API Configuration
@@ -84,7 +85,7 @@ export class KaitenApiClient {
   private async executeRequest<T>(
     path: string,
     params?: Record<string, unknown>,
-    retryCount: number = 0
+    retryCount = 0,
   ): Promise<T> {
     const url = `${this.config.serverUrl.replace(/\/$/, '')}/${path}`;
     const startTime = Date.now();
@@ -101,7 +102,6 @@ export class KaitenApiClient {
       log({ type: 'success', url, status: response.status, duration, message: '200 OK', params });
 
       return response.data;
-
     } catch (error) {
       const duration = Date.now() - startTime;
 
@@ -129,24 +129,57 @@ export class KaitenApiClient {
           }
           if (status >= 500 && status <= 599) {
             if (retryCount < this.maxRetries) {
-              log({ type: 'warning', url, status, duration, retryCount, message: `${status} Server Error — retry ${retryCount + 1}/${this.maxRetries}`, params });
-              await new Promise(resolve => setTimeout(resolve, this.retryDelayMs * (retryCount + 1)));
+              log({
+                type: 'warning',
+                url,
+                status,
+                duration,
+                retryCount,
+                message: `${status} Server Error — retry ${retryCount + 1}/${this.maxRetries}`,
+                params,
+              });
+              await new Promise((resolve) =>
+                setTimeout(resolve, this.retryDelayMs * (retryCount + 1)),
+              );
               return this.executeRequest<T>(path, params, retryCount + 1);
             }
-            log({ type: 'error', url, status, duration, message: `${status} Server Error (max retries exceeded)`, params });
+            log({
+              type: 'error',
+              url,
+              status,
+              duration,
+              message: `${status} Server Error (max retries exceeded)`,
+              params,
+            });
             throw new ServerError(`Server error: ${status}`);
           }
 
           const message = error.message || `HTTP ${status}`;
-          log({ type: 'error', url, status, duration, message: `${status} Unexpected error: ${message}`, params });
+          log({
+            type: 'error',
+            url,
+            status,
+            duration,
+            message: `${status} Unexpected error: ${message}`,
+            params,
+          });
           throw new ServerError(`Unexpected error: ${status}`);
         }
 
         // Timeout (axios sets code = 'ECONNABORTED' or 'ERR_CANCELED' for timeouts)
         if (error.code === 'ECONNABORTED' || error.code === 'ERR_CANCELED') {
           if (retryCount < this.maxRetries) {
-            log({ type: 'warning', url, duration, retryCount, message: `Timeout — retry ${retryCount + 1}/${this.maxRetries}`, params });
-            await new Promise(resolve => setTimeout(resolve, this.retryDelayMs * (retryCount + 1)));
+            log({
+              type: 'warning',
+              url,
+              duration,
+              retryCount,
+              message: `Timeout — retry ${retryCount + 1}/${this.maxRetries}`,
+              params,
+            });
+            await new Promise((resolve) =>
+              setTimeout(resolve, this.retryDelayMs * (retryCount + 1)),
+            );
             return this.executeRequest<T>(path, params, retryCount + 1);
           }
           log({ type: 'error', url, duration, message: 'Timeout (max retries exceeded)', params });
@@ -155,7 +188,8 @@ export class KaitenApiClient {
 
         // Network error (no response, not a timeout)
         const message = error.message || 'Network error';
-        if (import.meta.env.DEV) console.error(`[Kaiten API] NETWORK_ERROR ${url} (${duration}ms):`, error);
+        if (import.meta.env.DEV)
+          console.error(`[Kaiten API] NETWORK_ERROR ${url} (${duration}ms):`, error);
         log({ type: 'error', url, duration, message: `Network error: ${message}`, params });
         throw new NetworkError(message);
       }
@@ -207,7 +241,7 @@ export class KaitenApiClient {
       params.query = searchText.trim();
     }
 
-    if (memberId != null) {
+    if (memberId !== null && memberId !== undefined) {
       params.member_ids = memberId;
     }
 
@@ -231,7 +265,7 @@ export class KaitenApiClient {
     filter?: string | null,
     boardId?: number | null,
     searchText?: string,
-    columnIds?: number[] | null
+    columnIds?: number[] | null,
   ): Promise<Task[]> {
     const params: Record<string, unknown> = { space_id: spaceId };
 
@@ -245,7 +279,7 @@ export class KaitenApiClient {
       params.query = searchText.trim();
     }
 
-    if (columnIds != null && columnIds.length > 0) {
+    if (columnIds !== null && columnIds !== undefined && columnIds.length > 0) {
       params.column_ids = columnIds.join(',');
     }
 
@@ -254,7 +288,7 @@ export class KaitenApiClient {
     const dtos = await this.executeRequest<TaskDto[]>('cards', params);
     let tasks = dtos.map(taskDtoToDomain);
 
-    if (boardId != null) {
+    if (boardId !== null && boardId !== undefined) {
       tasks = tasks.filter((t) => t.boardId === boardId);
     }
 
@@ -314,7 +348,7 @@ export class KaitenApiClient {
    */
   async getTags(spaceId?: number | null): Promise<Tag[]> {
     const params: Record<string, unknown> = {};
-    if (spaceId != null) params.space_id = spaceId;
+    if (spaceId !== null && spaceId !== undefined) params.space_id = spaceId;
     const dtos = await this.executeRequest<TagDto[]>('tags', params);
     return dtos.map(tagDtoToDomain);
   }
@@ -324,7 +358,7 @@ export class KaitenApiClient {
    */
   async getCardTypes(spaceId?: number | null): Promise<CardType[]> {
     const params: Record<string, unknown> = {};
-    if (spaceId != null) params.space_id = spaceId;
+    if (spaceId !== null && spaceId !== undefined) params.space_id = spaceId;
     const dtos = await this.executeRequest<CardTypeDto[]>('card-types', params);
     return dtos.map(cardTypeDtoToDomain);
   }
@@ -349,12 +383,14 @@ export class KaitenApiClient {
    * Get select values for a custom property of type=select
    */
   async getCustomPropertySelectValues(id: number): Promise<CustomPropertySelectValue[]> {
-    const dtos = await this.executeRequest<CustomPropertySelectValueDto[]>(`company/custom-properties/${id}/select-values`);
+    const dtos = await this.executeRequest<CustomPropertySelectValueDto[]>(
+      `company/custom-properties/${id}/select-values`,
+    );
     return dtos.map(customPropertySelectValueDtoToDomain);
   }
 
   async getCardsByFilter(filter: string): Promise<Task[]> {
-    const params: Record<string, unknown> = {  };
+    const params: Record<string, unknown> = {};
 
     if (filter) {
       params.filter = filter;

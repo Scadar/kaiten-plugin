@@ -1,10 +1,11 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 /* ─── Geist Font Family ──────────────────────────────────────────────────── */
 @font-face {
   font-family: 'Geist';
-  src: url('../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2') format('woff2-variations');
+  src: url('../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2')
+    format('woff2-variations');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -12,7 +13,8 @@
 
 @font-face {
   font-family: 'GeistMono';
-  src: url('../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2') format('woff2-variations');
+  src: url('../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2')
+    format('woff2-variations');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -62,12 +64,20 @@
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
   @keyframes accordion-down {
-    from { height: 0; }
-    to { height: var(--radix-accordion-content-height); }
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
   }
   @keyframes accordion-up {
-    from { height: var(--radix-accordion-content-height); }
-    to { height: 0; }
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
   }
 }
 
@@ -134,13 +144,22 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Geist', -apple-system, 'Segoe UI', system-ui, sans-serif;
+    font-family:
+      'Geist',
+      -apple-system,
+      'Segoe UI',
+      system-ui,
+      sans-serif;
     font-size: var(--ide-font-size);
     line-height: 1.4;
     -webkit-font-smoothing: antialiased;
   }
 
-  code, kbd, samp, pre, .font-mono {
+  code,
+  kbd,
+  samp,
+  pre,
+  .font-mono {
     font-family: 'GeistMono', 'Menlo', 'Consolas', monospace;
   }
 

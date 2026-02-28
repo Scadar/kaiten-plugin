@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { cn } from '@/lib/utils';
+
+import type { Task, Column, Lane } from '@/api/types';
 import { KanbanColumn } from '@/components/kanban/KanbanColumn';
 import { KanbanTaskCard } from '@/components/kanban/KanbanTaskCard';
 import { Badge } from '@/components/ui/badge';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import type { Task, Column, Lane } from '@/api/types';
+import { cn } from '@/lib/utils';
 
 export interface KanbanBoardProps {
   tasks?: Task[];
@@ -23,10 +24,13 @@ interface LaneRow {
 }
 
 export const KanbanBoard = React.forwardRef<HTMLDivElement, KanbanBoardProps>(
-  ({ tasks, columns = [], lanes = [], isLoading = false, error = null, className, onTaskClick }, ref) => {
+  (
+    { tasks, columns = [], lanes = [], isLoading = false, error = null, className, onTaskClick },
+    ref,
+  ) => {
     const sortedColumns = React.useMemo(
       () => [...columns].sort((a, b) => a.position - b.position),
-      [columns]
+      [columns],
     );
 
     // Group tasks by laneId → columnId
@@ -62,7 +66,7 @@ export const KanbanBoard = React.forwardRef<HTMLDivElement, KanbanBoardProps>(
       for (const laneId of tasksByLaneAndColumn.keys()) {
         if (laneId !== null && !knownIds.has(laneId)) {
           const hasTasks = [...(tasksByLaneAndColumn.get(laneId)?.values() ?? [])].some(
-            (ts) => ts.length > 0
+            (ts) => ts.length > 0,
           );
           if (hasTasks) rows.push({ id: laneId, label: `Lane ${laneId}` });
         }
@@ -87,7 +91,9 @@ export const KanbanBoard = React.forwardRef<HTMLDivElement, KanbanBoardProps>(
     if (error) {
       return (
         <Stack ref={ref} align="center" justify="center" className={cn('p-8', className)}>
-          <Text variant="secondary" className="text-destructive">Error: {error.message}</Text>
+          <Text variant="secondary" className="text-destructive">
+            Error: {error.message}
+          </Text>
         </Stack>
       );
     }
@@ -105,7 +111,12 @@ export const KanbanBoard = React.forwardRef<HTMLDivElement, KanbanBoardProps>(
     // -----------------------------------------------------------------------
     if (lanes.length === 0) {
       return (
-        <Stack ref={ref} direction="row" spacing="3" className={cn('overflow-x-auto pb-4', className)}>
+        <Stack
+          ref={ref}
+          direction="row"
+          spacing="3"
+          className={cn('overflow-x-auto pb-4', className)}
+        >
           {sortedColumns.map((column) => (
             <KanbanColumn
               key={column.id}
@@ -124,7 +135,7 @@ export const KanbanBoard = React.forwardRef<HTMLDivElement, KanbanBoardProps>(
     return (
       <div ref={ref} className={cn('overflow-x-auto pb-4', className)}>
         <div
-          className="grid gap-3 min-w-max"
+          className="grid min-w-max gap-3"
           style={{ gridTemplateColumns: `160px repeat(${sortedColumns.length}, 288px)` }}
         >
           {/* ── Header row: corner spacer + column headers ── */}
@@ -138,16 +149,17 @@ export const KanbanBoard = React.forwardRef<HTMLDivElement, KanbanBoardProps>(
                 align="center"
                 justify="between"
                 spacing="2"
-                className="rounded-lg border border-border bg-card px-3 py-2 shadow-island"
+                className="border-border bg-card shadow-island rounded-lg border px-3 py-2"
               >
-                <Text variant="subheading" as="h3" className="truncate">{col.name}</Text>
+                <Text variant="subheading" as="h3" className="truncate">
+                  {col.name}
+                </Text>
                 <Badge variant="secondary" size="sm" className="shrink-0">
                   {total}
                 </Badge>
               </Stack>
             );
           })}
-
           {/* ── Lane rows ── */}
           {laneRows.map((row) => {
             const colMap = tasksByLaneAndColumn.get(row.id) ?? new Map<number, Task[]>();
@@ -159,7 +171,7 @@ export const KanbanBoard = React.forwardRef<HTMLDivElement, KanbanBoardProps>(
                 <Stack
                   justify="between"
                   spacing="1.5"
-                  className="rounded-lg border border-border bg-muted/40 px-3 py-2"
+                  className="border-border bg-muted/40 rounded-lg border px-3 py-2"
                 >
                   <Text variant="body" className="break-words">
                     {row.label}
@@ -176,7 +188,7 @@ export const KanbanBoard = React.forwardRef<HTMLDivElement, KanbanBoardProps>(
                     <Stack
                       key={col.id}
                       spacing="2"
-                      className="rounded-lg border border-border/50 bg-muted/20 p-2 min-h-[56px]"
+                      className="border-border/50 bg-muted/20 min-h-[56px] rounded-lg border p-2"
                     >
                       {colTasks.map((task) => (
                         <KanbanTaskCard
@@ -194,7 +206,7 @@ export const KanbanBoard = React.forwardRef<HTMLDivElement, KanbanBoardProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
 KanbanBoard.displayName = 'KanbanBoard';

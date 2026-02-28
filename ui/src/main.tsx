@@ -1,5 +1,7 @@
 import React from 'react';
+
 import ReactDOM from 'react-dom/client';
+
 // App component includes TanStack Router with module augmentation for type-safe routing
 // See App.tsx for router configuration and Register interface declaration
 import App from './App';
@@ -16,5 +18,5 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>
+  </React.StrictMode>,
 );

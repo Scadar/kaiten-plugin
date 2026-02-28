@@ -7,9 +7,13 @@ export class KaitenApiError extends Error {
     super(message);
     this.name = 'KaitenApiError';
     // Maintains proper stack trace for where our error was thrown (only available on V8)
-    if ((Error as any).captureStackTrace) {
-      (Error as any).captureStackTrace(this, this.constructor);
+    interface V8ErrorConstructor extends ErrorConstructor {
+      captureStackTrace?(target: object, ctor?: new (...args: unknown[]) => unknown): void;
     }
+    (Error as V8ErrorConstructor).captureStackTrace?.(
+      this,
+      this.constructor as new (...args: unknown[]) => unknown,
+    );
   }
 }
 
@@ -17,7 +21,7 @@ export class KaitenApiError extends Error {
  * Thrown when authentication fails (401)
  */
 export class UnauthorizedError extends KaitenApiError {
-  constructor(message: string = 'Unauthorized: Invalid token') {
+  constructor(message = 'Unauthorized: Invalid token') {
     super(message);
     this.name = 'UnauthorizedError';
   }
@@ -27,7 +31,7 @@ export class UnauthorizedError extends KaitenApiError {
  * Thrown when access is forbidden (403)
  */
 export class ForbiddenError extends KaitenApiError {
-  constructor(message: string = 'Forbidden: Insufficient permissions') {
+  constructor(message = 'Forbidden: Insufficient permissions') {
     super(message);
     this.name = 'ForbiddenError';
   }
@@ -37,7 +41,7 @@ export class ForbiddenError extends KaitenApiError {
  * Thrown when a resource is not found (404)
  */
 export class NotFoundError extends KaitenApiError {
-  constructor(message: string = 'Resource not found') {
+  constructor(message = 'Resource not found') {
     super(message);
     this.name = 'NotFoundError';
   }
@@ -47,7 +51,7 @@ export class NotFoundError extends KaitenApiError {
  * Thrown when a server error occurs (5xx)
  */
 export class ServerError extends KaitenApiError {
-  constructor(message: string = 'Server error occurred') {
+  constructor(message = 'Server error occurred') {
     super(message);
     this.name = 'ServerError';
   }
@@ -57,7 +61,7 @@ export class ServerError extends KaitenApiError {
  * Thrown when a network error occurs
  */
 export class NetworkError extends KaitenApiError {
-  constructor(message: string = 'Network error occurred') {
+  constructor(message = 'Network error occurred') {
     super(message);
     this.name = 'NetworkError';
   }
@@ -67,7 +71,7 @@ export class NetworkError extends KaitenApiError {
  * Thrown when a request times out
  */
 export class TimeoutError extends KaitenApiError {
-  constructor(message: string = 'Request timeout') {
+  constructor(message = 'Request timeout') {
     super(message);
     this.name = 'TimeoutError';
   }

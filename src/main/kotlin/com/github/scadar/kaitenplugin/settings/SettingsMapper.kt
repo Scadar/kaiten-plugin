@@ -12,6 +12,7 @@ object SettingsMapper {
     fun toMap(settings: KaitenSettingsState): Map<String, Any?> = mapOf(
         "serverUrl"            to settings.serverUrl,
         "hasToken"             to settings.apiToken.isNotBlank(),
+        "currentUserId"        to settings.currentUserId,
         "selectedSpaceId"      to settings.selectedSpaceId,
         "selectedBoardId"      to settings.selectedBoardId,
         "selectedColumnIds"    to settings.selectedColumnIds.toList(),
@@ -26,7 +27,8 @@ object SettingsMapper {
         "releaseSpaceId"       to settings.releaseSpaceId,
         "releaseBoardId"       to settings.releaseBoardId,
         "releaseColumnIds"     to settings.releaseColumnIds.toList(),
-        "activeReleaseCardId"  to settings.activeReleaseCardId
+        "activeReleaseCardId"  to settings.activeReleaseCardId,
+        "lastConnectionError"  to settings.lastConnectionError
     )
 
     /**

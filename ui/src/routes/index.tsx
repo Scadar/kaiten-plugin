@@ -1,18 +1,21 @@
-import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
+
 import { useQuery } from '@tanstack/react-query';
-import { useSyncedFields, useSyncedReady } from '@/hooks/useSyncedState';
-import { bridge } from '@/bridge/JCEFBridge';
+import { createFileRoute } from '@tanstack/react-router';
+import { FolderOpen, FileCode2 } from 'lucide-react';
+
 import { timeTrackerKeys } from '@/api/endpoints';
+import { bridge } from '@/bridge/JCEFBridge';
+import { InfoRow } from '@/components/home/InfoRow';
 import { Layout } from '@/components/Layout';
+import { ActivityHeatmap } from '@/components/time-tracker/ActivityHeatmap';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import { InfoRow } from '@/components/home/InfoRow';
-import { ActivityHeatmap } from '@/components/time-tracker/ActivityHeatmap';
-import { FolderOpen, FileCode2 } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { useSyncedFields, useSyncedReady } from '@/hooks/useSyncedState';
+import { aggregateDailySeconds } from '@/lib/format';
 
 export const Route = createFileRoute('/')({
   component: IndexComponent,
@@ -37,18 +40,10 @@ function IndexComponent() {
   });
 
   // Aggregate daily data across all branches for the heatmap
-  const aggregatedDaily = useMemo(() => {
-    if (!branchEntries) return [];
-    const dayMap = new Map<string, number>();
-    for (const data of Object.values(branchEntries)) {
-      for (const day of data.daily) {
-        dayMap.set(day.date, (dayMap.get(day.date) ?? 0) + day.seconds);
-      }
-    }
-    return Array.from(dayMap.entries())
-      .map(([date, seconds]) => ({ date, seconds }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [branchEntries]);
+  const aggregatedDaily = useMemo(
+    () => (branchEntries ? aggregateDailySeconds(branchEntries) : []),
+    [branchEntries],
+  );
 
   // Aggregate commits per date for commit heatmap
   const aggregatedCommits = useMemo(() => {
@@ -63,21 +58,25 @@ function IndexComponent() {
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [gitLog]);
 
-  const projectName = projectPath
-    ? projectPath.split(/[\\/]/).filter(Boolean).pop()
-    : null;
+  const projectName = projectPath ? projectPath.split(/[\\/]/).filter(Boolean).pop() : null;
 
   return (
-    <Layout header={
+    <Layout
+      header={
         <>
-            <Text variant="body">Kaiten Plugin</Text>
-            <Stack direction="row" align="center" spacing="1.5" className="ml-auto text-xs text-muted-foreground">
-                <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                Connected
-            </Stack>
+          <Text variant="body">Kaiten Integration</Text>
+          <Stack
+            direction="row"
+            align="center"
+            spacing="1.5"
+            className="text-muted-foreground ml-auto text-xs"
+          >
+            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+            Connected
+          </Stack>
         </>
-    }>
-
+      }
+    >
       {/* Project info island */}
       <Card variant="island" padding="sm">
         {isLoading ? (
@@ -89,9 +88,7 @@ function IndexComponent() {
               label="Project"
               value={projectName ?? 'Unknown'}
             />
-            {projectPath && (
-              <InfoRow label="Path" value={projectPath} mono truncate />
-            )}
+            {projectPath && <InfoRow label="Path" value={projectPath} mono truncate />}
             {selectedFile && (
               <>
                 <Separator className="my-1.5" />
@@ -133,20 +130,11 @@ function IndexComponent() {
           <ActivityHeatmap
             data={heatmapMode === 'time' ? aggregatedDaily : aggregatedCommits}
             valueFormatter={
-              heatmapMode === 'commits'
-                ? (v) => `${v} commit${v !== 1 ? 's' : ''}`
-                : undefined
+              heatmapMode === 'commits' ? (v) => `${v} commit${v !== 1 ? 's' : ''}` : undefined
             }
           />
         </Card>
       )}
-
-      <Card variant="island" padding="sm">
-        <Text variant="dimmed" className="leading-relaxed">
-          JetBrains IDE integration for Kaiten project management.
-          Use the tabs above to navigate between Tasks, Boards, and Settings.
-        </Text>
-      </Card>
     </Layout>
   );
 }

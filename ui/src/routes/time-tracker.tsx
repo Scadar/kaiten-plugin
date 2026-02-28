@@ -1,26 +1,28 @@
-import { createFileRoute } from '@tanstack/react-router';
 import { useState, useCallback, useMemo } from 'react';
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import { Activity, GitBranch, RefreshCw, Search } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { bridge } from '@/bridge/JCEFBridge';
+
 import { timeTrackerKeys } from '@/api/endpoints';
-import { formatDuration } from '@/lib/format';
+import { bridge } from '@/bridge/JCEFBridge';
 import { Layout } from '@/components/Layout';
+import { BranchDetail } from '@/components/time-tracker/BranchDetail';
+import { BranchRow } from '@/components/time-tracker/BranchRow';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Stack } from '@/components/ui/stack';
-import { Text } from '@/components/ui/typography';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import { BranchRow } from '@/components/time-tracker/BranchRow';
-import { BranchDetail } from '@/components/time-tracker/BranchDetail';
-import { Activity, GitBranch, RefreshCw, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Stack } from '@/components/ui/stack';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Text } from '@/components/ui/typography';
+import { aggregateDailySeconds, formatDuration } from '@/lib/format';
 
 export const Route = createFileRoute('/time-tracker')({
   component: TimeTrackerComponent,
@@ -46,33 +48,21 @@ function TimeTrackerComponent() {
   });
 
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: timeTrackerKeys.branches() });
+    void queryClient.invalidateQueries({ queryKey: timeTrackerKeys.branches() });
   }, [queryClient]);
 
   // Aggregate daily data across all branches for the activity chart
-  const aggregatedDaily = useMemo(() => {
-    if (!branchEntries) return [];
-    const dayMap = new Map<string, number>();
-    for (const data of Object.values(branchEntries)) {
-      for (const day of data.daily) {
-        dayMap.set(day.date, (dayMap.get(day.date) ?? 0) + day.seconds);
-      }
-    }
-    return Array.from(dayMap.entries())
-      .map(([date, seconds]) => ({ date, seconds }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [branchEntries]);
+  const aggregatedDaily = useMemo(
+    () => (branchEntries ? aggregateDailySeconds(branchEntries) : []),
+    [branchEntries],
+  );
 
   // If a branch is selected, show its detail view
   if (selectedBranch && branchEntries) {
     const data = branchEntries[selectedBranch];
     if (data) {
       return (
-        <BranchDetail
-          branch={selectedBranch}
-          data={data}
-          onBack={() => setSelectedBranch(null)}
-        />
+        <BranchDetail branch={selectedBranch} data={data} onBack={() => setSelectedBranch(null)} />
       );
     }
     // Branch data disappeared (cleared) — fall back to list
@@ -87,9 +77,7 @@ function TimeTrackerComponent() {
 
   // Filter by search query
   const filteredBranches = search
-    ? sortedBranches.filter(([branch]) =>
-        branch.toLowerCase().includes(search.toLowerCase())
-      )
+    ? sortedBranches.filter(([branch]) => branch.toLowerCase().includes(search.toLowerCase()))
     : sortedBranches;
 
   return (
@@ -98,7 +86,9 @@ function TimeTrackerComponent() {
         <>
           <Stack direction="row" align="center" spacing="1.5" className="flex-1">
             <GitBranch size={12} className="text-muted-foreground" />
-            <Text variant="body" className="text-muted-foreground">Branch Time</Text>
+            <Text variant="body" className="text-muted-foreground">
+              Branch Time
+            </Text>
           </Stack>
           <Text variant="dimmed" className="tabular-nums">
             {sortedBranches.length} branch{sortedBranches.length !== 1 ? 'es' : ''}
@@ -115,14 +105,14 @@ function TimeTrackerComponent() {
       }
     >
       {isLoading ? (
-        <Stack align="center" justify="center" spacing="2" className="py-10 text-muted-foreground">
+        <Stack align="center" justify="center" spacing="2" className="text-muted-foreground py-10">
           <Activity size={14} className="animate-pulse" />
           <Text variant="dimmed">Loading…</Text>
         </Stack>
       ) : sortedBranches.length === 0 ? (
-        <Stack align="center" justify="center" spacing="2" className="py-10 text-muted-foreground">
+        <Stack align="center" justify="center" spacing="2" className="text-muted-foreground py-10">
           <GitBranch size={20} className="opacity-30" />
-          <Text variant="dimmed" className="text-center px-4">
+          <Text variant="dimmed" className="px-4 text-center">
             No branch time recorded yet.
             <br />
             Open a task branch and start working.
@@ -157,9 +147,7 @@ function TimeTrackerComponent() {
                   />
                   <ChartTooltip
                     content={
-                      <ChartTooltipContent
-                        formatter={(value) => formatDuration(value as number)}
-                      />
+                      <ChartTooltipContent formatter={(value) => formatDuration(value as number)} />
                     }
                   />
                   <Bar dataKey="seconds" fill="var(--color-seconds)" radius={[3, 3, 0, 0]} />
@@ -171,7 +159,10 @@ function TimeTrackerComponent() {
           {/* Branch search */}
           <div className="px-3 pt-2">
             <div className="relative">
-              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search
+                size={12}
+                className="text-muted-foreground absolute top-1/2 left-2.5 -translate-y-1/2"
+              />
               <Input
                 size="sm"
                 placeholder="Search branches…"
@@ -184,12 +175,17 @@ function TimeTrackerComponent() {
 
           {/* Branch list */}
           {filteredBranches.length === 0 ? (
-            <Stack align="center" justify="center" spacing="1" className="py-6 text-muted-foreground">
+            <Stack
+              align="center"
+              justify="center"
+              spacing="1"
+              className="text-muted-foreground py-6"
+            >
               <Text variant="dimmed">No branches match your search</Text>
             </Stack>
           ) : (
             <Card variant="island">
-              <div className="divide-y divide-border">
+              <div className="divide-border divide-y">
                 {filteredBranches.map(([branch, data]) => (
                   <BranchRow
                     key={branch}

@@ -3,8 +3,9 @@
  * Verifies React hook for bidirectional state synchronization with IDE
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import {
   useSyncedState,
   useSyncedField,
@@ -14,6 +15,7 @@ import {
   useSyncedDerived,
 } from '../../src/hooks/useSyncedState';
 import { useSyncedStore, disposeSyncStore } from '../../src/state/syncStore';
+
 import type { AppState } from '../../src/bridge/types';
 
 describe('useSyncedState', () => {
@@ -564,7 +566,7 @@ describe('useSyncedState', () => {
       });
 
       const { result } = renderHook(() =>
-        useSyncedDerived((s) => s.projectPath?.split('/').length || 0)
+        useSyncedDerived((s) => s.projectPath?.split('/').length ?? 0)
       );
 
       expect(result.current).toBe(3);
@@ -572,7 +574,7 @@ describe('useSyncedState', () => {
 
     it('should recompute when dependency changes', () => {
       const { result } = renderHook(() =>
-        useSyncedDerived((s) => s.projectPath?.split('/').length || 0)
+        useSyncedDerived((s) => s.projectPath?.split('/').length ?? 0)
       );
 
       expect(result.current).toBe(0);
@@ -607,26 +609,22 @@ describe('useSyncedState', () => {
       act(() => {
         useSyncedStore.getState().updateFromIDE({
           projectPath: '/test/path',
-          user: {
-            id: 'user1',
-            name: 'John Doe',
-            email: 'john@example.com',
-          },
+          selectedFile: '/test/file.ts',
         });
       });
 
       const { result } = renderHook(() =>
         useSyncedDerived((s) => ({
           hasProject: s.projectPath !== null,
-          hasUser: s.user !== null,
-          userName: s.user?.name,
+          hasFile: s.selectedFile !== null,
+          filePath: s.selectedFile,
         }))
       );
 
       expect(result.current).toEqual({
         hasProject: true,
-        hasUser: true,
-        userName: 'John Doe',
+        hasFile: true,
+        filePath: '/test/file.ts',
       });
     });
 
@@ -635,7 +633,7 @@ describe('useSyncedState', () => {
 
       const { result, rerender } = renderHook(
         ({ multiplier }) =>
-          useSyncedDerived((s) => (s.projectPath?.split('/').length || 0) * multiplier, [multiplier]),
+          useSyncedDerived((s) => (s.projectPath?.split('/').length ?? 0) * multiplier, [multiplier]),
         {
           initialProps: { multiplier: customMultiplier },
         }
@@ -701,16 +699,6 @@ describe('useSyncedState', () => {
       const updates: Partial<AppState> = {
         projectPath: '/complex/path',
         selectedFile: '/complex/file.ts',
-        user: {
-          id: 'user1',
-          name: 'John Doe',
-          email: 'john@example.com',
-        },
-        tasks: [
-          { id: 'task1', title: 'Task 1' },
-          { id: 'task2', title: 'Task 2' },
-        ],
-        filters: { status: 'open' },
         settings: { theme: 'dark', fontSize: 14 },
       };
 
@@ -720,9 +708,6 @@ describe('useSyncedState', () => {
 
       expect(result.current.state.projectPath).toBe('/complex/path');
       expect(result.current.state.selectedFile).toBe('/complex/file.ts');
-      expect(result.current.state.user).toEqual(updates.user);
-      expect(result.current.state.tasks).toEqual(updates.tasks);
-      expect(result.current.state.filters).toEqual(updates.filters);
       expect(result.current.state.settings).toEqual(updates.settings);
     });
   });

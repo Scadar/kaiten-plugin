@@ -33,8 +33,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 class StateManager(private val project: Project) : Disposable {
     private val log = logger<StateManager>()
 
-    // Application state - thread-safe
-    private val state = ConcurrentHashMap<String, Any?>()
+    // Application state - thread-safe (ConcurrentHashMap does not allow null values)
+    private val state = ConcurrentHashMap<String, Any>()
 
     // Reference to bridge handler (set during initialization)
     @Volatile
@@ -123,7 +123,7 @@ class StateManager(private val project: Project) : Disposable {
      */
     fun getState(): Map<String, Any?> {
         // Start with all current state
-        val result = state.toMap().toMutableMap()
+        val result = mutableMapOf<String, Any?>().also { it.putAll(state) }
 
         // Ensure required keys are present (even if null)
         val requiredKeys = listOf("projectPath", "selectedFile", "settings", "user", "tasks", "filters")
@@ -206,33 +206,6 @@ class StateManager(private val project: Project) : Disposable {
     }
 
     /**
-     * Update tasks list
-     *
-     * @param tasks New tasks list
-     */
-    fun updateTasks(tasks: List<Any>) {
-        updateField("tasks", tasks)
-    }
-
-    /**
-     * Update filters
-     *
-     * @param filters New filters map
-     */
-    fun updateFilters(filters: Map<String, Any?>) {
-        updateField("filters", filters)
-    }
-
-    /**
-     * Update user information
-     *
-     * @param user User info map (id, name, email)
-     */
-    fun updateUser(user: Map<String, Any?>?) {
-        updateField("user", user)
-    }
-
-    /**
      * Broadcast state update to React via bridge
      *
      * @param updates State updates to broadcast
@@ -298,15 +271,6 @@ class StateManager(private val project: Project) : Disposable {
     }
 
     /**
-     * Remove a state change listener
-     *
-     * @param listener Listener to remove
-     */
-    fun removeStateChangeListener(listener: (Map<String, Any?>) -> Unit) {
-        stateChangeListeners.remove(listener)
-    }
-
-    /**
      * Notify all state change listeners
      *
      * @param changes State changes
@@ -319,16 +283,6 @@ class StateManager(private val project: Project) : Disposable {
                 log.error("Error in state change listener", e)
             }
         }
-    }
-
-    /**
-     * Reset state to initial values
-     */
-    fun reset() {
-        state.clear()
-        initializeState()
-        broadcastStateUpdate(getState())
-        log.info("State reset to initial values")
     }
 
     override fun dispose() {

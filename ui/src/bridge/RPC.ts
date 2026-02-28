@@ -3,13 +3,7 @@
  * Provides type-safe method calls from React to IDE with timeout handling
  */
 
-import type {
-  RPCMethodName,
-  RPCParams,
-  RPCResult,
-  RPCResponse,
-  RPCError,
-} from './types';
+import type { RPCMethodName, RPCParams, RPCResult, RPCResponse, RPCError } from './types';
 
 /**
  * RPC call options
@@ -108,7 +102,7 @@ export class RPCHandler {
   call<M extends RPCMethodName>(
     method: M,
     params: RPCParams<M>,
-    options: RPCCallOptions = {}
+    options: RPCCallOptions = {},
   ): Promise<RPCResult<M>> {
     const id = crypto.randomUUID();
     const timeout = options.timeout ?? this.defaultTimeout;
@@ -178,9 +172,7 @@ export class RPCHandler {
     this.pendingRequests.delete(error.id);
 
     // Reject promise with remote error
-    pending.reject(
-      new RPCRemoteError(error.error.code, error.error.message, error.error.details)
-    );
+    pending.reject(new RPCRemoteError(error.error.code, error.error.message, error.error.details));
   }
 
   /**
@@ -266,6 +258,7 @@ export class RPCHandler {
   protected emitRequest(id: string, method: string, params: unknown): void {
     // This will be hooked by JCEFBridge to actually send the request
     // Default implementation does nothing (useful for testing)
+    // eslint-disable-next-line no-console
     console.debug(`RPC request: ${method} (${id})`, params);
   }
 
@@ -274,9 +267,7 @@ export class RPCHandler {
    *
    * @param emitter - Function to emit RPC requests
    */
-  setRequestEmitter(
-    emitter: (id: string, method: string, params: unknown) => void
-  ): void {
+  setRequestEmitter(emitter: (id: string, method: string, params: unknown) => void): void {
     this.emitRequest = emitter;
   }
 }

@@ -1,17 +1,19 @@
 import { useState } from 'react';
+
 import { useQueryClient } from '@tanstack/react-query';
-import { bridge } from '@/bridge/JCEFBridge';
+import { CheckCircle2, Loader2, Save, XCircle } from 'lucide-react';
+
 import { settingsKeys } from '@/api/endpoints';
-import { useSpaces, useBoards, useColumns } from '@/hooks/useKaitenQuery';
-import { ComboboxSelect } from '@/components/ui/combobox-select';
-import { MultiCombobox } from '@/components/ui/multi-combobox';
+import type { KaitenSettings } from '@/api/types';
+import { bridge } from '@/bridge/JCEFBridge';
+import { FieldRow } from '@/components/settings/FieldRow';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ComboboxSelect } from '@/components/ui/combobox-select';
+import { MultiCombobox } from '@/components/ui/multi-combobox';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import { CheckCircle2, Loader2, Save, XCircle } from 'lucide-react';
-import { FieldRow } from '@/components/settings/FieldRow';
-import type { KaitenSettings } from '@/api/types';
+import { useSpaces, useBoards, useColumns } from '@/hooks/useKaitenQuery';
 
 export interface ReleasesSectionProps {
   currentSettings: KaitenSettings;
@@ -24,18 +26,24 @@ export interface ReleasesSectionProps {
 export function ReleasesSection({ currentSettings }: ReleasesSectionProps) {
   const queryClient = useQueryClient();
 
-  const [releaseSpaceId,   setReleaseSpaceId]   = useState<number | null>(currentSettings.releaseSpaceId);
-  const [releaseBoardId,   setReleaseBoardId]   = useState<number | null>(currentSettings.releaseBoardId);
-  const [releaseColumnIds, setReleaseColumnIds] = useState<number[]>(currentSettings.releaseColumnIds);
-  const [isSaving,         setIsSaving]         = useState(false);
-  const [saveStatus,       setSaveStatus]       = useState<'idle' | 'success' | 'error'>('idle');
+  const [releaseSpaceId, setReleaseSpaceId] = useState<number | null>(
+    currentSettings.releaseSpaceId,
+  );
+  const [releaseBoardId, setReleaseBoardId] = useState<number | null>(
+    currentSettings.releaseBoardId,
+  );
+  const [releaseColumnIds, setReleaseColumnIds] = useState<number[]>(
+    currentSettings.releaseColumnIds,
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  const { data: spaces,  isLoading: spacesLoading  } = useSpaces();
-  const { data: boards,  isLoading: boardsLoading  } = useBoards(releaseSpaceId);
+  const { data: spaces, isLoading: spacesLoading } = useSpaces();
+  const { data: boards, isLoading: boardsLoading } = useBoards(releaseSpaceId);
   const { data: columns, isLoading: columnsLoading } = useColumns(releaseBoardId);
 
-  const spaceOptions  = (spaces  ?? []).map((s) => ({ value: String(s.id), label: s.name }));
-  const boardOptions  = (boards  ?? []).map((b) => ({ value: String(b.id), label: b.name }));
+  const spaceOptions = (spaces ?? []).map((s) => ({ value: String(s.id), label: s.name }));
+  const boardOptions = (boards ?? []).map((b) => ({ value: String(b.id), label: b.name }));
   const columnOptions = (columns ?? []).map((c) => ({ value: String(c.id), label: c.name }));
 
   function handleSpaceChange(value: string | null) {
@@ -50,11 +58,11 @@ export function ReleasesSection({ currentSettings }: ReleasesSectionProps) {
   }
 
   const sortedCurrent = [...currentSettings.releaseColumnIds].sort().join(',');
-  const sortedLocal   = [...releaseColumnIds].sort().join(',');
+  const sortedLocal = [...releaseColumnIds].sort().join(',');
   const hasChanges =
-    releaseSpaceId   !== currentSettings.releaseSpaceId   ||
-    releaseBoardId   !== currentSettings.releaseBoardId   ||
-    sortedLocal      !== sortedCurrent;
+    releaseSpaceId !== currentSettings.releaseSpaceId ||
+    releaseBoardId !== currentSettings.releaseBoardId ||
+    sortedLocal !== sortedCurrent;
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -88,7 +96,7 @@ export function ReleasesSection({ currentSettings }: ReleasesSectionProps) {
           <FieldRow label="Space">
             <ComboboxSelect
               options={spaceOptions}
-              value={releaseSpaceId != null ? String(releaseSpaceId) : null}
+              value={releaseSpaceId !== null ? String(releaseSpaceId) : null}
               onChange={handleSpaceChange}
               placeholder={spacesLoading ? 'Loading…' : 'Select space…'}
               searchPlaceholder="Search spaces…"
@@ -100,7 +108,7 @@ export function ReleasesSection({ currentSettings }: ReleasesSectionProps) {
           <FieldRow label="Board">
             <ComboboxSelect
               options={boardOptions}
-              value={releaseBoardId != null ? String(releaseBoardId) : null}
+              value={releaseBoardId !== null ? String(releaseBoardId) : null}
               onChange={handleBoardChange}
               placeholder={
                 !releaseSpaceId
@@ -134,30 +142,34 @@ export function ReleasesSection({ currentSettings }: ReleasesSectionProps) {
           </FieldRow>
 
           <Stack direction="row" align="center" spacing="3" className="pt-1">
-            <Button
-              size="xs"
-              onClick={handleSave}
-              disabled={isSaving || !hasChanges}
-            >
+            <Button size="xs" onClick={handleSave} disabled={isSaving || !hasChanges}>
               {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
               Save
             </Button>
 
             {saveStatus === 'success' && (
-              <Stack direction="row" align="center" spacing="1" className="text-xs text-green-600 dark:text-green-500">
+              <Stack
+                direction="row"
+                align="center"
+                spacing="1"
+                className="text-xs text-green-600 dark:text-green-500"
+              >
                 <CheckCircle2 size={12} />
                 <span>Saved</span>
               </Stack>
             )}
             {saveStatus === 'error' && (
-              <Stack direction="row" align="center" spacing="1" className="text-xs text-destructive">
+              <Stack
+                direction="row"
+                align="center"
+                spacing="1"
+                className="text-destructive text-xs"
+              >
                 <XCircle size={12} />
                 <span>Failed</span>
               </Stack>
             )}
-            {hasChanges && saveStatus === 'idle' && (
-              <Text variant="dimmed">Unsaved changes</Text>
-            )}
+            {hasChanges && saveStatus === 'idle' && <Text variant="dimmed">Unsaved changes</Text>}
           </Stack>
         </Stack>
       </Card>

@@ -19,6 +19,11 @@ class KaitenSettingsState : PersistentStateComponent<KaitenSettingsState> {
     var serverUrl: String = ""
     var currentUserId: Long? = null
 
+    // Persisted result of the last connection verification.
+    // Empty = no error (either never verified or last check passed).
+    // Non-empty = human-readable error from the last failed attempt.
+    var lastConnectionError: String = ""
+
     // apiToken is NOT stored in XML — kept in the OS keychain via PasswordSafe
     val apiToken: String
         get() {

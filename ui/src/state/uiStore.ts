@@ -22,6 +22,8 @@ export interface UIStoreState {
   closedAccordionIds: string[];
   /** Last selected view mode on the Tasks page */
   tasksViewMode: TasksViewMode;
+  /** Whether to render the list view as a flat list (no board/lane/column grouping) */
+  tasksListNoGrouping: boolean;
   /** Last active tab on the Releases page */
   releasesActiveTab: ReleasesTab;
 }
@@ -29,6 +31,7 @@ export interface UIStoreState {
 export interface UIStoreActions {
   setClosedAccordionIds: (ids: string[]) => void;
   setTasksViewMode: (mode: TasksViewMode) => void;
+  setTasksListNoGrouping: (value: boolean) => void;
   setReleasesActiveTab: (tab: ReleasesTab) => void;
 }
 
@@ -66,8 +69,9 @@ const saved = loadState();
 
 export const useUIStore = create<UIStore>((set, get) => ({
   closedAccordionIds: saved.closedAccordionIds ?? [],
-  tasksViewMode:      saved.tasksViewMode ?? 'table',
-  releasesActiveTab:  saved.releasesActiveTab ?? 'list',
+  tasksViewMode: saved.tasksViewMode ?? 'table',
+  tasksListNoGrouping: saved.tasksListNoGrouping ?? false,
+  releasesActiveTab: saved.releasesActiveTab ?? 'list',
 
   setClosedAccordionIds: (ids) => {
     const next = { ...get(), closedAccordionIds: ids };
@@ -79,6 +83,12 @@ export const useUIStore = create<UIStore>((set, get) => ({
     const next = { ...get(), tasksViewMode: mode };
     persist(next);
     set({ tasksViewMode: mode });
+  },
+
+  setTasksListNoGrouping: (value) => {
+    const next = { ...get(), tasksListNoGrouping: value };
+    persist(next);
+    set({ tasksListNoGrouping: value });
   },
 
   setReleasesActiveTab: (tab) => {

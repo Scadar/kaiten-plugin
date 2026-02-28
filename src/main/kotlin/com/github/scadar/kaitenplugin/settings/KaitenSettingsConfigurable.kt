@@ -1,6 +1,8 @@
 package com.github.scadar.kaitenplugin.settings
 
+import com.github.scadar.kaitenplugin.state.StateSyncService
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.ProjectManager
 import javax.swing.JComponent
 
 class KaitenSettingsConfigurable : Configurable {
@@ -28,8 +30,23 @@ class KaitenSettingsConfigurable : Configurable {
         val settings = KaitenSettingsState.getInstance()
         val component = settingsComponent ?: return
 
+        val credentialsChanged = component.serverUrl != settings.serverUrl ||
+                component.apiToken != settings.apiToken
+
         settings.serverUrl = component.serverUrl
         settings.setApiToken(component.apiToken)
+
+        ProjectManager.getInstance().openProjects.forEach { project ->
+            val syncService = project.getServiceIfCreated(StateSyncService::class.java) ?: return@forEach
+            if (credentialsChanged) {
+                // Reset verification state so React shows "Connecting…" while we check.
+                settings.currentUserId = null
+                settings.lastConnectionError = ""
+                syncService.verifyConnectionAndRefresh(settings.serverUrl, settings.apiToken)
+            } else {
+                syncService.refreshSettings()
+            }
+        }
     }
 
     override fun reset() {

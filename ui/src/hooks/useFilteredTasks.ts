@@ -5,9 +5,11 @@
  * passing an encoded filter to the Kaiten API for server-side filtering.
  */
 
-import { useTasksBySpace } from './useKaitenQuery';
 import { encodeFilter } from '@/lib/advancedFilters';
 import type { SavedFilter } from '@/lib/advancedFilters';
+
+import { useTasksBySpace } from './useKaitenQuery';
+
 import type { Task } from '../api/types';
 
 export interface UseFilteredTasksResult {
@@ -19,7 +21,7 @@ export interface UseFilteredTasksResult {
 export function useFilteredTasks(
   spaceId: number | null | undefined,
   activeFilter: SavedFilter | null,
-  searchText?: string
+  searchText?: string,
 ): UseFilteredTasksResult {
   const encodedFilter = activeFilter ? encodeFilter(activeFilter.group) : null;
   const boardId = activeFilter?.boardId ?? null;
@@ -27,8 +29,8 @@ export function useFilteredTasks(
   const tasksQuery = useTasksBySpace({ spaceId, filter: encodedFilter, boardId, searchText });
 
   return {
-    data:      tasksQuery.data,
+    data: tasksQuery.data,
     isLoading: tasksQuery.isLoading,
-    error:     tasksQuery.error || null,
+    error: tasksQuery.error ?? null,
   };
 }

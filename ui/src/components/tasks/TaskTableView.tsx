@@ -1,16 +1,17 @@
 import { useMemo } from 'react';
-import { ExternalLink } from 'lucide-react';
-import { type ColumnDef } from '@tanstack/react-table';
 
+import { type ColumnDef } from '@tanstack/react-table';
+import { ExternalLink } from 'lucide-react';
+
+import type { Task, Column } from '@/api/types';
 import { CardsTable } from '@/components/tasks/CardsTable';
 import { Card } from '@/components/ui/card';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import { cn } from '@/lib/utils';
-import { buildKaitenUrl } from '@/lib/format';
 import { useSettings } from '@/hooks/useSettings';
+import { buildKaitenUrl } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { useFilterStore } from '@/state/filterStore';
-import type { Task, Column } from '@/api/types';
 
 export interface TaskTableViewProps {
   tasks?: Task[];
@@ -29,16 +30,18 @@ export function TaskTableView({
   className,
   onTaskClick,
 }: TaskTableViewProps) {
-  const settings        = useSettings();
+  const settings = useSettings();
   const selectedSpaceId = useFilterStore((s) => s.selectedSpaceId);
-  const activeFilterId  = useFilterStore((s) => s.activeFilterId);
+  const activeFilterId = useFilterStore((s) => s.activeFilterId);
 
   // Flatten per-board column lists into a single id → name map.
   // Column IDs are unique across boards in Kaiten.
   const columnMap = useMemo(() => {
     const map: Record<number, string> = {};
     Object.values(columnsByBoard).forEach((cols) =>
-      cols.forEach((c) => { map[c.id] = c.name; }),
+      cols.forEach((c) => {
+        map[c.id] = c.name;
+      }),
     );
     return map;
   }, [columnsByBoard]);
@@ -59,7 +62,7 @@ export function TaskTableView({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="text-muted-foreground opacity-0 group-hover/row:opacity-100 hover:text-primary transition-all"
+            className="text-muted-foreground hover:text-primary opacity-0 transition-all group-hover/row:opacity-100"
             title="Open in Kaiten"
           >
             <ExternalLink size={11} />
@@ -83,7 +86,9 @@ export function TaskTableView({
   if (error) {
     return (
       <div className={cn('px-3 py-4', className)}>
-        <Text variant="secondary" className="text-destructive">{error.message}</Text>
+        <Text variant="secondary" className="text-destructive">
+          {error.message}
+        </Text>
       </div>
     );
   }

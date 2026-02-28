@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import { useSettings } from '@/hooks/useSettings';
 
 interface RichTextContentProps {
@@ -120,7 +121,7 @@ function walkNode(
 // ── Markdown link parsing ─────────────────────────────────────────────────────
 
 // Matches  ![alt](url)  and  [text](url)  with optional "title" attribute
-const MD_RE = /(!?\[([^\]]*)\])\(([^)\s"]+)(?:\s+"[^"]*")?\)/g;
+const MD_RE = /(!?\[([^\]]*)])\(([^)\s"]+)(?:\s+"[^"]*")?\)/g;
 
 function parseMdLinks(
   text: string,
@@ -158,7 +159,7 @@ function parseMdLinks(
           rel="noopener noreferrer"
           className="text-primary hover:underline"
         >
-          {label || url}
+          {label ?? url}
         </a>,
       );
     }

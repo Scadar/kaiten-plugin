@@ -8,9 +8,7 @@ import type { EventName, EventPayload } from './types';
 /**
  * Event handler function type
  */
-export type EventHandler<E extends EventName = EventName> = (
-  payload: EventPayload<E>
-) => void;
+export type EventHandler<E extends EventName = EventName> = (payload: EventPayload<E>) => void;
 
 /**
  * Unsubscribe function type
@@ -35,8 +33,8 @@ interface HandlerEntry {
  * - Wildcard event listening
  */
 export class EventBus {
-  private handlers: Map<string, Set<HandlerEntry>> = new Map();
-  private wildcardHandlers: Set<EventHandler> = new Set();
+  private handlers = new Map<string, Set<HandlerEntry>>();
+  private wildcardHandlers = new Set<EventHandler>();
 
   /**
    * Subscribe to an event
@@ -56,25 +54,7 @@ export class EventBus {
    * ```
    */
   on<E extends EventName>(event: E, handler: EventHandler<E>): Unsubscribe {
-    const entry: HandlerEntry = { handler: handler as EventHandler, once: false };
-
-    if (!this.handlers.has(event)) {
-      this.handlers.set(event, new Set());
-    }
-
-    this.handlers.get(event)!.add(entry);
-
-    // Return unsubscribe function
-    return () => {
-      const handlers = this.handlers.get(event);
-      if (handlers) {
-        handlers.delete(entry);
-        // Clean up empty sets to prevent memory leaks
-        if (handlers.size === 0) {
-          this.handlers.delete(event);
-        }
-      }
-    };
+    return this.addEntry(event, { handler: handler as EventHandler, once: false });
   }
 
   /**
@@ -93,15 +73,14 @@ export class EventBus {
    * ```
    */
   once<E extends EventName>(event: E, handler: EventHandler<E>): Unsubscribe {
-    const entry: HandlerEntry = { handler: handler as EventHandler, once: true };
+    return this.addEntry(event, { handler: handler as EventHandler, once: true });
+  }
 
+  private addEntry(event: EventName, entry: HandlerEntry): Unsubscribe {
     if (!this.handlers.has(event)) {
       this.handlers.set(event, new Set());
     }
-
     this.handlers.get(event)!.add(entry);
-
-    // Return unsubscribe function
     return () => {
       const handlers = this.handlers.get(event);
       if (handlers) {

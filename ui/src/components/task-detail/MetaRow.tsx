@@ -1,4 +1,5 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
+
 import { Stack } from '@/components/ui/stack';
 
 export interface MetaRowProps {
@@ -11,9 +12,9 @@ export interface MetaRowProps {
 export function MetaRow({ icon, label, children }: MetaRowProps) {
   return (
     <Stack direction="row" align="start" spacing="2" className="py-1">
-      <span className="mt-0.5 shrink-0 text-muted-foreground">{icon}</span>
-      <span className="w-16 shrink-0 text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm min-w-0">{children}</span>
+      <span className="text-muted-foreground mt-0.5 shrink-0">{icon}</span>
+      <span className="text-muted-foreground w-16 shrink-0 text-xs">{label}</span>
+      <span className="min-w-0 text-sm">{children}</span>
     </Stack>
   );
 }

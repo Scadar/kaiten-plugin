@@ -1,10 +1,7 @@
 import { ChevronRight } from 'lucide-react';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+
 import { RichTextContent } from '@/components/task-detail/RichTextContent';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export interface TaskDescriptionProps {
   description: string;
@@ -20,14 +17,14 @@ export function TaskDescription({ description, fileUids }: TaskDescriptionProps)
       <CollapsibleTrigger className="flex w-full items-center gap-1.5 text-left">
         <ChevronRight
           size={11}
-          className="shrink-0 text-muted-foreground transition-transform duration-150 group-data-[state=open]/desc:rotate-90"
+          className="text-muted-foreground shrink-0 transition-transform duration-150 group-data-[state=open]/desc:rotate-90"
         />
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex-1">
+        <span className="text-muted-foreground flex-1 text-xs font-semibold tracking-wider uppercase">
           Description
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <p className="mt-1.5 text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap break-words pl-4">
+        <p className="text-foreground/90 mt-1.5 pl-4 text-sm leading-relaxed break-words whitespace-pre-wrap">
           <RichTextContent html={description} excludeUids={fileUids} />
         </p>
       </CollapsibleContent>

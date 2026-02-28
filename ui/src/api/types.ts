@@ -354,11 +354,11 @@ export function taskMemberDtoToDomain(dto: TaskMemberDto): TaskMember {
     fullName: dto.full_name,
     email: dto.email,
     type: dto.type ?? 0,
-    avatar_type: dto.avatar_type ?? 2,
-    avatar_initials_url: dto.avatar_initials_url ?? '',
-    avatar_uploaded_url: dto.avatar_uploaded_url ?? '',
-    initials: dto.initials ?? '',
-    username: dto.username ?? '',
+    avatar_type: dto.avatar_type,
+    avatar_initials_url: dto.avatar_initials_url,
+    avatar_uploaded_url: dto.avatar_uploaded_url,
+    initials: dto.initials,
+    username: dto.username,
   };
 }
 
@@ -411,7 +411,9 @@ export function customPropertyDtoToDomain(dto: CustomPropertyDto): CustomPropert
   };
 }
 
-export function customPropertySelectValueDtoToDomain(dto: CustomPropertySelectValueDto): CustomPropertySelectValue {
+export function customPropertySelectValueDtoToDomain(
+  dto: CustomPropertySelectValueDto,
+): CustomPropertySelectValue {
   return {
     id: dto.id,
     customPropertyId: dto.custom_property_id,
@@ -506,6 +508,12 @@ export interface KaitenSettings {
   releaseBoardId: number | null;
   releaseColumnIds: number[];
   activeReleaseCardId: number | null;
+  // Connection verification — persisted error from the last failed check.
+  // Empty string means no error (credentials are valid or not yet tested).
+  lastConnectionError: string;
+  // Transient flag set by the IDE while a connection check is in progress.
+  // Never persisted; absent from the map when no check is running.
+  isVerifyingConnection?: boolean;
 }
 
 export function getDefaultSettings(): KaitenSettings {
@@ -527,5 +535,7 @@ export function getDefaultSettings(): KaitenSettings {
     releaseBoardId: null,
     releaseColumnIds: [],
     activeReleaseCardId: null,
+    lastConnectionError: '',
+    isVerifyingConnection: false,
   };
 }

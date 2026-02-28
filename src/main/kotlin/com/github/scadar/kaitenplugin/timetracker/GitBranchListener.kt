@@ -2,9 +2,9 @@ package com.github.scadar.kaitenplugin.timetracker
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import git4idea.branch.GitBranchUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import git4idea.repo.GitRepositoryManager
 
 class GitBranchListener(private val project: Project) : GitRepositoryChangeListener {
     private val log = logger<GitBranchListener>()
@@ -41,11 +41,11 @@ class GitBranchListener(private val project: Project) : GitRepositoryChangeListe
             TASK_ID_REGEX.find(branchName)?.groupValues?.get(1)?.toLongOrNull()
 
         fun getCurrentTaskId(project: Project): Long? {
-            val branch = GitBranchUtil.getCurrentRepository(project)?.currentBranchName ?: return null
+            val branch = GitRepositoryManager.getInstance(project).repositories.firstOrNull()?.currentBranchName ?: return null
             return extractTaskIdFromBranch(branch)
         }
 
         fun getCurrentBranchName(project: Project): String? =
-            GitBranchUtil.getCurrentRepository(project)?.currentBranchName
+            GitRepositoryManager.getInstance(project).repositories.firstOrNull()?.currentBranchName
     }
 }

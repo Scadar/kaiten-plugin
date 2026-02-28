@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
@@ -23,7 +24,7 @@ export function ImageLightbox({ src, alt, onClose }: ImageLightboxProps) {
       onClick={onClose}
     >
       <button
-        className="absolute right-4 top-4 rounded-full p-1 text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+        className="absolute top-4 right-4 rounded-full p-1 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
         onClick={onClose}
         aria-label="Close"
       >

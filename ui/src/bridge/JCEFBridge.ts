@@ -3,10 +3,10 @@
  * Uses window.__jcef_send__ and window.__jcef_receive__ for bidirectional messaging
  */
 
-import { EventBus, createEventBus } from './EventBus';
-import { RPCHandler, createRPCHandler } from './RPC';
-import type { RPCCallOptions } from './RPC';
-import type { EventHandler, Unsubscribe } from './EventBus';
+import { type EventBus, createEventBus, type EventHandler, type Unsubscribe } from './EventBus';
+import { type RPCHandler, createRPCHandler, type RPCCallOptions } from './RPC';
+import { isRPCResponse, isRPCError, isEventMessage, isStateUpdate, isBridgeReady } from './types';
+
 import type {
   BridgeMessage,
   RPCMethodName,
@@ -15,13 +15,6 @@ import type {
   EventName,
   EventPayload,
   AppState,
-} from './types';
-import {
-  isRPCResponse,
-  isRPCError,
-  isEventMessage,
-  isStateUpdate,
-  isBridgeReady,
 } from './types';
 
 /**
@@ -71,10 +64,10 @@ export interface JCEFBridgeOptions {
  * - Type-safe message contracts
  */
 export class JCEFBridge {
-  private eventBus: EventBus;
-  private rpc: RPCHandler;
+  private readonly eventBus: EventBus;
+  private readonly rpc: RPCHandler;
   private state: BridgeState = 'initializing';
-  private readyPromise: Promise<void>;
+  private readonly readyPromise: Promise<void>;
   private readyResolve?: () => void;
   private readyReject?: (error: Error) => void;
   private options: Required<JCEFBridgeOptions>;
@@ -134,7 +127,7 @@ export class JCEFBridge {
     const timeoutId = setTimeout(() => {
       if (this.state === 'initializing') {
         const error = new Error(
-          `Bridge ready handshake timed out after ${this.options.readyTimeout}ms`
+          `Bridge ready handshake timed out after ${this.options.readyTimeout}ms`,
         );
         this.state = 'error';
         this.readyReject?.(error);
@@ -143,9 +136,11 @@ export class JCEFBridge {
     }, this.options.readyTimeout);
 
     // Clear timeout when ready
-    this.readyPromise.then(() => clearTimeout(timeoutId)).catch(() => {
-      clearTimeout(timeoutId);
-    });
+    this.readyPromise
+      .then(() => clearTimeout(timeoutId))
+      .catch(() => {
+        clearTimeout(timeoutId);
+      });
   }
 
   /**
@@ -296,7 +291,7 @@ export class JCEFBridge {
   async call<M extends RPCMethodName>(
     method: M,
     params: RPCParams<M>,
-    options?: RPCCallOptions
+    options?: RPCCallOptions,
   ): Promise<RPCResult<M>> {
     return this.rpc.call(method, params, options);
   }
@@ -372,7 +367,7 @@ export class JCEFBridge {
   reportError(
     error: Error,
     severity: 'fatal' | 'error' | 'warning' | 'info' = 'error',
-    context?: Record<string, unknown>
+    context?: Record<string, unknown>,
   ): void {
     this.send({
       type: 'error:report',
@@ -420,9 +415,11 @@ export class JCEFBridge {
     const prefix = '[JCEFBridge]';
     switch (level) {
       case 'debug':
+        // eslint-disable-next-line no-console
         console.debug(prefix, ...args);
         break;
       case 'info':
+        // eslint-disable-next-line no-console
         console.info(prefix, ...args);
         break;
       case 'warn':

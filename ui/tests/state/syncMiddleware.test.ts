@@ -4,7 +4,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { create } from 'zustand';
+
+import { bridge } from '../../src/bridge/JCEFBridge';
 import {
   detectChanges,
   flushPendingChanges,
@@ -12,7 +13,7 @@ import {
   getPendingChanges,
   markAsIDEUpdate,
 } from '../../src/state/syncMiddleware';
-import { bridge } from '../../src/bridge/JCEFBridge';
+
 import type { AppState } from '../../src/bridge/types';
 
 describe('SyncMiddleware', () => {
@@ -120,9 +121,6 @@ describe('SyncMiddleware', () => {
         projectPath: '/new/path',
         selectedFile: '/new/file.ts',
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const changes = detectChanges(current, previous);
@@ -138,9 +136,6 @@ describe('SyncMiddleware', () => {
         projectPath: '/old/path',
         selectedFile: '/old/file.ts',
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const current: AppState = {
@@ -162,18 +157,12 @@ describe('SyncMiddleware', () => {
         projectPath: null,
         selectedFile: null,
         settings: { nested: { value: 1 } },
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const current: AppState = {
         projectPath: null,
         selectedFile: null,
         settings: { nested: { value: 2 } },
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const changes = detectChanges(current, previous);
@@ -186,24 +175,18 @@ describe('SyncMiddleware', () => {
   });
 
   describe('Pending changes management', () => {
-    it('should accumulate pending changes', async () => {
+    it('should accumulate pending changes', () => {
       // Create a simple store state update
       const state1: AppState = {
         projectPath: '/path1',
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const state2: AppState = {
         projectPath: '/path2',
         selectedFile: null,
         settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       // Simulate two rapid state changes
@@ -283,7 +266,7 @@ describe('SyncMiddleware', () => {
       };
 
       // Create a deep copy
-      const copy = JSON.parse(JSON.stringify(state));
+      const copy = JSON.parse(JSON.stringify(state)) as AppState;
 
       const changes = detectChanges(copy, state);
       expect(changes).toEqual({});
@@ -300,9 +283,6 @@ describe('SyncMiddleware', () => {
             fontFamily: 'monospace',
           },
         },
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const current: AppState = {
@@ -315,9 +295,6 @@ describe('SyncMiddleware', () => {
             fontFamily: 'monospace',
           },
         },
-        user: null,
-        tasks: [],
-        filters: {},
       };
 
       const changes = detectChanges(current, previous);

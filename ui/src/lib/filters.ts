@@ -32,10 +32,7 @@ export interface FilterTasksOptions {
  * @param tasks - List of tasks to filter
  * @param options - Filter options
  */
-export function filterTasks(
-  tasks: Task[],
-  options: FilterTasksOptions = {}
-): Task[] {
+export function filterTasks(tasks: Task[], options: FilterTasksOptions = {}): Task[] {
   const {
     selectedColumnIds = [],
     selectedUserId = null,
@@ -58,13 +55,17 @@ export function filterTasks(
   // Filter by user + role
   if (selectedUserId !== null && (filterAsMember || filterAsResponsible)) {
     result = result.filter((task) => {
-      const isMember = filterAsMember &&
+      const isMember =
+        filterAsMember &&
         task.participants.some((m) => m.id === selectedUserId && m.type === MEMBER_TYPE_MEMBER);
-      const isResponsible = filterAsResponsible &&
-        task.participants.some((m) => m.id === selectedUserId && m.type === MEMBER_TYPE_RESPONSIBLE);
+      const isResponsible =
+        filterAsResponsible &&
+        task.participants.some(
+          (m) => m.id === selectedUserId && m.type === MEMBER_TYPE_RESPONSIBLE,
+        );
 
       if (filterAsMember && filterAsResponsible) {
-        return filterLogic === 'AND' ? (isMember && isResponsible) : (isMember || isResponsible);
+        return filterLogic === 'AND' ? isMember && isResponsible : isMember || isResponsible;
       }
       return isMember || isResponsible;
     });

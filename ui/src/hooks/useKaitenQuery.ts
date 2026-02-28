@@ -6,9 +6,19 @@
  * staleTime / gcTime are inherited from the global QueryClient defaults.
  */
 
-import { useQuery, useQueries, UseQueryResult } from '@tanstack/react-query';
+import { useMemo } from 'react';
+
+import { useQuery, useQueries, type UseQueryResult } from '@tanstack/react-query';
+
+import { bridge } from '@/bridge/JCEFBridge';
+import {
+  encodeFilter,
+  type FilterCondition,
+  type FilterGroup,
+  type SavedFilter,
+} from '@/lib/advancedFilters.ts';
+
 import { useApiClient } from './useApiClient';
-import { Space, Board, Column, Task, TaskDetail, Comment, CardFile, User, Tag, CardType, CustomProperty, CustomPropertySelectValue } from '../api/types';
 import {
   spacesKeys,
   boardsKeys,
@@ -23,11 +33,22 @@ import {
   customPropertiesKeys,
   gitKeys,
 } from '../api/endpoints';
-import { bridge } from '@/bridge/JCEFBridge';
-import {useMemo} from "react";
-import { encodeFilter, FilterCondition, FilterGroup, SavedFilter } from "@/lib/advancedFilters.ts";
+import {
+  type Space,
+  type Board,
+  type Column,
+  type Task,
+  type TaskDetail,
+  type Comment,
+  type CardFile,
+  type User,
+  type Tag,
+  type CardType,
+  type CustomProperty,
+  type CustomPropertySelectValue,
+} from '../api/types';
 
-export function useSpaces(): UseQueryResult<Space[], Error> {
+export function useSpaces(): UseQueryResult<Space[]> {
   const client = useApiClient();
   return useQuery({
     queryKey: spacesKeys.all(),
@@ -36,21 +57,21 @@ export function useSpaces(): UseQueryResult<Space[], Error> {
   });
 }
 
-export function useBoards(spaceId: number | null | undefined): UseQueryResult<Board[], Error> {
+export function useBoards(spaceId: number | null | undefined): UseQueryResult<Board[]> {
   const client = useApiClient();
   return useQuery({
     queryKey: boardsKeys.bySpace(spaceId!),
     queryFn: () => client!.getBoards(spaceId!),
-    enabled: client !== null && spaceId != null,
+    enabled: client !== null && spaceId !== null,
   });
 }
 
-export function useColumns(boardId: number | null | undefined): UseQueryResult<Column[], Error> {
+export function useColumns(boardId: number | null | undefined): UseQueryResult<Column[]> {
   const client = useApiClient();
   return useQuery({
     queryKey: columnsKeys.byBoard(boardId!),
     queryFn: () => client!.getColumns(boardId!),
-    enabled: client !== null && boardId != null,
+    enabled: client !== null && boardId !== null,
   });
 }
 
@@ -85,13 +106,13 @@ export function useColumnsByBoards(boardIds: number[]): {
 export function useTasks(
   boardId: number | null | undefined,
   searchText?: string,
-  memberId?: number | null
-): UseQueryResult<Task[], Error> {
+  memberId?: number | null,
+): UseQueryResult<Task[]> {
   const client = useApiClient();
   return useQuery({
     queryKey: tasksKeys.byBoard(boardId!, memberId),
     queryFn: () => client!.getCards(boardId!, searchText, memberId),
-    enabled: client !== null && boardId != null,
+    enabled: client !== null && boardId !== null,
   });
 }
 
@@ -103,53 +124,53 @@ export interface TasksBySpaceOptions {
   searchText?: string;
 }
 
-export function useTasksBySpace(options: TasksBySpaceOptions): UseQueryResult<Task[], Error> {
+export function useTasksBySpace(options: TasksBySpaceOptions): UseQueryResult<Task[]> {
   const { spaceId, filter, boardId, columnIds, searchText } = options;
   const client = useApiClient();
   return useQuery({
     queryKey: tasksKeys.bySpace(spaceId!, filter, boardId, columnIds),
     queryFn: () => client!.getCardsBySpace(spaceId!, filter, boardId, searchText, columnIds),
-    enabled: client !== null && spaceId != null,
+    enabled: client !== null && spaceId !== null,
   });
 }
 
-export function useTask(cardId: number | null | undefined): UseQueryResult<Task, Error> {
+export function useTask(cardId: number | null | undefined): UseQueryResult<Task> {
   const client = useApiClient();
   return useQuery({
     queryKey: tasksKeys.detail(cardId!),
     queryFn: () => client!.getCard(cardId!),
-    enabled: client !== null && cardId != null,
+    enabled: client !== null && cardId !== null,
   });
 }
 
-export function useCardDetail(cardId: number | null | undefined): UseQueryResult<TaskDetail, Error> {
+export function useCardDetail(cardId: number | null | undefined): UseQueryResult<TaskDetail> {
   const client = useApiClient();
   return useQuery({
     queryKey: tasksKeys.detailExtended(cardId!),
     queryFn: () => client!.getCardDetail(cardId!),
-    enabled: client !== null && cardId != null,
+    enabled: client !== null && cardId !== null,
   });
 }
 
-export function useCardComments(cardId: number | null | undefined): UseQueryResult<Comment[], Error> {
+export function useCardComments(cardId: number | null | undefined): UseQueryResult<Comment[]> {
   const client = useApiClient();
   return useQuery({
     queryKey: commentsKeys.byCard(cardId!),
     queryFn: () => client!.getCardComments(cardId!),
-    enabled: client !== null && cardId != null,
+    enabled: client !== null && cardId !== null,
   });
 }
 
-export function useCardFiles(cardId: number | null | undefined): UseQueryResult<CardFile[], Error> {
+export function useCardFiles(cardId: number | null | undefined): UseQueryResult<CardFile[]> {
   const client = useApiClient();
   return useQuery({
     queryKey: filesKeys.byCard(cardId!),
     queryFn: () => client!.getCardFiles(cardId!),
-    enabled: client !== null && cardId != null,
+    enabled: client !== null && cardId !== null,
   });
 }
 
-export function useUsers(): UseQueryResult<User[], Error> {
+export function useUsers(): UseQueryResult<User[]> {
   const client = useApiClient();
   return useQuery({
     queryKey: usersKeys.all(),
@@ -158,7 +179,7 @@ export function useUsers(): UseQueryResult<User[], Error> {
   });
 }
 
-export function useCurrentUser(): UseQueryResult<User, Error> {
+export function useCurrentUser(): UseQueryResult<User> {
   const client = useApiClient();
   return useQuery({
     queryKey: usersKeys.current(),
@@ -167,7 +188,7 @@ export function useCurrentUser(): UseQueryResult<User, Error> {
   });
 }
 
-export function useTags(spaceId?: number | null): UseQueryResult<Tag[], Error> {
+export function useTags(spaceId?: number | null): UseQueryResult<Tag[]> {
   const client = useApiClient();
   return useQuery({
     queryKey: tagsKeys.bySpace(spaceId ?? null),
@@ -176,7 +197,7 @@ export function useTags(spaceId?: number | null): UseQueryResult<Tag[], Error> {
   });
 }
 
-export function useCardTypes(spaceId?: number | null): UseQueryResult<CardType[], Error> {
+export function useCardTypes(spaceId?: number | null): UseQueryResult<CardType[]> {
   const client = useApiClient();
   return useQuery({
     queryKey: cardTypesKeys.bySpace(spaceId ?? null),
@@ -185,7 +206,7 @@ export function useCardTypes(spaceId?: number | null): UseQueryResult<CardType[]
   });
 }
 
-export function useCustomProperties(): UseQueryResult<CustomProperty[], Error> {
+export function useCustomProperties(): UseQueryResult<CustomProperty[]> {
   const client = useApiClient();
   return useQuery({
     queryKey: customPropertiesKeys.all(),
@@ -248,11 +269,9 @@ export function useCardCustomProperties(properties: Record<string, number[]>): {
   const propertyEntries = useMemo(() => {
     return Object.entries(properties)
       .map(([key, valueIds]) => {
-        const match = key.match(/^id_(\d+)$/);
+        const match = /^id_(\d+)$/.exec(key);
         if (!match) return null;
-        const normalized = Array.isArray(valueIds)
-          ? valueIds
-          : valueIds != null ? [Number(valueIds)] : [];
+        const normalized = Array.isArray(valueIds) ? valueIds : [Number(valueIds)];
         return { id: parseInt(match[1]!, 10), valueIds: normalized };
       })
       .filter((e): e is { id: number; valueIds: number[] } => e !== null);
@@ -296,7 +315,7 @@ export function useCardCustomProperties(properties: Record<string, number[]>): {
 export function useCheckBranchesMerged(
   releaseBranch: string | null,
   branches: string[],
-): UseQueryResult<Record<string, boolean>, Error> {
+): UseQueryResult<Record<string, boolean>> {
   return useQuery({
     queryKey: gitKeys.checkBranchesMerged(releaseBranch ?? '', branches),
     queryFn: async () => {
@@ -307,7 +326,7 @@ export function useCheckBranchesMerged(
       if ('error' in result) throw new Error((result as { error: string }).error);
       return (result as { results: Record<string, boolean> }).results;
     },
-    enabled: releaseBranch != null && releaseBranch.trim() !== '' && branches.length > 0,
+    enabled: releaseBranch !== null && releaseBranch.trim() !== '' && branches.length > 0,
     staleTime: 0,
     gcTime: 0,
     retry: false,
@@ -317,7 +336,7 @@ export function useCheckBranchesMerged(
 export function useChildCards(
   childrenIds: number[] | null | undefined,
   activeFilter?: SavedFilter | null,
-): UseQueryResult<Task[], Error> {
+): UseQueryResult<Task[]> {
   const client = useApiClient();
 
   const encodedActiveFilter = useMemo(

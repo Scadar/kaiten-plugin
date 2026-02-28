@@ -1,6 +1,6 @@
-import { ComboboxSelect } from '@/components/ui/combobox-select';
-import { FilterSection } from '@/components/filters/FilterSection';
 import type { Board } from '@/api/types';
+import { FilterSection } from '@/components/filters/FilterSection';
+import { ComboboxSelect } from '@/components/ui/combobox-select';
 
 export interface BoardFilterProps {
   boards: Board[] | undefined;
@@ -13,9 +13,9 @@ export function BoardFilter({ boards, isLoading, selectedBoardId, onSelect }: Bo
   return (
     <FilterSection title="Board">
       {isLoading ? (
-        <p className="text-xs text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground text-xs">Loading...</p>
       ) : !boards?.length ? (
-        <p className="text-xs text-muted-foreground">No boards</p>
+        <p className="text-muted-foreground text-xs">No boards</p>
       ) : (
         <ComboboxSelect
           options={boards.map((b) => ({ value: String(b.id), label: b.name }))}

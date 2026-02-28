@@ -5,6 +5,7 @@
  * Features: sorting, column filters, column visibility, row selection, pagination.
  */
 import * as React from 'react';
+
 import {
   useReactTable,
   getCoreRowModel,
@@ -22,14 +23,7 @@ import {
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -38,8 +32,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
 import { Stack } from '@/components/ui/stack';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Text } from '@/components/ui/typography';
 import { cn } from '@/lib/utils';
 
@@ -57,7 +58,11 @@ export function DataTableColumnHeader<TData, TValue>({
   className?: string;
 }) {
   if (!column.getCanSort()) {
-    return <Text variant="secondary" className={cn('font-medium', className)}>{title}</Text>;
+    return (
+      <Text variant="secondary" className={cn('font-medium', className)}>
+        {title}
+      </Text>
+    );
   }
 
   const sorted = column.getIsSorted();
@@ -66,7 +71,10 @@ export function DataTableColumnHeader<TData, TValue>({
     <Button
       variant="ghost"
       size="sm"
-      className={cn('h-auto p-0 font-medium text-muted-foreground hover:text-foreground text-[length:var(--ide-font-size-sm)] -ml-1 px-1', className)}
+      className={cn(
+        'text-muted-foreground hover:text-foreground -ml-1 h-auto p-0 px-1 text-[length:var(--ide-font-size-sm)] font-medium',
+        className,
+      )}
       onClick={() => column.toggleSorting(sorted === 'asc')}
     >
       {title}
@@ -100,7 +108,7 @@ export function DataTableViewOptions<TData>({ table }: { table: TanTable<TData> 
               key={col.id}
               className="capitalize"
               checked={col.getIsVisible()}
-              onCheckedChange={(value) => col.toggleVisibility(!!value)}
+              onCheckedChange={(value) => col.toggleVisibility(value)}
             >
               {col.id}
             </DropdownMenuCheckboxItem>
@@ -135,18 +143,17 @@ export function DataTablePagination<TData>({
   // Derive disabled state directly from React state (avoids TanStack Table
   // getCanPreviousPage/getCanNextPage stale-closure issues with controlled state)
   const isFirstPage = pageIndex === 0;
-  const isLastPage  = pageIndex >= pageCount - 1;
+  const isLastPage = pageIndex >= pageCount - 1;
 
-  const goTo = (idx: number) =>
-    setPagination((prev) => ({ ...prev, pageIndex: idx }));
+  const goTo = (idx: number) => setPagination((prev) => ({ ...prev, pageIndex: idx }));
 
   return (
-    <Stack direction="row" align="center" className="px-2 py-2 w-full justify-between">
+    <Stack direction="row" align="center" className="w-full justify-between px-2 py-2">
       {/* Left: page size selector + row range */}
       <Stack direction="row" align="center" spacing="2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="xs" className="gap-1 text-muted-foreground">
+            <Button variant="outline" size="xs" className="text-muted-foreground gap-1">
               {pageSize}
               <ChevronDown size={11} />
             </Button>
@@ -156,9 +163,7 @@ export function DataTablePagination<TData>({
               <DropdownMenuCheckboxItem
                 key={size}
                 checked={pageSize === size}
-                onCheckedChange={() =>
-                  setPagination({ pageIndex: 0, pageSize: size })
-                }
+                onCheckedChange={() => setPagination({ pageIndex: 0, pageSize: size })}
               >
                 {size}
               </DropdownMenuCheckboxItem>
@@ -179,12 +184,7 @@ export function DataTablePagination<TData>({
 
         {/* Navigation buttons */}
         <Stack direction="row" align="center" spacing="2">
-          <Button
-            variant="outline"
-            size="icon-xs"
-            onClick={() => goTo(0)}
-            disabled={isFirstPage}
-          >
+          <Button variant="outline" size="icon-xs" onClick={() => goTo(0)} disabled={isFirstPage}>
             <ChevronsLeft size={14} />
           </Button>
           <Button
@@ -221,7 +221,7 @@ export function DataTablePagination<TData>({
 // DataTable — main generic component
 // ---------------------------------------------------------------------------
 
-export type DataTableProps<TData, TValue = unknown> = {
+export interface DataTableProps<TData, TValue = unknown> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   /** Called when a body row is clicked */
@@ -245,11 +245,11 @@ export function DataTable<TData, TValue = unknown>({
   showViewOptions = false,
   emptyMessage = 'No results.',
 }: DataTableProps<TData, TValue>) {
-  const [sorting,          setSorting]          = React.useState<SortingState>([]);
-  const [columnFilters,    setColumnFilters]    = React.useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [rowSelection,     setRowSelection]     = React.useState<RowSelectionState>({});
-  const [pagination,       setPagination]       = React.useState({ pageIndex: 0, pageSize });
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize });
 
   const enablePagination = pageSize > 0;
 
@@ -264,17 +264,17 @@ export function DataTable<TData, TValue = unknown>({
       ...(enablePagination && { pagination }),
     },
     enableRowSelection: true,
-    onSortingChange:          setSorting,
-    onColumnFiltersChange:    setColumnFilters,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange:     setRowSelection,
+    onRowSelectionChange: setRowSelection,
     ...(enablePagination && {
-      onPaginationChange:    setPagination,
+      onPaginationChange: setPagination,
       getPaginationRowModel: getPaginationRowModel(),
     }),
-    getCoreRowModel:       getCoreRowModel(),
-    getSortedRowModel:     getSortedRowModel(),
-    getFilteredRowModel:   getFilteredRowModel(),
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
   });
 
   return (
@@ -291,10 +291,7 @@ export function DataTable<TData, TValue = unknown>({
         <Table className="table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="hover:bg-transparent"
-              >
+              <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
@@ -310,16 +307,13 @@ export function DataTable<TData, TValue = unknown>({
           </TableHeader>
 
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() ? 'selected' : undefined}
                   onClick={() => onRowClick?.(row.original)}
-                  className={cn(
-                    onRowClick && 'cursor-pointer',
-                    row.getIsSelected() && 'bg-muted'
-                  )}
+                  className={cn(onRowClick && 'cursor-pointer', row.getIsSelected() && 'bg-muted')}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -330,10 +324,7 @@ export function DataTable<TData, TValue = unknown>({
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   {emptyMessage}
                 </TableCell>
               </TableRow>

@@ -3,14 +3,17 @@
  * Verifies error catching, fallback rendering, error reporting to IDE, and recovery
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import React, { useState } from 'react';
+
 import { render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import { ErrorBoundary } from '../../src/components/ErrorBoundary';
-import * as JCEFBridge from '../../src/bridge/JCEFBridge';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import * as JCEFBridge from '@/bridge/JCEFBridge';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Mock the bridge module
-vi.mock('../../src/bridge/JCEFBridge', () => ({
+vi.mock('@/bridge/JCEFBridge', () => ({
   bridge: {
     reportError: vi.fn(),
     isReady: vi.fn(() => true),
@@ -27,7 +30,7 @@ function ThrowError({ shouldThrow }: { shouldThrow: boolean }) {
 
 // Component that throws on button click
 function ThrowOnClick() {
-  const [shouldThrow, setShouldThrow] = React.useState(false);
+  const [shouldThrow, setShouldThrow] = useState(false);
 
   if (shouldThrow) {
     throw new Error('Click error');
@@ -39,9 +42,6 @@ function ThrowOnClick() {
     </button>
   );
 }
-
-// Import React after other imports
-import React from 'react';
 
 describe('ErrorBoundary', () => {
   // Suppress console.error in tests to avoid noise
@@ -102,7 +102,7 @@ describe('ErrorBoundary', () => {
     });
 
     it('should update state with error details', () => {
-      const { container } = render(
+      render(
         <ErrorBoundary>
           <ThrowError shouldThrow={true} />
         </ErrorBoundary>
@@ -284,7 +284,7 @@ describe('ErrorBoundary', () => {
 
   describe('Error recovery', () => {
     it('should recover when children stop throwing errors', () => {
-      const { rerender } = render(
+      render(
         <ErrorBoundary>
           <ThrowError shouldThrow={true} />
         </ErrorBoundary>
@@ -341,8 +341,7 @@ describe('ErrorBoundary', () => {
 
   describe('Edge cases', () => {
     it('should handle null error', () => {
-      function ThrowNull() {
-        // eslint-disable-next-line no-throw-literal
+      function ThrowNull(): React.ReactNode {
         throw null;
       }
 
@@ -375,8 +374,7 @@ describe('ErrorBoundary', () => {
     });
 
     it('should handle string errors', () => {
-      function ThrowString() {
-        // eslint-disable-next-line no-throw-literal
+      function ThrowString(): React.ReactNode {
         throw 'String error';
       }
 
