@@ -24,7 +24,7 @@ export function FallbackUI({
     setIsRetrying(true);
     try {
       if (onRetry) {
-        onRetry();
+        await onRetry();
       } else {
         window.location.reload();
       }
