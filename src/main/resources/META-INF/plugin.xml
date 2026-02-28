@@ -2,7 +2,7 @@
 <idea-plugin>
     <id>com.github.scadar.kaitenplugin</id>
     <name>Kaiten Integration</name>
-    <vendor>Roman Miroshnikov</vendor>
+    <vendor url="https://github.com/Scadar" email="roman.miroshnikov.private@gmail.com">Roman Miroshnikov</vendor>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>Git4Idea</depends>
@@ -10,7 +10,7 @@
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.scadar.kaitenplugin.ui.KaitenToolWindowFactory" id="Kaiten" icon="/icons/kaiten.svg"/>
+        <toolWindow factoryClass="com.github.scadar.kaitenplugin.ui.KaitenToolWindowFactory" id="Kaiten" icon="/icons/kaiten-integration.svg"/>
         <applicationConfigurable
             parentId="tools"
             instance="com.github.scadar.kaitenplugin.settings.KaitenSettingsConfigurable"
