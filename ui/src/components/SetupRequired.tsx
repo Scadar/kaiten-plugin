@@ -16,8 +16,8 @@ export function SetupRequired({ isVerifying, connectionError }: SetupRequiredPro
   if (isVerifying) {
     return (
       <div className="flex flex-col items-center justify-center h-screen gap-2 p-6 text-center">
-        <p className="text-sm font-medium text-foreground">Проверка подключения…</p>
-        <p className="text-xs text-muted-foreground">Выполняется запрос к серверу Kaiten</p>
+        <p className="text-sm font-medium text-foreground">Checking connection…</p>
+        <p className="text-xs text-muted-foreground">Connecting to Kaiten server</p>
       </div>
     );
   }
@@ -25,10 +25,10 @@ export function SetupRequired({ isVerifying, connectionError }: SetupRequiredPro
   if (connectionError) {
     return (
       <div className="flex flex-col items-center justify-center h-screen gap-3 p-6 text-center">
-        <p className="text-sm font-medium text-foreground">Ошибка подключения к Kaiten</p>
+        <p className="text-sm font-medium text-foreground">Kaiten connection error</p>
         <p className="text-xs text-muted-foreground">{connectionError}</p>
         <Button size="sm" onClick={openSettings}>
-          Открыть настройки
+          Open settings
         </Button>
       </div>
     );
@@ -36,12 +36,12 @@ export function SetupRequired({ isVerifying, connectionError }: SetupRequiredPro
 
   return (
     <div className="flex flex-col items-center justify-center h-screen gap-3 p-6 text-center">
-      <p className="text-sm font-medium text-foreground">Настройте подключение к Kaiten</p>
+      <p className="text-sm font-medium text-foreground">Configure Kaiten connection</p>
       <p className="text-xs text-muted-foreground">
-        Укажите Server URL и API Token в настройках плагина
+        Specify Server URL and API Token in plugin settings
       </p>
       <Button size="sm" onClick={openSettings}>
-        Открыть настройки
+        Open settings
       </Button>
     </div>
   );

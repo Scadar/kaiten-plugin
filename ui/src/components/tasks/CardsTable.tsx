@@ -130,9 +130,9 @@ function makeIdColumn(): ColumnDef<Task> {
           onClick={(e) => {
             e.stopPropagation();
             void navigator.clipboard.writeText(String(id));
-            toast.success(`ID #${id} скопирован`);
+            toast.success(`ID #${id} copied`);
           }}
-          title="Копировать ID"
+          title="Copy ID"
         >
           #{id}
           <Copy

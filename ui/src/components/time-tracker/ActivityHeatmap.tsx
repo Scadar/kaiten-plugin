@@ -19,9 +19,9 @@ const MONTH_LABEL_HEIGHT = 20;
 const LEFT_PADDING = 30;
 
 const DOW_LABELS = [
-  { row: 0, label: 'Пн' },
-  { row: 2, label: 'Ср' },
-  { row: 4, label: 'Пт' },
+  { row: 0, label: 'Mon' },
+  { row: 2, label: 'Wed' },
+  { row: 4, label: 'Fri' },
 ];
 
 export function ActivityHeatmap({ data, valueFormatter }: ActivityHeatmapProps) {
@@ -40,11 +40,11 @@ export function ActivityHeatmap({ data, valueFormatter }: ActivityHeatmapProps) 
       31, 31, 30, 31, 30, 31,
     ];
 
-    // День недели 1 января (UTC, берём один раз)
+    // Day of week for Jan 1 (UTC, computed once)
     const firstJanWeekday = new Date(Date.UTC(currentYear, 0, 1)).getUTCDay();
-    // 0(Вс)..6(Сб)
+    // 0(Sun)..6(Sat)
 
-    // Переводим в Пн=0..Вс=6
+    // Convert to Mon=0..Sun=6
     const firstJanRow = (firstJanWeekday + 6) % 7;
 
     const dayMap = new Map<string, number>();
@@ -64,7 +64,7 @@ export function ActivityHeatmap({ data, valueFormatter }: ActivityHeatmapProps) 
     let lastMonth = -1;
     let dayIndex = 0;
 
-    // Сколько дней добавить в начале, чтобы сетка началась с понедельника
+    // Number of padding days at the start so the grid begins on Monday
     const paddingStart = firstJanRow;
 
     const totalCells = paddingStart + daysInYear;
@@ -106,7 +106,7 @@ export function ActivityHeatmap({ data, valueFormatter }: ActivityHeatmapProps) 
         if (currentMonth !== lastMonth) {
           months.push({
             label: new Date(Date.UTC(currentYear, currentMonth, 1))
-              .toLocaleDateString('ru-RU', { month: 'short' }),
+              .toLocaleDateString('en-US', { month: 'short' }),
             col: colIdx,
           });
           lastMonth = currentMonth;
@@ -115,8 +115,8 @@ export function ActivityHeatmap({ data, valueFormatter }: ActivityHeatmapProps) 
         dayIndex++;
         dayOfMonth++;
 
-        // В строгом режиме индексирования доступ по индексу может вернуть undefined,
-        // поэтому используем fallback (??) или явную проверку.
+        // In strict index mode, index access may return undefined,
+        // so use a fallback (??) or an explicit check.
         if (currentMonth < monthDays.length) {
           const daysInCurrentMonth = monthDays[currentMonth] ?? 31;
 
@@ -199,10 +199,10 @@ export function ActivityHeatmap({ data, valueFormatter }: ActivityHeatmapProps) 
                       ? valueFormatter
                         ? valueFormatter(cell.seconds)
                         : formatDuration(cell.seconds)
-                      : 'Нет активности'}
+                      : 'No activity'}
                   </div>
                   <div className="text-muted-foreground capitalize">
-                    {new Date(cell.date).toLocaleDateString('ru-RU', {
+                    {new Date(cell.date).toLocaleDateString('en-US', {
                       day: 'numeric',
                       month: 'long',
                       weekday: 'short',

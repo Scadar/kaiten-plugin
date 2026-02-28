@@ -54,11 +54,11 @@ const AvatarBadge = React.forwardRef<
     <div
         ref={ref}
         className={cn(
-            // Базовые стили бейджа для аватара
+            // Base badge styles for avatar
             "absolute bottom-0 right-0 flex h-3 w-3 shrink-0 items-center justify-center rounded-full border-2 border-background",
-            // Используем цвета из вашего Badge, но убираем лишние отступы и шрифты
+            // Use colors from Badge, but remove extra padding and fonts
             badgeVariants({ variant }),
-            "p-0 min-h-0 min-w-0 shadow-none", // сброс лишнего
+            "p-0 min-h-0 min-w-0 shadow-none", // reset extra
             className
         )}
         {...props}

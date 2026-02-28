@@ -158,10 +158,10 @@ class StateSyncService(private val project: Project) : Disposable {
                 } else {
                     s.currentUserId = null
                     s.lastConnectionError = when (val e = result.exceptionOrNull()) {
-                        is KaitenApiException.Unauthorized -> "Неверный API токен"
-                        is KaitenApiException.NetworkError -> "Ошибка сети: ${e.message}"
-                        is KaitenApiException.TimeoutError -> "Превышено время ожидания"
-                        else -> "Ошибка подключения: ${result.exceptionOrNull()?.message ?: "неизвестная ошибка"}"
+                        is KaitenApiException.Unauthorized -> "Invalid API token"
+                        is KaitenApiException.NetworkError -> "Network error: ${e.message}"
+                        is KaitenApiException.TimeoutError -> "Connection timed out"
+                        else -> "Connection error: ${result.exceptionOrNull()?.message ?: "unknown error"}"
                     }
                     log.warn("Connection verification failed: ${s.lastConnectionError}")
                 }

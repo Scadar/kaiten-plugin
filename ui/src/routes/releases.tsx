@@ -552,7 +552,7 @@ function ActiveReleaseContent({ cardId, serverUrl, releaseSpaceId, branchPattern
             <Text variant="dimmed" className="text-muted-foreground">
               {(childTasks ?? []).filter((t) =>
                 branchPatterns.some((p) => branchResults[p.replace('{id}', String(t.id))])
-              ).length} / {(childTasks ?? []).length} задач добавлены в{' '}
+              ).length} / {(childTasks ?? []).length} tasks added to{' '}
               <span className="font-mono">{releaseBranch}</span>
             </Text>
           )}
