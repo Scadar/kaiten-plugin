@@ -2,8 +2,6 @@
 
 ![Build](https://github.com/Scadar/kaiten-integration/workflows/Build/badge.svg)
 ![VirusTotal Scan](https://github.com/Scadar/kaiten-integration/actions/workflows/virustotal.yml/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 
 <!-- Plugin description -->
 JetBrains IDE integration with [Kaiten](https://kaiten.ru) project management system. Browse tasks, track progress across boards, and automatically record time spent — all without leaving your IDE.

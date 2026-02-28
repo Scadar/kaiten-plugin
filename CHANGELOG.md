@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-02-28
+
+### Changed
+- Added plugin icon for Marketplace (light and dark variants)
+- Added vendor URL and email to plugin metadata
+- Removed broken badge links from README
+
 ## [1.0.0] - 2026-02-27
 
 ### Added
@@ -30,5 +37,6 @@
 - **URL validation**: external links opened via `BrowserUtil` with scheme check (http/https only)
 - **Origin validation**: API proxy restricted to the configured Kaiten server origin
 
-[Unreleased]: https://github.com/Scadar/kaiten-integration/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Scadar/kaiten-integration/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/Scadar/kaiten-integration/compare/v1.0.0...v1.0.2
 [1.0.0]: https://github.com/Scadar/kaiten-integration/commits/v1.0.0
