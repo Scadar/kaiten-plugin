@@ -1,17 +1,19 @@
 import { useState } from 'react';
+
 import { useQueryClient } from '@tanstack/react-query';
-import { bridge } from '@/bridge/JCEFBridge';
+import { CheckCircle2, Loader2, Save, XCircle } from 'lucide-react';
+
 import { settingsKeys } from '@/api/endpoints';
-import { useSpaces } from '@/hooks/useKaitenQuery';
-import { useFilterActions } from '@/state/filterStore';
-import { ComboboxSelect } from '@/components/ui/combobox-select';
+import type { KaitenSettings } from '@/api/types';
+import { bridge } from '@/bridge/JCEFBridge';
+import { FieldRow } from '@/components/settings/FieldRow';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ComboboxSelect } from '@/components/ui/combobox-select';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import { CheckCircle2, Loader2, Save, XCircle } from 'lucide-react';
-import { FieldRow } from '@/components/settings/FieldRow';
-import type { KaitenSettings } from '@/api/types';
+import { useSpaces } from '@/hooks/useKaitenQuery';
+import { useFilterActions } from '@/state/filterStore';
 
 export interface TasksSpaceSectionProps {
   currentSettings: KaitenSettings;
@@ -63,8 +65,11 @@ export function TasksSpaceSection({ currentSettings }: TasksSpaceSectionProps) {
           <FieldRow label="Space">
             <ComboboxSelect
               options={spaceOptions}
-              value={spaceId != null ? String(spaceId) : null}
-              onChange={(val) => { setSpaceId(val ? Number(val) : null); setSaveStatus('idle'); }}
+              value={spaceId !== null ? String(spaceId) : null}
+              onChange={(val) => {
+                setSpaceId(val ? Number(val) : null);
+                setSaveStatus('idle');
+              }}
               placeholder={spacesLoading ? 'Loading…' : 'Select space…'}
               searchPlaceholder="Search spaces…"
               emptyText="No spaces found."
@@ -73,30 +78,34 @@ export function TasksSpaceSection({ currentSettings }: TasksSpaceSectionProps) {
           </FieldRow>
 
           <Stack direction="row" align="center" spacing="3" className="pt-1">
-            <Button
-              size="xs"
-              onClick={handleSave}
-              disabled={isSaving || !hasChanges}
-            >
+            <Button size="xs" onClick={handleSave} disabled={isSaving || !hasChanges}>
               {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
               Save
             </Button>
 
             {saveStatus === 'success' && (
-              <Stack direction="row" align="center" spacing="1" className="text-xs text-green-600 dark:text-green-500">
+              <Stack
+                direction="row"
+                align="center"
+                spacing="1"
+                className="text-xs text-green-600 dark:text-green-500"
+              >
                 <CheckCircle2 size={12} />
                 <span>Saved</span>
               </Stack>
             )}
             {saveStatus === 'error' && (
-              <Stack direction="row" align="center" spacing="1" className="text-xs text-destructive">
+              <Stack
+                direction="row"
+                align="center"
+                spacing="1"
+                className="text-destructive text-xs"
+              >
                 <XCircle size={12} />
                 <span>Failed</span>
               </Stack>
             )}
-            {hasChanges && saveStatus === 'idle' && (
-              <Text variant="dimmed">Unsaved changes</Text>
-            )}
+            {hasChanges && saveStatus === 'idle' && <Text variant="dimmed">Unsaved changes</Text>}
           </Stack>
         </Stack>
       </Card>

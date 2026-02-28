@@ -3,11 +3,12 @@
  * Verifies error catching, fallback rendering, error reporting to IDE, and recovery
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import { ErrorBoundary } from '../../src/components/ErrorBoundary';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import * as JCEFBridge from '../../src/bridge/JCEFBridge';
+import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 
 // Mock the bridge module
 vi.mock('../../src/bridge/JCEFBridge', () => ({
@@ -341,8 +342,7 @@ describe('ErrorBoundary', () => {
 
   describe('Edge cases', () => {
     it('should handle null error', () => {
-      function ThrowNull() {
-        // eslint-disable-next-line no-throw-literal
+      function ThrowNull(): React.ReactNode {
         throw null;
       }
 
@@ -375,8 +375,7 @@ describe('ErrorBoundary', () => {
     });
 
     it('should handle string errors', () => {
-      function ThrowString() {
-        // eslint-disable-next-line no-throw-literal
+      function ThrowString(): React.ReactNode {
         throw 'String error';
       }
 

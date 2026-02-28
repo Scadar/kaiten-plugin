@@ -1,27 +1,23 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, CalendarDays, Clock, Trash2 } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { bridge } from '@/bridge/JCEFBridge';
+
 import { timeTrackerKeys } from '@/api/endpoints';
-import { formatDuration } from '@/lib/format';
+import { bridge } from '@/bridge/JCEFBridge';
+import type { BranchTimeData } from '@/bridge/types';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Stack } from '@/components/ui/stack';
-import { Text } from '@/components/ui/typography';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import type { BranchTimeData } from '@/bridge/types';
-import {
-  ArrowLeft,
-  CalendarDays,
-  Clock,
-  Trash2,
-} from 'lucide-react';
+import { Stack } from '@/components/ui/stack';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Text } from '@/components/ui/typography';
+import { formatDuration } from '@/lib/format';
 
 export interface BranchDetailProps {
   branch: string;
@@ -57,11 +53,16 @@ export function BranchDetail({ branch, data, onBack }: BranchDetailProps) {
           <Button variant="ghost" size="icon-xs" className="shrink-0" onClick={onBack}>
             <ArrowLeft size={13} />
           </Button>
-          <span className="flex-1 truncate font-mono text-xs text-foreground min-w-0">
+          <span className="text-foreground min-w-0 flex-1 truncate font-mono text-xs">
             {branch}
           </span>
           {data.isActive && (
-            <Stack direction="row" align="center" spacing="1" className="shrink-0 text-xs text-green-600 dark:text-green-500">
+            <Stack
+              direction="row"
+              align="center"
+              spacing="1"
+              className="shrink-0 text-xs text-green-600 dark:text-green-500"
+            >
               <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
               Active
             </Stack>
@@ -71,7 +72,7 @@ export function BranchDetail({ branch, data, onBack }: BranchDetailProps) {
               <Button
                 variant="ghost"
                 size="icon-xs"
-                className="shrink-0 text-destructive/70 hover:text-destructive"
+                className="text-destructive/70 hover:text-destructive shrink-0"
                 onClick={handleClear}
               >
                 <Trash2 size={12} />
@@ -90,7 +91,7 @@ export function BranchDetail({ branch, data, onBack }: BranchDetailProps) {
             <span className="text-lg font-semibold tabular-nums">{formatDuration(data.total)}</span>
             <Text variant="dimmed">Total</Text>
           </Stack>
-          <div className="h-8 w-px bg-border" />
+          <div className="bg-border h-8 w-px" />
           <Stack align="center" spacing="0.5" className="flex-1">
             <CalendarDays size={14} className="text-muted-foreground" />
             <span className="text-lg font-semibold tabular-nums">{dayCount}</span>
@@ -127,9 +128,7 @@ export function BranchDetail({ branch, data, onBack }: BranchDetailProps) {
                 />
                 <ChartTooltip
                   content={
-                    <ChartTooltipContent
-                      formatter={(value) => formatDuration(value as number)}
-                    />
+                    <ChartTooltipContent formatter={(value) => formatDuration(value as number)} />
                   }
                 />
                 <Bar dataKey="seconds" fill="var(--color-seconds)" radius={[4, 4, 0, 0]} />

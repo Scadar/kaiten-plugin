@@ -24,8 +24,9 @@
  */
 
 import { useEffect, useCallback, useRef } from 'react';
-import { useSyncedStore, type SyncStore } from '@/state/syncStore';
+
 import type { AppState } from '@/bridge/types';
+import { useSyncedStore, type SyncStore } from '@/state/syncStore';
 
 /**
  * Type for state selector function
@@ -45,10 +46,7 @@ export interface UseSyncedStateReturn {
    * Update a specific field in the state
    * This will automatically sync to IDE via middleware
    */
-  updateField: <K extends keyof AppState>(
-    field: K,
-    value: AppState[K]
-  ) => void;
+  updateField: <K extends keyof AppState>(field: K, value: AppState[K]) => void;
 
   /**
    * Update multiple fields at once
@@ -95,29 +93,24 @@ export interface UseSyncedStateReturn {
  * const hasUser = useSyncedState((s) => s.user !== null);
  * ```
  */
+// Identity selector used when no selector is provided — avoids conditional hook calls
+const _identitySelector = (s: SyncStore) => s;
+
 export function useSyncedState(): UseSyncedStateReturn;
 export function useSyncedState<T>(selector: StateSelector<T>): T;
-export function useSyncedState<T>(
-  selector?: StateSelector<T>
-): T | UseSyncedStateReturn {
-  // If selector provided, use it directly with Zustand
-  if (selector) {
-    return useSyncedStore(selector);
-  }
-
-  // Get full state from store
-  const state = useSyncedStore();
+export function useSyncedState<T>(selector?: StateSelector<T>): T | UseSyncedStateReturn {
+  // Always call hooks unconditionally (rules of hooks requirement).
+  // Merge selector with identity selector to avoid conditional hook calls.
+  const effectiveSelector = (selector ?? _identitySelector) as StateSelector<T | SyncStore>;
+  const value = useSyncedStore(effectiveSelector);
 
   // Create stable callback for updating a single field
-  const updateField = useCallback(
-    <K extends keyof AppState>(field: K, value: AppState[K]) => {
-      useSyncedStore.setState((current) => ({
-        ...current,
-        [field]: value,
-      }));
-    },
-    []
-  );
+  const updateField = useCallback(<K extends keyof AppState>(field: K, fieldValue: AppState[K]) => {
+    useSyncedStore.setState((current) => ({
+      ...current,
+      [field]: fieldValue,
+    }));
+  }, []);
 
   // Create stable callback for updating multiple fields
   const updateFields = useCallback((updates: Partial<AppState>) => {
@@ -127,7 +120,13 @@ export function useSyncedState<T>(
     }));
   }, []);
 
-  // Get actions from store
+  // Return selected value when selector provided
+  if (selector !== undefined) {
+    return value as T;
+  }
+
+  // Return full state object with actions
+  const state = value as SyncStore;
   const { initialize } = state;
 
   return {
@@ -165,7 +164,7 @@ export function useSyncedState<T>(
  * ```
  */
 export function useSyncedField<K extends keyof AppState>(
-  field: K
+  field: K,
 ): [AppState[K], (value: AppState[K]) => void] {
   // Get current value with selector
   const value = useSyncedStore((state) => state[field]);
@@ -178,7 +177,7 @@ export function useSyncedField<K extends keyof AppState>(
         [field]: newValue,
       }));
     },
-    [field]
+    [field],
   );
 
   return [value, setValue];
@@ -224,7 +223,6 @@ export function useSyncedReady(autoInitialize = false): {
       void useSyncedStore.getState().initialize();
     }
     // Only depend on autoInitialize to prevent re-running on every render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoInitialize]);
 
   return {
@@ -256,7 +254,7 @@ export function useSyncedReady(autoInitialize = false): {
  */
 export function useSyncedStateEffect<K extends keyof AppState>(
   field: K,
-  callback: (value: AppState[K], previousValue: AppState[K]) => void
+  callback: (value: AppState[K], previousValue: AppState[K]) => void,
 ): void {
   // Track previous value
   const previousValueRef = useRef<AppState[K] | undefined>(undefined);
@@ -278,7 +276,7 @@ export function useSyncedStateEffect<K extends keyof AppState>(
 
       // Check if value actually changed
       if (currentValue !== previousValue) {
-        callbackRef.current(currentValue, previousValue as AppState[K]);
+        callbackRef.current(currentValue, previousValue!);
         previousValueRef.current = currentValue;
       }
     });
@@ -329,9 +327,7 @@ function shallowEqual<T extends Record<string, unknown>>(a: T, b: T): boolean {
  * }
  * ```
  */
-export function useSyncedFields<K extends keyof AppState>(
-  fields: readonly K[]
-): Pick<AppState, K> {
+export function useSyncedFields<K extends keyof AppState>(fields: readonly K[]): Pick<AppState, K> {
   // Store previous result to implement shallow equality
   const previousRef = useRef<Pick<AppState, K> | null>(null);
 
@@ -378,10 +374,7 @@ export function useSyncedFields<K extends keyof AppState>(
  * }
  * ```
  */
-export function useSyncedDerived<T>(
-  selector: (state: SyncStore) => T,
-  deps: unknown[] = []
-): T {
+export function useSyncedDerived<T>(selector: (state: SyncStore) => T, deps: unknown[] = []): T {
   // Store previous result for shallow equality check (useful for object results)
   const previousRef = useRef<T | undefined>(undefined);
   const selectorRef = useRef(selector);
@@ -404,7 +397,12 @@ export function useSyncedDerived<T>(
       typeof previousRef.current === 'object' &&
       previousRef.current !== null
     ) {
-      if (shallowEqual(previousRef.current as Record<string, unknown>, newResult as Record<string, unknown>)) {
+      if (
+        shallowEqual(
+          previousRef.current as Record<string, unknown>,
+          newResult as Record<string, unknown>,
+        )
+      ) {
         return previousRef.current;
       }
     }

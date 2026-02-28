@@ -1,7 +1,16 @@
 import { Link, useMatchRoute } from '@tanstack/react-router';
-import { cn } from '@/lib/utils';
-import { Home, ListTodo, Settings, ScrollText, Timer, PackageSearch, type LucideIcon } from 'lucide-react';
+import {
+  Home,
+  ListTodo,
+  Settings,
+  ScrollText,
+  Timer,
+  PackageSearch,
+  type LucideIcon,
+} from 'lucide-react';
+
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface NavItem {
   label: string;
@@ -10,12 +19,12 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Home',     to: '/',             icon: Home },
-  { label: 'Tasks',   to: '/tasks',        icon: ListTodo },
-  { label: 'Releases',to: '/releases',     icon: PackageSearch },
-  { label: 'Time',    to: '/time-tracker', icon: Timer },
-  { label: 'Settings',to: '/settings',     icon: Settings },
-  { label: 'Logs',    to: '/logs',         icon: ScrollText },
+  { label: 'Home', to: '/', icon: Home },
+  { label: 'Tasks', to: '/tasks', icon: ListTodo },
+  { label: 'Releases', to: '/releases', icon: PackageSearch },
+  { label: 'Time', to: '/time-tracker', icon: Timer },
+  { label: 'Settings', to: '/settings', icon: Settings },
+  { label: 'Logs', to: '/logs', icon: ScrollText },
 ];
 
 /**
@@ -31,7 +40,7 @@ export function Navigation() {
 
   return (
     <nav
-      className="flex shrink-0 items-center gap-1 bg-card px-2 py-2"
+      className="bg-card flex shrink-0 items-center gap-1 px-2 py-2"
       aria-label="Main navigation"
     >
       {navItems.map((item) => {
@@ -50,7 +59,7 @@ export function Navigation() {
                   'h-7',
                   isActive
                     ? 'bg-primary/[0.12] text-primary'
-                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
                 )}
               >
                 <Icon
@@ -60,7 +69,7 @@ export function Navigation() {
                   className="shrink-0"
                 />
                 {/* Label shown when panel is wide enough */}
-                <span className="hidden xs:inline text-sm leading-none font-medium">
+                <span className="xs:inline hidden text-sm leading-none font-medium">
                   {item.label}
                 </span>
               </Link>

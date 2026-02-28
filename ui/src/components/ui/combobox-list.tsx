@@ -1,8 +1,10 @@
 import * as React from 'react';
-import { Check, Search } from 'lucide-react';
+
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { cn } from '@/lib/utils';
+import { Check, Search } from 'lucide-react';
+
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 export interface ComboboxOption {
   value: string;
@@ -79,11 +81,11 @@ export function ComboboxList({
 
   return (
     <>
-      <div className="flex items-center border-b border-border px-2">
-        <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <div className="border-border flex items-center border-b px-2">
+        <Search className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
         <input
           ref={inputRef}
-          className="flex-1 bg-transparent py-2 pl-2 text-xs outline-none placeholder:text-muted-foreground"
+          className="placeholder:text-muted-foreground flex-1 bg-transparent py-2 pl-2 text-xs outline-none"
           placeholder={searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -92,7 +94,7 @@ export function ComboboxList({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="py-6 text-center text-xs text-muted-foreground">{emptyText}</div>
+        <div className="text-muted-foreground py-6 text-center text-xs">{emptyText}</div>
       ) : (
         <div
           ref={setListElement}
@@ -119,13 +121,15 @@ export function ComboboxList({
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
                   className={cn(
-                    'flex cursor-pointer select-none items-center gap-2 px-2 text-xs',
+                    'flex cursor-pointer items-center gap-2 px-2 text-xs select-none',
                     isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50',
                   )}
                   onClick={() => onSelect(opt.value)}
                   onMouseEnter={() => setActiveIndex(virtualItem.index)}
                 >
-                  <Check className={cn('h-3.5 w-3.5 shrink-0', selected ? 'opacity-100' : 'opacity-0')} />
+                  <Check
+                    className={cn('h-3.5 w-3.5 shrink-0', selected ? 'opacity-100' : 'opacity-0')}
+                  />
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className="truncate">{opt.label}</span>

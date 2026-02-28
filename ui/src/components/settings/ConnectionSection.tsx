@@ -1,10 +1,11 @@
+import { CheckCircle2, XCircle } from 'lucide-react';
+
+import type { KaitenSettings } from '@/api/types';
+import { bridge } from '@/bridge/JCEFBridge';
 import { Card } from '@/components/ui/card';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import { CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { bridge } from '@/bridge/JCEFBridge';
-import type { KaitenSettings } from '@/api/types';
 
 export interface ConnectionSectionProps {
   currentSettings: KaitenSettings;
@@ -30,7 +31,7 @@ export function ConnectionSection({ currentSettings }: ConnectionSectionProps) {
             {hasToken ? (
               <CheckCircle2 size={14} className="shrink-0 text-green-600 dark:text-green-500" />
             ) : (
-              <XCircle size={14} className="shrink-0 text-destructive" />
+              <XCircle size={14} className="text-destructive shrink-0" />
             )}
             <Text
               variant="dimmed"
@@ -51,7 +52,7 @@ export function ConnectionSection({ currentSettings }: ConnectionSectionProps) {
             <button
               type="button"
               onClick={openIdeSettings}
-              className="font-medium text-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:underline"
+              className="text-foreground font-medium underline-offset-2 hover:underline focus-visible:underline focus-visible:outline-none"
             >
               IDE Settings → Kaiten
             </button>

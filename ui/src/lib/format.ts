@@ -2,7 +2,11 @@
 
 // ─── Kaiten URLs ──────────────────────────────────────────────────────────────
 
-export function buildKaitenUrl(serverUrl: string, spaceId: number | null, cardId: number): string | null {
+export function buildKaitenUrl(
+  serverUrl: string,
+  spaceId: number | null,
+  cardId: number,
+): string | null {
   if (!serverUrl || !spaceId) return null;
   try {
     return `${new URL(serverUrl).origin}/space/${spaceId}/boards/card/${cardId}`;
@@ -21,10 +25,10 @@ export function formatMinutes(minutes: number): string {
 }
 
 export const PRIORITY_LABELS: Record<number, { label: string; color: string }> = {
-  0: { label: 'None',     color: 'text-muted-foreground' },
-  1: { label: 'Low',      color: 'text-blue-400' },
-  2: { label: 'Medium',   color: 'text-yellow-400' },
-  3: { label: 'High',     color: 'text-orange-400' },
+  0: { label: 'None', color: 'text-muted-foreground' },
+  1: { label: 'Low', color: 'text-blue-400' },
+  2: { label: 'Medium', color: 'text-yellow-400' },
+  3: { label: 'High', color: 'text-orange-400' },
   4: { label: 'Critical', color: 'text-red-500' },
 };
 
@@ -38,6 +42,7 @@ export const CONDITION_LABELS: Record<number, string> = {
 
 export function stripHtml(html: string): string {
   const doc = new DOMParser().parseFromString(html, 'text/html');
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   return (doc.body.textContent ?? '').trim();
 }
 
@@ -104,4 +109,3 @@ export function formatRelativeDate(dateStr: string | null): string {
   if (diffDays === 1) return 'yesterday';
   return `${diffDays}d ago`;
 }
-

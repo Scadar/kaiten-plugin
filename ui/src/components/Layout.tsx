@@ -1,4 +1,5 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
+
 import { Navigation } from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 
@@ -21,21 +22,19 @@ export interface LayoutProps {
  */
 export function Layout({ children, header }: LayoutProps) {
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+    <div className="bg-background text-foreground flex h-screen flex-col overflow-hidden">
       <Navigation />
 
       {header && (
         <Card
           variant="island"
-          className="shrink-0 mb-0 flex items-center gap-1.5 px-3 py-1.5 min-h-[38px]"
+          className="mb-0 flex min-h-[38px] shrink-0 items-center gap-1.5 px-3 py-1.5"
         >
           {header}
         </Card>
       )}
 
-      <main className="flex-1 overflow-y-auto min-h-0">
-        {children}
-      </main>
+      <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }

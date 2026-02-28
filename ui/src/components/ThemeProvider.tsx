@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
+
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
-import { ReactNode } from 'react';
+
 import { bridge } from '@/bridge/JCEFBridge';
 import type { IdeTheme } from '@/bridge/types';
 
@@ -17,29 +18,29 @@ function applyIdeTheme(theme: IdeTheme) {
   // Override every CSS variable with the real IDE color.
   // Inline styles beat :root and .dark rules in the cascade.
   const vars: Record<string, string> = {
-    '--background':             theme.background,
-    '--foreground':             theme.foreground,
-    '--card':                   theme.card,
-    '--card-foreground':        theme.cardForeground,
-    '--popover':                theme.popover,
-    '--popover-foreground':     theme.popoverForeground,
-    '--primary':                theme.primary,
-    '--primary-foreground':     theme.primaryForeground,
-    '--secondary':              theme.secondary,
-    '--secondary-foreground':   theme.secondaryForeground,
-    '--muted':                  theme.muted,
-    '--muted-foreground':       theme.mutedForeground,
-    '--accent':                 theme.accent,
-    '--accent-foreground':      theme.accentForeground,
-    '--border':                 theme.border,
-    '--input':                  theme.input,
-    '--ring':                   theme.ring,
-    '--destructive':            theme.destructive,
+    '--background': theme.background,
+    '--foreground': theme.foreground,
+    '--card': theme.card,
+    '--card-foreground': theme.cardForeground,
+    '--popover': theme.popover,
+    '--popover-foreground': theme.popoverForeground,
+    '--primary': theme.primary,
+    '--primary-foreground': theme.primaryForeground,
+    '--secondary': theme.secondary,
+    '--secondary-foreground': theme.secondaryForeground,
+    '--muted': theme.muted,
+    '--muted-foreground': theme.mutedForeground,
+    '--accent': theme.accent,
+    '--accent-foreground': theme.accentForeground,
+    '--border': theme.border,
+    '--input': theme.input,
+    '--ring': theme.ring,
+    '--destructive': theme.destructive,
     '--destructive-foreground': theme.destructiveForeground,
-    '--radius':                 theme.radius,
-    '--ide-font-size':          theme.fontSize,
-    '--ide-font-size-sm':       theme.fontSizeSm,
-    '--ide-font-size-xs':       theme.fontSizeXs,
+    '--radius': theme.radius,
+    '--ide-font-size': theme.fontSize,
+    '--ide-font-size-sm': theme.fontSizeSm,
+    '--ide-font-size-xs': theme.fontSizeXs,
   };
 
   for (const [prop, value] of Object.entries(vars)) {
@@ -48,8 +49,7 @@ function applyIdeTheme(theme: IdeTheme) {
 
   // Apply IDE system font so the plugin feels native
   if (theme.fontFamily) {
-    document.body.style.fontFamily =
-      `${theme.fontFamily}, -apple-system, 'Segoe UI', system-ui, sans-serif`;
+    document.body.style.fontFamily = `${theme.fontFamily}, -apple-system, 'Segoe UI', system-ui, sans-serif`;
   }
 }
 

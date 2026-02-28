@@ -9,11 +9,12 @@
  */
 
 import { create } from 'zustand';
+
+import { settingsKeys } from '@/api/endpoints';
+import type { KaitenSettings } from '@/api/types';
 import { bridge } from '@/bridge/JCEFBridge';
 import type { AppState } from '@/bridge/types';
 import { queryClient } from '@/lib/cache';
-import { settingsKeys } from '@/api/endpoints';
-import type { KaitenSettings } from '@/api/types';
 
 /**
  * Store state interface extends AppState with loading/error states
@@ -107,9 +108,9 @@ export const useSyncedStore = create<SyncStore>((set, _get) => ({
 
       // Update store with IDE state
       set({
-        settings: (settings as Record<string, unknown>) || ({} as Record<string, unknown>),
-        projectPath: projectPath || null,
-        selectedFile: selectedFile || null,
+        settings: (settings ?? {}) as Record<string, unknown>,
+        projectPath: projectPath ?? null,
+        selectedFile: selectedFile ?? null,
         isLoading: false,
         error: null,
       });

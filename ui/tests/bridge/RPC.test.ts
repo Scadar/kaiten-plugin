@@ -1,15 +1,19 @@
 /**
  * RPC handler tests
  * Verifies request/response matching, timeout handling, concurrent calls, and error handling
+ *
+ * Only RPC methods defined in Kotlin RPCMethodNames / TypeScript RPCMethods are used.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import {
   RPCHandler,
   createRPCHandler,
   RPCTimeoutError,
   RPCRemoteError,
 } from '../../src/bridge/RPC';
+
 import type { RPCResponse, RPCError } from '../../src/bridge/types';
 
 describe('RPCHandler', () => {
@@ -40,7 +44,7 @@ describe('RPCHandler', () => {
       );
 
       // Verify UUID format (basic check)
-      const uuid = emitSpy.mock.calls[0][0];
+      const uuid = emitSpy.mock.calls[0]![0];
       expect(uuid).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
       );
@@ -53,7 +57,7 @@ describe('RPCHandler', () => {
       const promise = rpc.call('getProjectPath', undefined);
 
       // Get the request ID from the emit call
-      const requestId = emitSpy.mock.calls[0][0];
+      const requestId = emitSpy.mock.calls[0]![0];
 
       // Simulate IDE response
       const response: RPCResponse<string> = {
@@ -89,7 +93,7 @@ describe('RPCHandler', () => {
       const promise = rpc.call('getProjectPath', undefined);
       expect(rpc.pendingCount()).toBe(1);
 
-      const requestId = emitSpy.mock.calls[0][0];
+      const requestId = emitSpy.mock.calls[0]![0];
       const response: RPCResponse<string> = {
         type: 'rpc_response',
         id: requestId,
@@ -109,29 +113,20 @@ describe('RPCHandler', () => {
       const emitSpy = vi.fn();
       rpc.setRequestEmitter(emitSpy);
 
-      const promise = rpc.call('getState', undefined);
-      const requestId = emitSpy.mock.calls[0][0];
+      const promise = rpc.call('getProjectPath', undefined);
+      const requestId = emitSpy.mock.calls[0]![0];
 
-      const state = {
-        projectPath: '/test',
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
-      };
-
-      const response: RPCResponse = {
+      const response: RPCResponse<string> = {
         type: 'rpc_response',
         id: requestId,
-        result: state,
+        result: '/test/project',
         timestamp: Date.now(),
       };
 
       rpc.handleResponse(response);
 
       const result = await promise;
-      expect(result).toEqual(state);
+      expect(result).toBe('/test/project');
     });
 
     it('should ignore response for unknown request ID', () => {
@@ -158,8 +153,8 @@ describe('RPCHandler', () => {
       const promise1 = rpc.call('getProjectPath', undefined);
       const promise2 = rpc.call('getSelectedFile', undefined);
 
-      const id1 = emitSpy.mock.calls[0][0];
-      const id2 = emitSpy.mock.calls[1][0];
+      const id1 = emitSpy.mock.calls[0]![0];
+      const id2 = emitSpy.mock.calls[1]![0];
 
       // Respond in reverse order
       rpc.handleResponse({
@@ -187,16 +182,16 @@ describe('RPCHandler', () => {
       const emitSpy = vi.fn();
       rpc.setRequestEmitter(emitSpy);
 
-      const promise = rpc.call('getTasks', { filters: {} });
-      const requestId = emitSpy.mock.calls[0][0];
+      const promise = rpc.call('getSettings', undefined);
+      const requestId = emitSpy.mock.calls[0]![0];
 
       const error: RPCError = {
         type: 'rpc_error',
         id: requestId,
         error: {
           code: 'NOT_FOUND',
-          message: 'Tasks not found',
-          details: { reason: 'No tasks available' },
+          message: 'Settings not found',
+          details: { reason: 'No settings configured' },
         },
         timestamp: Date.now(),
       };
@@ -204,23 +199,23 @@ describe('RPCHandler', () => {
       rpc.handleError(error);
 
       await expect(promise).rejects.toThrow(RPCRemoteError);
-      await expect(promise).rejects.toThrow('Tasks not found');
+      await expect(promise).rejects.toThrow('Settings not found');
     });
 
     it('should include error code and details in RPCRemoteError', async () => {
       const emitSpy = vi.fn();
       rpc.setRequestEmitter(emitSpy);
 
-      const promise = rpc.call('getTask', { id: '123' });
-      const requestId = emitSpy.mock.calls[0][0];
+      const promise = rpc.call('getSelectedFile', undefined);
+      const requestId = emitSpy.mock.calls[0]![0];
 
       const error: RPCError = {
         type: 'rpc_error',
         id: requestId,
         error: {
-          code: 'INVALID_ID',
-          message: 'Task ID is invalid',
-          details: { id: '123', expected: 'numeric' },
+          code: 'INVALID_STATE',
+          message: 'No file selected',
+          details: { expected: 'active editor' },
         },
         timestamp: Date.now(),
       };
@@ -233,9 +228,9 @@ describe('RPCHandler', () => {
       } catch (e) {
         expect(e).toBeInstanceOf(RPCRemoteError);
         const remoteError = e as RPCRemoteError;
-        expect(remoteError.code).toBe('INVALID_ID');
-        expect(remoteError.message).toBe('Task ID is invalid');
-        expect(remoteError.details).toEqual({ id: '123', expected: 'numeric' });
+        expect(remoteError.code).toBe('INVALID_STATE');
+        expect(remoteError.message).toBe('No file selected');
+        expect(remoteError.details).toEqual({ expected: 'active editor' });
       }
     });
 
@@ -263,16 +258,16 @@ describe('RPCHandler', () => {
       const emitSpy = vi.fn();
       rpc.setRequestEmitter(emitSpy);
 
-      const promise = rpc.call('getCurrentUser', undefined);
+      const promise = rpc.call('getProjectPath', undefined);
       expect(rpc.pendingCount()).toBe(1);
 
-      const requestId = emitSpy.mock.calls[0][0];
+      const requestId = emitSpy.mock.calls[0]![0];
       const error: RPCError = {
         type: 'rpc_error',
         id: requestId,
         error: {
           code: 'UNAUTHORIZED',
-          message: 'User not authenticated',
+          message: 'Not authenticated',
         },
         timestamp: Date.now(),
       };
@@ -320,7 +315,7 @@ describe('RPCHandler', () => {
       // Fast-forward by 5 seconds (before timeout)
       vi.advanceTimersByTime(5000);
 
-      const requestId = emitSpy.mock.calls[0][0];
+      const requestId = emitSpy.mock.calls[0]![0];
       rpc.handleResponse({
         type: 'rpc_response',
         id: requestId,
@@ -350,7 +345,7 @@ describe('RPCHandler', () => {
       rpc.setRequestEmitter(emitSpy);
 
       const promise = rpc.call('getProjectPath', undefined, { timeout: 10000 });
-      const requestId = emitSpy.mock.calls[0][0];
+      const requestId = emitSpy.mock.calls[0]![0];
 
       // Response arrives immediately
       rpc.handleResponse({
@@ -396,7 +391,7 @@ describe('RPCHandler', () => {
       rpc.setRequestEmitter(emitSpy);
 
       const promise = rpc.call('getProjectPath', undefined);
-      const requestId = emitSpy.mock.calls[0][0];
+      const requestId = emitSpy.mock.calls[0]![0];
 
       const cancelled = rpc.cancel(requestId);
       expect(cancelled).toBe(true);
@@ -415,7 +410,7 @@ describe('RPCHandler', () => {
       rpc.setRequestEmitter(emitSpy);
 
       const promise = rpc.call('getProjectPath', undefined, { timeout: 10000 });
-      const requestId = emitSpy.mock.calls[0][0];
+      const requestId = emitSpy.mock.calls[0]![0];
 
       rpc.cancel(requestId);
 
@@ -435,7 +430,7 @@ describe('RPCHandler', () => {
 
       const promise1 = rpc.call('getProjectPath', undefined);
       const promise2 = rpc.call('getSelectedFile', undefined);
-      const promise3 = rpc.call('getCurrentUser', undefined);
+      const promise3 = rpc.call('getSettings', undefined);
 
       expect(rpc.pendingCount()).toBe(3);
 
@@ -461,13 +456,13 @@ describe('RPCHandler', () => {
 
       const promise1 = rpc.call('getProjectPath', undefined);
       const promise2 = rpc.call('getSelectedFile', undefined);
-      const promise3 = rpc.call('getCurrentUser', undefined);
+      const promise3 = rpc.call('getSettings', undefined);
 
       expect(rpc.pendingCount()).toBe(3);
 
-      const id1 = emitSpy.mock.calls[0][0];
-      const id2 = emitSpy.mock.calls[1][0];
-      const id3 = emitSpy.mock.calls[2][0];
+      const id1 = emitSpy.mock.calls[0]![0];
+      const id2 = emitSpy.mock.calls[1]![0];
+      const id3 = emitSpy.mock.calls[2]![0];
 
       // Verify all IDs are unique
       expect(new Set([id1, id2, id3]).size).toBe(3);
@@ -490,7 +485,7 @@ describe('RPCHandler', () => {
       rpc.handleResponse({
         type: 'rpc_response',
         id: id3,
-        result: { id: '1', name: 'John', email: 'john@example.com' },
+        result: { token: 'abc', serverUrl: 'https://kaiten.io' },
         timestamp: Date.now(),
       });
 
@@ -502,7 +497,7 @@ describe('RPCHandler', () => {
 
       expect(result1).toBe('/project');
       expect(result2).toBe('/file.ts');
-      expect(result3).toEqual({ id: '1', name: 'John', email: 'john@example.com' });
+      expect(result3).toEqual({ token: 'abc', serverUrl: 'https://kaiten.io' });
     });
 
     it('should handle mix of successful and failed concurrent calls', async () => {
@@ -510,10 +505,10 @@ describe('RPCHandler', () => {
       rpc.setRequestEmitter(emitSpy);
 
       const promise1 = rpc.call('getProjectPath', undefined);
-      const promise2 = rpc.call('getTasks', { filters: {} });
+      const promise2 = rpc.call('getSettings', undefined);
 
-      const id1 = emitSpy.mock.calls[0][0];
-      const id2 = emitSpy.mock.calls[1][0];
+      const id1 = emitSpy.mock.calls[0]![0];
+      const id2 = emitSpy.mock.calls[1]![0];
 
       rpc.handleResponse({
         type: 'rpc_response',
@@ -527,7 +522,7 @@ describe('RPCHandler', () => {
         id: id2,
         error: {
           code: 'NOT_FOUND',
-          message: 'No tasks found',
+          message: 'Settings not found',
         },
         timestamp: Date.now(),
       });
@@ -535,7 +530,7 @@ describe('RPCHandler', () => {
       const result1 = await promise1;
       expect(result1).toBe('/project');
 
-      await expect(promise2).rejects.toThrow('No tasks found');
+      await expect(promise2).rejects.toThrow('Settings not found');
     });
 
     it('should handle concurrent calls with different timeouts', async () => {
@@ -553,7 +548,7 @@ describe('RPCHandler', () => {
       expect(rpc.pendingCount()).toBe(1); // Second call still pending
 
       // Respond to second call
-      const id2 = emitSpy.mock.calls[1][0];
+      const id2 = emitSpy.mock.calls[1]![0];
       rpc.handleResponse({
         type: 'rpc_response',
         id: id2,
@@ -579,7 +574,7 @@ describe('RPCHandler', () => {
       rpc.call('getSelectedFile', undefined);
       expect(rpc.pendingCount()).toBe(2);
 
-      rpc.call('getCurrentUser', undefined);
+      rpc.call('getSettings', undefined);
       expect(rpc.pendingCount()).toBe(3);
     });
 
@@ -594,8 +589,8 @@ describe('RPCHandler', () => {
 
       const ids = rpc.pendingRequestIds();
       expect(ids).toHaveLength(2);
-      expect(ids).toContain(emitSpy.mock.calls[0][0]);
-      expect(ids).toContain(emitSpy.mock.calls[1][0]);
+      expect(ids).toContain(emitSpy.mock.calls[0]![0]);
+      expect(ids).toContain(emitSpy.mock.calls[1]![0]);
     });
 
     it('getPendingRequest() should return request details', () => {
@@ -603,7 +598,7 @@ describe('RPCHandler', () => {
       rpc.setRequestEmitter(emitSpy);
 
       rpc.call('getProjectPath', undefined);
-      const requestId = emitSpy.mock.calls[0][0];
+      const requestId = emitSpy.mock.calls[0]![0];
 
       const details = rpc.getPendingRequest(requestId);
       expect(details).toEqual({ method: 'getProjectPath' });
@@ -654,7 +649,7 @@ describe('RPCHandler', () => {
       rpc.setRequestEmitter(emitSpy);
 
       const promise = rpc.call('getProjectPath', undefined);
-      const requestId = emitSpy.mock.calls[0][0];
+      const requestId = emitSpy.mock.calls[0]![0];
 
       expect(rpc.pendingRequestIds()).toContain(requestId);
 
@@ -675,8 +670,8 @@ describe('RPCHandler', () => {
       const emitSpy = vi.fn();
       rpc.setRequestEmitter(emitSpy);
 
-      const promise = rpc.call('getTasks', { filters: {} });
-      const requestId = emitSpy.mock.calls[0][0];
+      const promise = rpc.call('getSettings', undefined);
+      const requestId = emitSpy.mock.calls[0]![0];
 
       rpc.handleError({
         type: 'rpc_error',
@@ -696,7 +691,7 @@ describe('RPCHandler', () => {
       rpc.setRequestEmitter(emitSpy);
 
       const promise = rpc.call('getProjectPath', undefined, { timeout: 5000 });
-      const requestId = emitSpy.mock.calls[0][0];
+      const requestId = emitSpy.mock.calls[0]![0];
 
       vi.advanceTimersByTime(5000);
 
@@ -711,7 +706,7 @@ describe('RPCHandler', () => {
       rpc.setRequestEmitter(emitSpy);
 
       const promise = rpc.call('getProjectPath', undefined);
-      const requestId = emitSpy.mock.calls[0][0];
+      const requestId = emitSpy.mock.calls[0]![0];
 
       rpc.cancel(requestId);
 

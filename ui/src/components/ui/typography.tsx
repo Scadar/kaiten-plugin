@@ -1,6 +1,8 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import * as React from 'react';
+
+import { cva, type VariantProps } from 'class-variance-authority';
+
+import { cn } from '@/lib/utils';
 
 /**
  * Typography variants matching JetBrains New UI type scale.
@@ -17,60 +19,47 @@ import { cn } from "@/lib/utils"
  *  - overline  — uppercase label (section dividers, group headings)
  *  - code      — monospace (IDs, code snippets, hashes)
  */
-const typographyVariants = cva("", {
+const typographyVariants = cva('', {
   variants: {
     variant: {
-      heading:
-        "text-[length:var(--ide-font-size)] font-bold leading-snug tracking-tight",
-      subheading:
-        "text-[length:var(--ide-font-size)] font-semibold leading-snug",
-      body:
-        "text-[length:var(--ide-font-size)] leading-normal",
-      secondary:
-        "text-[length:var(--ide-font-size-sm)] leading-normal text-muted-foreground",
-      dimmed:
-        "text-[length:var(--ide-font-size-xs)] leading-normal text-muted-foreground",
+      heading: 'text-[length:var(--ide-font-size)] font-bold leading-snug tracking-tight',
+      subheading: 'text-[length:var(--ide-font-size)] font-semibold leading-snug',
+      body: 'text-[length:var(--ide-font-size)] leading-normal',
+      secondary: 'text-[length:var(--ide-font-size-sm)] leading-normal text-muted-foreground',
+      dimmed: 'text-[length:var(--ide-font-size-xs)] leading-normal text-muted-foreground',
       overline:
-        "text-[length:var(--ide-font-size-xs)] font-semibold uppercase tracking-wider text-muted-foreground",
-      code:
-        "font-mono text-[length:var(--ide-font-size-sm)] text-muted-foreground",
+        'text-[length:var(--ide-font-size-xs)] font-semibold uppercase tracking-wider text-muted-foreground',
+      code: 'font-mono text-[length:var(--ide-font-size-sm)] text-muted-foreground',
     },
   },
   defaultVariants: {
-    variant: "body",
+    variant: 'body',
   },
-})
+});
 
-type TypographyVariant = NonNullable<VariantProps<typeof typographyVariants>["variant"]>
+type TypographyVariant = NonNullable<VariantProps<typeof typographyVariants>['variant']>;
 
 const defaultElementMap: Record<TypographyVariant, React.ElementType> = {
-  heading: "h3",
-  subheading: "h4",
-  body: "p",
-  secondary: "span",
-  dimmed: "span",
-  overline: "span",
-  code: "code",
-}
+  heading: 'h3',
+  subheading: 'h4',
+  body: 'p',
+  secondary: 'span',
+  dimmed: 'span',
+  overline: 'span',
+  code: 'code',
+};
 
 export interface TypographyProps
-  extends React.HTMLAttributes<HTMLElement>,
-    VariantProps<typeof typographyVariants> {
-  as?: React.ElementType
+  extends React.HTMLAttributes<HTMLElement>, VariantProps<typeof typographyVariants> {
+  as?: React.ElementType;
 }
 
 const Typography = React.forwardRef<HTMLElement, TypographyProps>(
-  ({ className, variant = "body", as, ...props }, ref) => {
-    const Comp = as ?? defaultElementMap[variant as TypographyVariant] ?? "span"
-    return (
-      <Comp
-        ref={ref}
-        className={cn(typographyVariants({ variant }), className)}
-        {...props}
-      />
-    )
-  }
-)
-Typography.displayName = "Typography"
+  ({ className, variant = 'body', as, ...props }, ref) => {
+    const Comp = as ?? defaultElementMap[variant ?? 'body'];
+    return <Comp ref={ref} className={cn(typographyVariants({ variant }), className)} {...props} />;
+  },
+);
+Typography.displayName = 'Typography';
 
-export { Typography, Typography as Text, typographyVariants }
+export { Typography, Typography as Text, typographyVariants };

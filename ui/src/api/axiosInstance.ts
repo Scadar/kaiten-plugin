@@ -14,7 +14,9 @@ import axios, {
   type InternalAxiosRequestConfig,
   type AxiosInstance,
 } from 'axios';
+
 import { bridge } from '@/bridge/JCEFBridge';
+
 import type { ApiConfig } from './client';
 
 /**
@@ -25,7 +27,7 @@ import type { ApiConfig } from './client';
  * This lets client.ts use standard axios error handling (isAxiosError, error.response.status).
  */
 const bridgeAdapter: AxiosAdapter = async (
-  config: InternalAxiosRequestConfig
+  config: InternalAxiosRequestConfig,
 ): Promise<AxiosResponse> => {
   // Build full URL: baseURL + path + serialized query params
   const url = axios.getUri(config);
@@ -57,11 +59,7 @@ const bridgeAdapter: AxiosAdapter = async (
   // status <= 0 means no HTTP response (network failure or timeout)
   if (status <= 0) {
     const isTimeout = message.toLowerCase().includes('timeout');
-    throw new AxiosError(
-      message,
-      isTimeout ? 'ECONNABORTED' : 'ERR_NETWORK',
-      config,
-    );
+    throw new AxiosError(message, isTimeout ? 'ECONNABORTED' : 'ERR_NETWORK', config);
   }
 
   // HTTP error (4xx / 5xx) — include response so error.response.status works in client.ts

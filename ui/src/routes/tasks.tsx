@@ -1,29 +1,31 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo } from 'react';
-import { useUIStore } from '@/state/uiStore';
+
 import { useQueryClient } from '@tanstack/react-query';
-import { useFilteredTasks } from '@/hooks/useFilteredTasks';
-import { useBoards, useColumnsByBoards } from '@/hooks/useKaitenQuery';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+
 import { tasksKeys } from '@/api/endpoints';
-import { useFilterState, useActiveFilter } from '@/state/filterStore';
+import { FiltersPanel } from '@/components/FiltersPanel';
+import { KanbanBoard } from '@/components/KanbanBoard';
 import { Layout } from '@/components/Layout';
+import { TaskList } from '@/components/TaskList';
+import { TasksToolbar } from '@/components/tasks/TasksToolbar';
+import { TaskTableView } from '@/components/tasks/TaskTableView';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/typography';
-import { FiltersPanel } from '@/components/FiltersPanel';
-import { TaskList } from '@/components/TaskList';
-import { KanbanBoard } from '@/components/KanbanBoard';
-import { TaskTableView } from '@/components/tasks/TaskTableView';
-import { TasksToolbar } from '@/components/tasks/TasksToolbar';
+import { useFilteredTasks } from '@/hooks/useFilteredTasks';
+import { useBoards, useColumnsByBoards } from '@/hooks/useKaitenQuery';
+import { useFilterState, useActiveFilter } from '@/state/filterStore';
+import { useUIStore } from '@/state/uiStore';
 
 export const Route = createFileRoute('/tasks')({
   component: TasksComponent,
 });
 
 function TasksComponent() {
-  const viewMode             = useUIStore((s) => s.tasksViewMode);
-  const setViewMode          = useUIStore((s) => s.setTasksViewMode);
-  const noGrouping           = useUIStore((s) => s.tasksListNoGrouping);
-  const setNoGrouping        = useUIStore((s) => s.setTasksListNoGrouping);
+  const viewMode = useUIStore((s) => s.tasksViewMode);
+  const setViewMode = useUIStore((s) => s.setTasksViewMode);
+  const noGrouping = useUIStore((s) => s.tasksListNoGrouping);
+  const setNoGrouping = useUIStore((s) => s.setTasksListNoGrouping);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -33,22 +35,21 @@ function TasksComponent() {
   );
 
   const { selectedSpaceId } = useFilterState();
-  const activeFilter        = useActiveFilter();
+  const activeFilter = useActiveFilter();
 
   const boardIdForKanban = activeFilter?.boardId ?? null;
 
-  const { data: tasks, isLoading: tasksLoading, error: tasksError } = useFilteredTasks(
-    selectedSpaceId,
-    activeFilter,
-  );
+  const {
+    data: tasks,
+    isLoading: tasksLoading,
+    error: tasksError,
+  } = useFilteredTasks(selectedSpaceId, activeFilter);
 
   const { data: boards, isLoading: boardsLoading } = useBoards(selectedSpaceId);
 
   const taskBoardIds = useMemo(() => {
     if (!tasks) return [];
-    return [...new Set(
-      tasks.map((t) => t.boardId).filter((id): id is number => id != null)
-    )];
+    return [...new Set(tasks.map((t) => t.boardId).filter((id): id is number => id !== null))];
   }, [tasks]);
 
   const { data: columnsByBoard, isLoading: columnsLoading } = useColumnsByBoards(taskBoardIds);
@@ -65,23 +66,24 @@ function TasksComponent() {
 
   const handleRefresh = useCallback(
     () => queryClient.invalidateQueries({ queryKey: tasksKeys.all() }),
-    [queryClient]
+    [queryClient],
   );
 
   const canUseKanban = boardIdForKanban !== null;
-  const kanbanColumns = boardIdForKanban != null ? (columnsByBoard[boardIdForKanban] ?? []) : [];
+  const kanbanColumns = boardIdForKanban !== null ? (columnsByBoard[boardIdForKanban] ?? []) : [];
   const kanbanLanes = useMemo(
     () => boards?.find((b) => b.id === boardIdForKanban)?.lanes ?? [],
-    [boards, boardIdForKanban]
+    [boards, boardIdForKanban],
   );
 
   return (
     <Layout
       header={
         <TasksToolbar
-          taskCount={filteredTasks?.length}
           viewMode={viewMode}
-          onViewModeChange={canUseKanban ? setViewMode : (mode) => setViewMode(mode === 'kanban' ? 'table' : mode)}
+          onViewModeChange={
+            canUseKanban ? setViewMode : (mode) => setViewMode(mode === 'kanban' ? 'table' : mode)
+          }
           onRefresh={handleRefresh}
           noGrouping={noGrouping}
           onNoGroupingChange={setNoGrouping}
@@ -96,7 +98,7 @@ function TasksComponent() {
         <Card variant="island" padding="md" className="my-3 text-center">
           <Text variant="dimmed">
             Configure a space in{' '}
-            <Link to="/settings" className="underline text-primary">
+            <Link to="/settings" className="text-primary underline">
               Settings
             </Link>{' '}
             to view tasks

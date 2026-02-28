@@ -1,14 +1,14 @@
-import { useTaskDetailData } from '@/hooks/useTaskDetailData';
+import type { TaskDetail as TaskDetailType } from '@/api/types';
+import { TaskComments } from '@/components/task-detail/TaskComments';
+import { TaskDescription } from '@/components/task-detail/TaskDescription';
+import { TaskDetailHeader } from '@/components/task-detail/TaskDetailHeader';
+import { TaskLinks } from '@/components/task-detail/TaskLinks';
+import { TaskMeta } from '@/components/task-detail/TaskMeta';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import { TaskDetailHeader } from '@/components/task-detail/TaskDetailHeader';
-import { TaskMeta } from '@/components/task-detail/TaskMeta';
-import { TaskDescription } from '@/components/task-detail/TaskDescription';
-import { TaskLinks } from '@/components/task-detail/TaskLinks';
-import { TaskComments } from '@/components/task-detail/TaskComments';
-import type { TaskDetail as TaskDetailType } from '@/api/types';
+import { useTaskDetailData } from '@/hooks/useTaskDetailData';
 
 export interface DetailContentProps {
   task: TaskDetailType;
@@ -16,16 +16,30 @@ export interface DetailContentProps {
 }
 
 export function DetailContent({ task, onBack }: DetailContentProps) {
-  const { columnName, kaitenUrl, comments, commentsLoading, commentsError, refetchComments, allFiles } =
-    useTaskDetailData(task);
+  const {
+    columnName,
+    kaitenUrl,
+    comments,
+    commentsLoading,
+    commentsError,
+    refetchComments,
+    allFiles,
+  } = useTaskDetailData(task);
 
   return (
     <div>
-      <TaskDetailHeader taskId={task.id} columnName={columnName} onBack={onBack} kaitenUrl={kaitenUrl} />
+      <TaskDetailHeader
+        taskId={task.id}
+        columnName={columnName}
+        onBack={onBack}
+        kaitenUrl={kaitenUrl}
+      />
 
       <Stack spacing="3" className="px-3 py-3">
         {/* Title */}
-        <Text variant="subheading" as="h1" className="leading-snug">{task.title}</Text>
+        <Text variant="subheading" as="h1" className="leading-snug">
+          {task.title}
+        </Text>
 
         {/* Tags */}
         {task.tags.length > 0 && (

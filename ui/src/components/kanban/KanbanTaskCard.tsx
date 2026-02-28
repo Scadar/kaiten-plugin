@@ -1,12 +1,13 @@
 import { ExternalLink } from 'lucide-react';
+
+import type { Task } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import { buildKaitenUrl, stripHtml } from '@/lib/format';
 import { useSettings } from '@/hooks/useSettings';
-import { useFilterStore } from '@/state/filterStore';
+import { buildKaitenUrl, stripHtml } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import type { Task } from '@/api/types';
+import { useFilterStore } from '@/state/filterStore';
 
 interface KanbanTaskCardProps {
   task: Task;
@@ -21,10 +22,10 @@ function getAssigneeName(task: Task): string | null {
 
 /** Islands-style Kanban task card with click-to-open dialog */
 export function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
-  const assigneeName     = getAssigneeName(task);
+  const assigneeName = getAssigneeName(task);
   const participantCount = task.participants.length;
-  const settings         = useSettings();
-  const selectedSpaceId  = useFilterStore((s) => s.selectedSpaceId);
+  const settings = useSettings();
+  const selectedSpaceId = useFilterStore((s) => s.selectedSpaceId);
 
   const kaitenUrl = buildKaitenUrl(settings.serverUrl, selectedSpaceId, task.id);
 
@@ -35,9 +36,9 @@ export function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
       onClick={onClick}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
       className={cn(
-        'rounded-lg border border-border bg-card p-3 shadow-island',
+        'border-border bg-card shadow-island rounded-lg border p-3',
         'transition-all duration-150',
-        onClick && 'cursor-pointer hover:shadow-island-md hover:border-primary/25'
+        onClick && 'hover:shadow-island-md hover:border-primary/25 cursor-pointer',
       )}
       spacing="0"
     >
@@ -67,13 +68,13 @@ export function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
 
       {/* Description snippet */}
       {task.description && (
-        <Text variant="secondary" as="p" className="line-clamp-2 mb-2 leading-relaxed">
+        <Text variant="secondary" as="p" className="mb-2 line-clamp-2 leading-relaxed">
           {stripHtml(task.description)}
         </Text>
       )}
 
       {/* Meta */}
-      <Stack spacing="0.5" className="text-xs text-muted-foreground">
+      <Stack spacing="0.5" className="text-muted-foreground text-xs">
         {assigneeName && (
           <Stack direction="row" align="center" spacing="1">
             <span className="font-medium">Assignee:</span>

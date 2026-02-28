@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import { FallbackUI } from '@/components/FallbackUI';
 
 describe('FallbackUI', () => {
@@ -10,11 +11,11 @@ describe('FallbackUI', () => {
   beforeEach(() => {
     // Mock window.location.reload
     delete (window as any).location;
-    window.location = { ...originalLocation, reload: vi.fn() };
+    (window as any).location = { ...originalLocation, reload: vi.fn() };
   });
 
   afterEach(() => {
-    window.location = originalLocation;
+    (window as any).location = originalLocation;
     vi.clearAllMocks();
   });
 

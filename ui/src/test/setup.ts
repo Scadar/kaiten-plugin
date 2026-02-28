@@ -3,8 +3,8 @@
  * Runs before all tests
  */
 
-import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import { afterEach, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 
 // Mock JCEF bridge functions globally to prevent "not available" errors

@@ -1,13 +1,14 @@
-import { useSettingsStatus } from '@/hooks/useSettings';
-import { useFilterState, useFilterActions } from '@/state/filterStore';
+import { FiltersPanelBase } from '@/components/filters/FiltersPanelBase';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/typography';
-import { FiltersPanelBase } from '@/components/filters/FiltersPanelBase';
+import { useSettingsStatus } from '@/hooks/useSettings';
+import { useFilterState, useFilterActions } from '@/state/filterStore';
 
 export function FiltersPanel() {
   const { isConfigured } = useSettingsStatus();
   const { selectedSpaceId, savedFilters, activeFilterId } = useFilterState();
-  const { addSavedFilter, updateSavedFilter, deleteSavedFilter, setActiveFilter } = useFilterActions();
+  const { addSavedFilter, updateSavedFilter, deleteSavedFilter, setActiveFilter } =
+    useFilterActions();
 
   if (!isConfigured) {
     return (

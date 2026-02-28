@@ -18,6 +18,11 @@
  */
 
 import { Plus, Trash2 } from 'lucide-react';
+
+import type { User, Tag, CardType } from '@/api/types';
+import { Button } from '@/components/ui/button';
+import { Stack } from '@/components/ui/stack';
+import type { CustomPropertyWithValues } from '@/hooks/useKaitenQuery';
 import {
   type FilterGroup,
   type FilterNode,
@@ -27,11 +32,8 @@ import {
   createCondition,
   createGroup,
 } from '@/lib/advancedFilters';
-import { Button } from '@/components/ui/button';
-import { Stack } from '@/components/ui/stack';
+
 import { FilterConditionRow } from './FilterConditionRow';
-import type { User, Tag, CardType } from '@/api/types';
-import type { CustomPropertyWithValues } from '@/hooks/useKaitenQuery';
 
 interface FilterBuilderProps {
   group: FilterGroup;
@@ -114,11 +116,15 @@ export function FilterBuilder({
           onClick={toggleLogic}
           title="Click to toggle AND / OR"
         >
-          <span className={group.logic === 'and' ? 'text-primary' : 'text-muted-foreground'}>AND</span>
+          <span className={group.logic === 'and' ? 'text-primary' : 'text-muted-foreground'}>
+            AND
+          </span>
           <span className="text-muted-foreground">/</span>
-          <span className={group.logic === 'or'  ? 'text-primary' : 'text-muted-foreground'}>OR</span>
+          <span className={group.logic === 'or' ? 'text-primary' : 'text-muted-foreground'}>
+            OR
+          </span>
         </Button>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           {group.logic === 'and' ? 'All conditions must match' : 'Any condition must match'}
         </span>
       </Stack>
@@ -158,7 +164,7 @@ export function FilterBuilder({
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    className="absolute -top-1.5 -right-1.5 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20"
+                    className="bg-destructive/10 text-destructive hover:bg-destructive/20 absolute -top-1.5 -right-1.5 rounded-full"
                     onClick={() => handleRemoveNode(node.id)}
                     aria-label="Remove group"
                   >
@@ -179,7 +185,7 @@ export function FilterBuilder({
           <Button
             variant="ghost"
             size="xs"
-            className="gap-1 px-2 text-muted-foreground"
+            className="text-muted-foreground gap-1 px-2"
             onClick={addSubGroup}
           >
             <Plus size={11} />
@@ -190,7 +196,7 @@ export function FilterBuilder({
             <Button
               variant="ghost"
               size="xs"
-              className="gap-1 px-2 text-muted-foreground"
+              className="text-muted-foreground gap-1 px-2"
               onClick={addCondition}
             >
               <Plus size={11} />
@@ -200,7 +206,7 @@ export function FilterBuilder({
               <Button
                 variant="ghost"
                 size="xs"
-                className="gap-1 px-2 text-muted-foreground"
+                className="text-muted-foreground gap-1 px-2"
                 onClick={addSubGroup}
               >
                 <Plus size={11} />

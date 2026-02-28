@@ -1,10 +1,11 @@
 import * as React from 'react';
+
 import { ChevronsUpDown, X } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ComboboxList } from '@/components/ui/combobox-list';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 export interface MultiComboboxOption {
   value: string;
@@ -65,17 +66,24 @@ export function MultiCombobox({
           aria-expanded={open}
           className={cn('w-full justify-between font-normal', className)}
         >
-          <span className={cn('truncate text-left flex-1', value.length === 0 && 'text-muted-foreground')}>
+          <span
+            className={cn(
+              'flex-1 truncate text-left',
+              value.length === 0 && 'text-muted-foreground',
+            )}
+          >
             {displayText}
           </span>
-          <span className="flex items-center ml-2 shrink-0 gap-1">
+          <span className="ml-2 flex shrink-0 items-center gap-1">
             {value.length > 0 && (
               <span
                 role="button"
                 tabIndex={0}
                 onClick={handleClear}
-                onKeyDown={(e) => e.key === 'Enter' && handleClear(e as unknown as React.MouseEvent)}
-                className="flex h-3.5 w-3.5 items-center justify-center rounded-full hover:text-destructive"
+                onKeyDown={(e) =>
+                  e.key === 'Enter' && handleClear(e as unknown as React.MouseEvent)
+                }
+                className="hover:text-destructive flex h-3.5 w-3.5 items-center justify-center rounded-full"
               >
                 <X className="h-3 w-3" />
               </span>
@@ -84,7 +92,10 @@ export function MultiCombobox({
           </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" onWheel={(e) => e.stopPropagation()}>
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-0"
+        onWheel={(e) => e.stopPropagation()}
+      >
         {open && (
           <ComboboxList
             options={options}

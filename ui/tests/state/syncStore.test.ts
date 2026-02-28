@@ -3,11 +3,11 @@
  * Verifies Zustand store with bridge event subscription for IDE state updates
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useSyncedStore, disposeSyncStore, syncStoreSelectors } from '../../src/state/syncStore';
-import { bridge } from '../../src/bridge/JCEFBridge';
-import type { AppState } from '../../src/bridge/types';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import type { AppState } from '@/bridge/types.ts';
+import { useSyncedStore, disposeSyncStore, syncStoreSelectors } from '@/state/syncStore.ts';
 
 describe('SyncStore', () => {
   beforeEach(() => {
@@ -81,7 +81,6 @@ describe('SyncStore', () => {
       expect(result.current.selectedFile).toBe('/file.ts');
     });
 
-
     it('should update settings', () => {
       const { result } = renderHook(() => useSyncedStore());
 
@@ -139,7 +138,6 @@ describe('SyncStore', () => {
         result.current.updateFromIDE({
           projectPath: '/some/path',
           selectedFile: '/some/file.ts',
-          user: { id: 'user1', name: 'User', email: 'user@test.com' },
         });
       });
 
@@ -194,9 +192,7 @@ describe('SyncStore', () => {
 
   describe('Selectors', () => {
     it('should select projectPath', () => {
-      const { result } = renderHook(() =>
-        useSyncedStore(syncStoreSelectors.projectPath)
-      );
+      const { result } = renderHook(() => useSyncedStore(syncStoreSelectors.projectPath));
 
       act(() => {
         useSyncedStore.getState().updateFromIDE({ projectPath: '/test' });
@@ -206,9 +202,7 @@ describe('SyncStore', () => {
     });
 
     it('should select selectedFile', () => {
-      const { result } = renderHook(() =>
-        useSyncedStore(syncStoreSelectors.selectedFile)
-      );
+      const { result } = renderHook(() => useSyncedStore(syncStoreSelectors.selectedFile));
 
       act(() => {
         useSyncedStore.getState().updateFromIDE({ selectedFile: '/file.ts' });
@@ -217,11 +211,8 @@ describe('SyncStore', () => {
       expect(result.current).toBe('/file.ts');
     });
 
-
     it('should select settings', () => {
-      const { result } = renderHook(() =>
-        useSyncedStore(syncStoreSelectors.settings)
-      );
+      const { result } = renderHook(() => useSyncedStore(syncStoreSelectors.settings));
 
       const settings = { theme: 'dark' };
 
@@ -233,9 +224,7 @@ describe('SyncStore', () => {
     });
 
     it('should select isLoading', () => {
-      const { result } = renderHook(() =>
-        useSyncedStore(syncStoreSelectors.isLoading)
-      );
+      const { result } = renderHook(() => useSyncedStore(syncStoreSelectors.isLoading));
 
       act(() => {
         useSyncedStore.setState({ isLoading: true });
@@ -245,9 +234,7 @@ describe('SyncStore', () => {
     });
 
     it('should select error', () => {
-      const { result } = renderHook(() =>
-        useSyncedStore(syncStoreSelectors.error)
-      );
+      const { result } = renderHook(() => useSyncedStore(syncStoreSelectors.error));
 
       const error = new Error('Test');
 
@@ -259,9 +246,7 @@ describe('SyncStore', () => {
     });
 
     it('should select isReady (not loading and no error)', () => {
-      const { result } = renderHook(() =>
-        useSyncedStore(syncStoreSelectors.isReady)
-      );
+      const { result } = renderHook(() => useSyncedStore(syncStoreSelectors.isReady));
 
       // Initial state: not loading, no error = ready
       expect(result.current).toBe(true);

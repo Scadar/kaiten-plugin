@@ -3,7 +3,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
+
 import { filterTasks, MEMBER_TYPE_MEMBER, MEMBER_TYPE_RESPONSIBLE } from './filters';
+
 import type { Task, TaskMember } from '../api/types';
 
 const createMember = (id: number, type: number): TaskMember => ({
@@ -15,14 +17,10 @@ const createMember = (id: number, type: number): TaskMember => ({
   username: 'qwe',
   avatar_initials_url: '',
   avatar_type: 2,
-  avatar_uploaded_url: ''
+  avatar_uploaded_url: '',
 });
 
-const createTask = (
-  id: number,
-  columnId: number,
-  members: TaskMember[] = []
-): Task => ({
+const createTask = (id: number, columnId: number, members: TaskMember[] = []): Task => ({
   id,
   title: `Task ${id}`,
   description: null,
@@ -39,11 +37,20 @@ const createTask = (
 // user 3: both member(type1) and responsible(type2) on some tasks
 const tasks: Task[] = [
   // Task 1: user1=member, user2=responsible
-  createTask(1, 100, [createMember(1, MEMBER_TYPE_MEMBER), createMember(2, MEMBER_TYPE_RESPONSIBLE)]),
+  createTask(1, 100, [
+    createMember(1, MEMBER_TYPE_MEMBER),
+    createMember(2, MEMBER_TYPE_RESPONSIBLE),
+  ]),
   // Task 2: user1=responsible, user3=member
-  createTask(2, 100, [createMember(1, MEMBER_TYPE_RESPONSIBLE), createMember(3, MEMBER_TYPE_MEMBER)]),
+  createTask(2, 100, [
+    createMember(1, MEMBER_TYPE_RESPONSIBLE),
+    createMember(3, MEMBER_TYPE_MEMBER),
+  ]),
   // Task 3: user3=member AND user3=responsible (both roles)
-  createTask(3, 200, [createMember(3, MEMBER_TYPE_MEMBER), createMember(3, MEMBER_TYPE_RESPONSIBLE)]),
+  createTask(3, 200, [
+    createMember(3, MEMBER_TYPE_MEMBER),
+    createMember(3, MEMBER_TYPE_RESPONSIBLE),
+  ]),
   // Task 4: user2=member
   createTask(4, 200, [createMember(2, MEMBER_TYPE_MEMBER)]),
   // Task 5: no members
@@ -176,7 +183,10 @@ describe('filterTasks', () => {
     });
 
     it('should handle empty selectedColumnIds Set', () => {
-      const result = filterTasks(tasks, { selectedColumnIds: new Set<number>(), selectedUserId: 1 });
+      const result = filterTasks(tasks, {
+        selectedColumnIds: new Set<number>(),
+        selectedUserId: 1,
+      });
       expect(result.map((t) => t.id)).toEqual([1, 2]);
     });
   });

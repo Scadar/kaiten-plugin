@@ -1,18 +1,15 @@
 import { useMemo } from 'react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { toast } from 'sonner';
-import { Copy } from 'lucide-react';
 
-import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
+import { type ColumnDef } from '@tanstack/react-table';
+import { Copy } from 'lucide-react';
+import { toast } from 'sonner';
+
+import type { Task, TaskMember } from '@/api/types';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from '@/components/ui/tooltip';
+import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Text } from '@/components/ui/typography';
 import { cn } from '@/lib/utils';
-import type { Task, TaskMember } from '@/api/types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,9 +46,7 @@ export interface CardsTableProps {
 // ---------------------------------------------------------------------------
 
 function getAvatarSrc(member: TaskMember): string {
-  return member.avatar_type === 3
-    ? member.avatar_uploaded_url
-    : member.avatar_initials_url;
+  return member.avatar_type === 3 ? member.avatar_uploaded_url : member.avatar_initials_url;
 }
 
 // Single avatar with tooltip showing full name
@@ -59,7 +54,7 @@ function MemberAvatar({ member }: { member: TaskMember }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Avatar className="size-6 ring-2 ring-background cursor-default">
+        <Avatar className="ring-background size-6 cursor-default ring-2">
           <AvatarImage src={getAvatarSrc(member)} alt={member.fullName} />
           <AvatarFallback className="text-[9px]">{member.initials}</AvatarFallback>
         </Avatar>
@@ -79,7 +74,11 @@ function MembersAvatarGroup({
   maxVisible?: number;
 }) {
   if (members.length === 0) {
-    return <Text variant="secondary" className="opacity-40">—</Text>;
+    return (
+      <Text variant="secondary" className="opacity-40">
+        —
+      </Text>
+    );
   }
 
   const visible = members.slice(0, maxVisible);
@@ -89,23 +88,21 @@ function MembersAvatarGroup({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex -space-x-1.5 w-fit cursor-default">
+        <div className="flex w-fit cursor-default -space-x-1.5">
           {visible.map((m) => (
-            <Avatar key={m.id} className="size-5 ring-2 ring-background">
+            <Avatar key={m.id} className="ring-background size-5 ring-2">
               <AvatarImage src={getAvatarSrc(m)} alt={m.fullName} />
               <AvatarFallback className="text-[8px]">{m.initials}</AvatarFallback>
             </Avatar>
           ))}
           {overflow > 0 && (
-            <div className="flex size-5 shrink-0 items-center justify-center rounded-full ring-2 ring-background bg-muted text-[9px] font-medium text-muted-foreground">
+            <div className="ring-background bg-muted text-muted-foreground flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-medium ring-2">
               +{overflow}
             </div>
           )}
         </div>
       </TooltipTrigger>
-      <TooltipContent className="max-w-[220px] whitespace-pre-wrap">
-        {allNames}
-      </TooltipContent>
+      <TooltipContent className="max-w-[220px] whitespace-pre-wrap">{allNames}</TooltipContent>
     </Tooltip>
   );
 }
@@ -125,7 +122,7 @@ function makeIdColumn(): ColumnDef<Task> {
         <button
           className={cn(
             'flex items-center gap-1 font-mono text-[length:var(--ide-font-size-xs)]',
-            'text-muted-foreground hover:text-foreground transition-colors group/id',
+            'text-muted-foreground hover:text-foreground group/id transition-colors',
           )}
           onClick={(e) => {
             e.stopPropagation();
@@ -137,7 +134,7 @@ function makeIdColumn(): ColumnDef<Task> {
           #{id}
           <Copy
             size={10}
-            className="opacity-0 group-hover/id:opacity-60 transition-opacity shrink-0"
+            className="shrink-0 opacity-0 transition-opacity group-hover/id:opacity-60"
           />
         </button>
       );
@@ -156,14 +153,11 @@ function makeTitleColumn(): ColumnDef<Task> {
       return (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Text
-              variant="body"
-              className="block w-full truncate cursor-default"
-            >
+            <Text variant="body" className="block w-full cursor-default truncate">
               {title}
             </Text>
           </TooltipTrigger>
-          <TooltipContent className="max-w-[320px] whitespace-normal break-words">
+          <TooltipContent className="max-w-[320px] break-words whitespace-normal">
             {title}
           </TooltipContent>
         </Tooltip>
@@ -183,7 +177,7 @@ function makeColumnColumn(columnMap: Record<number, string>): ColumnDef<Task> {
       return (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Text variant="secondary" className="block truncate cursor-default">
+            <Text variant="secondary" className="block cursor-default truncate">
               {name}
             </Text>
           </TooltipTrigger>
@@ -204,11 +198,19 @@ function makeColumnColumn(columnMap: Record<number, string>): ColumnDef<Task> {
 function makeResponsibleColumn(): ColumnDef<Task> {
   return {
     id: 'responsible',
-    header: () => <Text variant="secondary" className="font-medium">Responsible</Text>,
+    header: () => (
+      <Text variant="secondary" className="font-medium">
+        Responsible
+      </Text>
+    ),
     cell: ({ row }) => {
-      const responsible = row.original.participants?.find((p) => p.type === 2) ?? null;
+      const responsible = row.original.participants.find((p) => p.type === 2) ?? null;
       if (!responsible) {
-        return <Text variant="secondary" className="opacity-40">—</Text>;
+        return (
+          <Text variant="secondary" className="opacity-40">
+            —
+          </Text>
+        );
       }
       return <MemberAvatar member={responsible} />;
     },
@@ -220,9 +222,13 @@ function makeResponsibleColumn(): ColumnDef<Task> {
 function makeMembersColumn(): ColumnDef<Task> {
   return {
     id: 'members',
-    header: () => <Text variant="secondary" className="font-medium">Members</Text>,
+    header: () => (
+      <Text variant="secondary" className="font-medium">
+        Members
+      </Text>
+    ),
     cell: ({ row }) => {
-      const members = (row.original.participants ?? []).filter((p) => p.type === 1);
+      const members = row.original.participants.filter((p) => p.type === 1);
       return <MembersAvatarGroup members={members} />;
     },
     enableSorting: false,
@@ -237,9 +243,14 @@ function makeDueDateColumn(): ColumnDef<Task> {
     header: ({ column }) => <DataTableColumnHeader column={column} title="Due" />,
     cell: ({ row }) => {
       const date = row.original.dueDate;
-      if (!date) return <Text variant="secondary" className="opacity-40">—</Text>;
+      if (!date)
+        return (
+          <Text variant="secondary" className="opacity-40">
+            —
+          </Text>
+        );
       return (
-        <Text variant="secondary" className="tabular-nums whitespace-nowrap">
+        <Text variant="secondary" className="whitespace-nowrap tabular-nums">
           {new Date(date).toLocaleDateString()}
         </Text>
       );
@@ -265,12 +276,18 @@ function resolveColumns(
     if (typeof config !== 'string') return config as ColumnDef<Task>;
 
     switch (config) {
-      case 'id':          return makeIdColumn();
-      case 'title':       return makeTitleColumn();
-      case 'column':      return makeColumnColumn(columnMap);
-      case 'responsible': return makeResponsibleColumn();
-      case 'members':     return makeMembersColumn();
-      case 'dueDate':     return makeDueDateColumn();
+      case 'id':
+        return makeIdColumn();
+      case 'title':
+        return makeTitleColumn();
+      case 'column':
+        return makeColumnColumn(columnMap);
+      case 'responsible':
+        return makeResponsibleColumn();
+      case 'members':
+        return makeMembersColumn();
+      case 'dueDate':
+        return makeDueDateColumn();
     }
   });
 }
@@ -290,7 +307,7 @@ export function CardsTable({
 }: CardsTableProps) {
   const columnDefs = useMemo(
     () => resolveColumns(columns, columnMap),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [columns, columnMap],
   );
 

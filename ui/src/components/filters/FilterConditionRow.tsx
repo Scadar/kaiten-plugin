@@ -1,8 +1,14 @@
 import { X } from 'lucide-react';
+
+import type { User, Tag, CardType } from '@/api/types';
 import { Button } from '@/components/ui/button';
+import {
+  ComboboxSelect,
+  type ComboboxSelectOption as ComboboxOption,
+} from '@/components/ui/combobox-select';
 import { Input } from '@/components/ui/input';
 import { Stack } from '@/components/ui/stack';
-import { ComboboxSelect, type ComboboxSelectOption as ComboboxOption } from '@/components/ui/combobox-select';
+import type { CustomPropertyWithValues } from '@/hooks/useKaitenQuery';
 import {
   type FilterCondition,
   type FilterKey,
@@ -18,8 +24,6 @@ import {
   customPropertyKey,
   getKeyComparisons,
 } from '@/lib/advancedFilters';
-import type { User, Tag, CardType } from '@/api/types';
-import type { CustomPropertyWithValues } from '@/hooks/useKaitenQuery';
 
 interface FilterConditionRowProps {
   condition: FilterCondition;
@@ -92,7 +96,7 @@ export function FilterConditionRow({
   }
 
   const comparisons = getKeyComparisons(condition.key);
-  const showValue   = needsValue(condition.key, condition.comparison);
+  const showValue = needsValue(condition.key, condition.comparison);
 
   // Build field options: static keys + custom properties
   const staticOptions: ComboboxOption[] = STATIC_KEYS.map((k) => ({
@@ -113,13 +117,16 @@ export function FilterConditionRow({
     label: COMPARISON_LABELS[c],
   }));
 
-  const userOptions: ComboboxOption[]      = users.map((u) => ({ value: String(u.id), label: u.name }));
-  const tagOptions: ComboboxOption[]       = tags.map((t) => ({ value: String(t.id), label: t.name }));
-  const typeOptions: ComboboxOption[]      = cardTypes.map((ct) => ({ value: String(ct.id), label: ct.name }));
+  const userOptions: ComboboxOption[] = users.map((u) => ({ value: String(u.id), label: u.name }));
+  const tagOptions: ComboboxOption[] = tags.map((t) => ({ value: String(t.id), label: t.name }));
+  const typeOptions: ComboboxOption[] = cardTypes.map((ct) => ({
+    value: String(ct.id),
+    label: ct.name,
+  }));
   const conditionOptions: ComboboxOption[] = CONDITION_OPTIONS;
 
   const currentSingleValue =
-    condition.value != null && !Array.isArray(condition.value)
+    condition.value !== undefined && !Array.isArray(condition.value)
       ? String(condition.value)
       : null;
 
@@ -131,13 +138,13 @@ export function FilterConditionRow({
   const customPropId = isCustomPropertyKey(condition.key)
     ? customPropertyIdFromKey(condition.key)
     : null;
-  const customProp = customPropId != null
-    ? customProperties.find((cp) => cp.id === customPropId)
-    : null;
-  const customPropSelectOptions: ComboboxOption[] = customProp?.selectValues.map((sv) => ({
-    value: String(sv.id),
-    label: sv.value,
-  })) ?? [];
+  const customProp =
+    customPropId !== null ? customProperties.find((cp) => cp.id === customPropId) : null;
+  const customPropSelectOptions: ComboboxOption[] =
+    customProp?.selectValues.map((sv) => ({
+      value: String(sv.id),
+      label: sv.value,
+    })) ?? [];
 
   return (
     <Stack direction="row" wrap="wrap" align="center" spacing="1" className="py-0.5">
@@ -149,7 +156,7 @@ export function FilterConditionRow({
         placeholder="Field…"
         searchPlaceholder="Search fields…"
         emptyText="No fields."
-        className="h-7 w-58 text-xs shrink-0"
+        className="h-7 w-58 shrink-0 text-xs"
       />
 
       {/* Comparison selector */}
@@ -160,7 +167,7 @@ export function FilterConditionRow({
         placeholder="Condition…"
         searchPlaceholder="Search…"
         emptyText="No options."
-        className="h-7 w-28 text-xs shrink-0"
+        className="h-7 w-28 shrink-0 text-xs"
       />
 
       {/* Value picker */}
@@ -249,18 +256,21 @@ export function FilterConditionRow({
             )}
 
           {/* Custom property value picker */}
-          {isCustomPropertyKey(condition.key) && customProp?.type === 'select' && (
-            (condition.comparison === 'eq' || condition.comparison === 'ne') ? (
+          {isCustomPropertyKey(condition.key) &&
+            customProp?.type === 'select' &&
+            (condition.comparison === 'eq' || condition.comparison === 'ne' ? (
               <ComboboxSelect
                 options={customPropSelectOptions}
                 value={currentSingleValue}
                 onChange={handleSingleNumberValue}
-                placeholder={customPropSelectOptions.length ? `Select ${customProp.name}…` : 'Loading…'}
+                placeholder={
+                  customPropSelectOptions.length ? `Select ${customProp.name}…` : 'Loading…'
+                }
                 searchPlaceholder={`Search ${customProp.name}…`}
                 emptyText="No values found."
                 className="h-7 min-w-36 flex-1 text-xs"
               />
-            ) : (condition.comparison === 'in' || condition.comparison === 'not_in') ? (
+            ) : condition.comparison === 'in' || condition.comparison === 'not_in' ? (
               <Input
                 size="sm"
                 className="min-w-36 flex-1"
@@ -268,14 +278,17 @@ export function FilterConditionRow({
                 onChange={(e) => handleMultiIdValue(e.target.value)}
                 placeholder="Value IDs: 1, 2, 3…"
               />
-            ) : null
-          )}
+            ) : null)}
 
           {isCustomPropertyKey(condition.key) && customProp && customProp.type !== 'select' && (
             <Input
               size="sm"
               className="min-w-28 flex-1"
-              value={typeof condition.value === 'string' ? condition.value : String(condition.value ?? '')}
+              value={
+                typeof condition.value === 'string'
+                  ? condition.value
+                  : String(condition.value ?? '')
+              }
               onChange={(e) => handleStringValue(e.target.value)}
               placeholder="Value…"
             />
@@ -287,7 +300,7 @@ export function FilterConditionRow({
       <Button
         variant="ghost"
         size="icon-xs"
-        className="ml-auto shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
+        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto shrink-0 disabled:opacity-30"
         disabled={disableRemove}
         onClick={onRemove}
         aria-label="Remove condition"

@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import { useSettings } from '@/hooks/useSettings';
 
 interface RichTextContentProps {
@@ -158,7 +159,7 @@ function parseMdLinks(
           rel="noopener noreferrer"
           className="text-primary hover:underline"
         >
-          {label || url}
+          {label ?? url}
         </a>,
       );
     }

@@ -1,8 +1,8 @@
+import type { Column } from '@/api/types';
+import { FilterSection } from '@/components/filters/FilterSection';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Stack } from '@/components/ui/stack';
-import { FilterSection } from '@/components/filters/FilterSection';
-import type { Column } from '@/api/types';
 
 export interface ColumnsFilterProps {
   columns: Column[] | undefined;
@@ -11,13 +11,18 @@ export interface ColumnsFilterProps {
   onToggle: (columnId: number) => void;
 }
 
-export function ColumnsFilter({ columns, isLoading, selectedColumnIds, onToggle }: ColumnsFilterProps) {
+export function ColumnsFilter({
+  columns,
+  isLoading,
+  selectedColumnIds,
+  onToggle,
+}: ColumnsFilterProps) {
   return (
     <FilterSection title="Columns" defaultOpen={false}>
       {isLoading ? (
-        <p className="text-xs text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground text-xs">Loading...</p>
       ) : !columns?.length ? (
-        <p className="text-xs text-muted-foreground">No columns</p>
+        <p className="text-muted-foreground text-xs">No columns</p>
       ) : (
         <Stack spacing="1">
           {columns.map((col) => (
@@ -26,7 +31,7 @@ export function ColumnsFilter({ columns, isLoading, selectedColumnIds, onToggle 
               direction="row"
               align="center"
               spacing="2"
-              className="rounded-md px-1.5 py-1 hover:bg-accent/40 cursor-pointer transition-colors"
+              className="hover:bg-accent/40 cursor-pointer rounded-md px-1.5 py-1 transition-colors"
               onClick={() => onToggle(col.id)}
             >
               <Checkbox
@@ -36,7 +41,7 @@ export function ColumnsFilter({ columns, isLoading, selectedColumnIds, onToggle 
               />
               <Label
                 htmlFor={`col-${col.id}`}
-                className="flex-1 text-xs font-normal cursor-pointer truncate"
+                className="flex-1 cursor-pointer truncate text-xs font-normal"
               >
                 {col.name}
               </Label>

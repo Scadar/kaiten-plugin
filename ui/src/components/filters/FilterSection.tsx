@@ -1,10 +1,8 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
+
 import { ChevronRight } from 'lucide-react';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Stack } from '@/components/ui/stack';
 
 export interface FilterSectionProps {
@@ -20,17 +18,17 @@ export interface FilterSectionProps {
 export function FilterSection({ title, children, defaultOpen = true }: FilterSectionProps) {
   return (
     <Collapsible defaultOpen={defaultOpen} className="group/section">
-      <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-3 py-1.5 text-left hover:bg-accent/40 transition-colors rounded-md">
+      <CollapsibleTrigger className="hover:bg-accent/40 flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-left transition-colors">
         <ChevronRight
           size={11}
-          className="shrink-0 text-muted-foreground transition-transform duration-150 group-data-[state=open]/section:rotate-90"
+          className="text-muted-foreground shrink-0 transition-transform duration-150 group-data-[state=open]/section:rotate-90"
         />
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
           {title}
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <Stack spacing="2" className="px-3 pb-2.5 pt-1">
+        <Stack spacing="2" className="px-3 pt-1 pb-2.5">
           {children}
         </Stack>
       </CollapsibleContent>

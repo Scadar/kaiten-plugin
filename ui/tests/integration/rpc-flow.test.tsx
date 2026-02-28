@@ -12,6 +12,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
 import { createJCEFBridge } from '@/bridge/JCEFBridge';
 
 describe('RPC Call Flow', () => {
@@ -72,7 +73,7 @@ describe('RPC Call Flow', () => {
 
       // Verify RPC request was sent
       expect(sendMock).toHaveBeenCalled();
-      const sentMessage = JSON.parse(sendMock.mock.calls[sendMock.mock.calls.length - 1][0]);
+      const sentMessage = JSON.parse(sendMock.mock.calls[sendMock.mock.calls.length - 1]![0] as string);
       expect(sentMessage.type).toBe('rpc_request');
       expect(sentMessage.method).toBe('getProjectPath');
       expect(sentMessage.id).toBeDefined();
@@ -118,8 +119,8 @@ describe('RPC Call Flow', () => {
 
       // Make multiple RPC calls
       const call1 = bridge.call('getProjectPath', undefined);
-      const call2 = bridge.call('getProjectName', undefined);
-      const call3 = bridge.call('getState', undefined);
+      const call2 = bridge.call('getSettings', undefined);
+      const call3 = bridge.call('getSelectedFile', undefined);
 
       // Verify all requests were sent
       expect(sendMock).toHaveBeenCalledTimes(4); // 1 ready + 3 RPC requests
@@ -140,7 +141,7 @@ describe('RPC Call Flow', () => {
         JSON.stringify({
           type: 'rpc_response',
           id: id2,
-          result: 'MyProject',
+          result: { theme: 'dark' },
           timestamp: Date.now(),
         })
       );
@@ -158,14 +159,7 @@ describe('RPC Call Flow', () => {
         JSON.stringify({
           type: 'rpc_response',
           id: id3,
-          result: {
-            projectPath: '/path/to/project',
-            selectedFile: null,
-            settings: {},
-            user: null,
-            tasks: [],
-            filters: {},
-          },
+          result: '/path/to/selected-file.ts',
           timestamp: Date.now(),
         })
       );
@@ -175,15 +169,8 @@ describe('RPC Call Flow', () => {
 
       // Verify results match the correct requests
       expect(result1).toBe('/path/to/project');
-      expect(result2).toBe('MyProject');
-      expect(result3).toEqual({
-        projectPath: '/path/to/project',
-        selectedFile: null,
-        settings: {},
-        user: null,
-        tasks: [],
-        filters: {},
-      });
+      expect(result2).toEqual({ theme: 'dark' });
+      expect(result3).toBe('/path/to/selected-file.ts');
 
     });
 
@@ -213,7 +200,7 @@ describe('RPC Call Flow', () => {
       const callPromise = bridge.call('getProjectPath', undefined);
 
       // Get request ID
-      const sentMessage = JSON.parse(sendMock.mock.calls[sendMock.mock.calls.length - 1][0]);
+      const sentMessage = JSON.parse(sendMock.mock.calls[sendMock.mock.calls.length - 1]![0] as string);
 
       // Simulate IDE error response
       receiveFunction(
@@ -280,8 +267,8 @@ describe('RPC Call Flow', () => {
       // We don't await these - just checking they compile
       // Suppress unhandled rejections by catching them
       bridge.call('getProjectPath', undefined).catch(() => {});
-      bridge.call('getProjectName', undefined).catch(() => {});
-      bridge.call('getState', undefined).catch(() => {});
+      bridge.call('getSettings', undefined).catch(() => {});
+      bridge.call('getSelectedFile', undefined).catch(() => {});
 
       // TypeScript should catch invalid methods at compile time
       // Uncomment to test:

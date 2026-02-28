@@ -1,14 +1,13 @@
 import { useEffect } from 'react';
-import {
-  createRouter,
-  createHashHistory,
-  RouterProvider,
-} from '@tanstack/react-router';
+
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { routeTree } from './routeTree.gen';
-import { queryClient } from './lib/cache';
+import { createRouter, createHashHistory, RouterProvider } from '@tanstack/react-router';
+
 import { bridge } from '@/bridge/JCEFBridge';
+
+import { queryClient } from './lib/cache';
+import { routeTree } from './routeTree.gen';
 
 // ---------------------------------------------------------------------------
 // Route persistence helpers
@@ -21,7 +20,11 @@ const EPHEMERAL_PREFIXES = ['/card/'];
 
 function saveRoute(pathname: string): void {
   if (EPHEMERAL_PREFIXES.some((p) => pathname.startsWith(p))) return;
-  try { localStorage.setItem(ROUTE_LS_KEY, pathname); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(ROUTE_LS_KEY, pathname);
+  } catch {
+    /* ignore */
+  }
 }
 
 // Before creating the router, restore the saved route by setting window.location.hash.
@@ -34,7 +37,9 @@ try {
   if (savedRoute && savedRoute !== '/' && isDefaultHash) {
     window.location.hash = savedRoute;
   }
-} catch { /* ignore */ }
+} catch {
+  /* ignore */
+}
 
 // ---------------------------------------------------------------------------
 // Router
@@ -69,7 +74,7 @@ declare module '@tanstack/react-router' {
 function useBrowserLinkInterceptor() {
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      const anchor = (e.target as HTMLElement).closest('a[href]') as HTMLAnchorElement | null;
+      const anchor = (e.target as HTMLElement).closest('a[href]');
       if (!anchor) return;
 
       const href = anchor.getAttribute('href') ?? '';

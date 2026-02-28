@@ -1,8 +1,15 @@
 import { AlertTriangle, Calendar, Clock, Flag, Hash, Timer, User, Users } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { MetaRow } from '@/components/task-detail/MetaRow';
-import { formatDate, formatDateTime, formatMinutes, PRIORITY_LABELS, CONDITION_LABELS } from '@/lib/format';
+
 import type { TaskDetail } from '@/api/types';
+import { MetaRow } from '@/components/task-detail/MetaRow';
+import { Badge } from '@/components/ui/badge';
+import {
+  formatDate,
+  formatDateTime,
+  formatMinutes,
+  PRIORITY_LABELS,
+  CONDITION_LABELS,
+} from '@/lib/format';
 
 export interface TaskMetaProps {
   task: Pick<
@@ -28,18 +35,18 @@ export interface TaskMetaProps {
  */
 export function TaskMeta({ task }: TaskMetaProps) {
   const assignee = task.participants.find((p) => p.id === task.assigneeId);
-  const members  = task.participants.filter((p) => p.id !== task.assigneeId);
-  const priority = task.priority != null ? PRIORITY_LABELS[task.priority] : null;
+  const members = task.participants.filter((p) => p.id !== task.assigneeId);
+  const priority = task.priority !== null ? PRIORITY_LABELS[task.priority] : null;
 
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-1 shadow-island-sm">
+    <div className="border-border bg-card shadow-island-sm rounded-lg border px-3 py-1">
       {task.blocked && (
         <MetaRow icon={<AlertTriangle size={12} className="text-destructive" />} label="Blocked">
-          <span className="text-destructive">{task.blockReason || 'Yes'}</span>
+          <span className="text-destructive">{task.blockReason ?? 'Yes'}</span>
         </MetaRow>
       )}
 
-      {task.condition != null && (
+      {task.condition !== null && (
         <MetaRow icon={<span className="text-xs">◉</span>} label="Condition">
           <span>{CONDITION_LABELS[task.condition] ?? String(task.condition)}</span>
         </MetaRow>
@@ -69,12 +76,12 @@ export function TaskMeta({ task }: TaskMetaProps) {
         </MetaRow>
       )}
 
-      {(task.spentTimeMinutes != null || task.timeEstimateMinutes != null) && (
+      {(task.spentTimeMinutes !== null || task.timeEstimateMinutes !== null) && (
         <MetaRow icon={<Timer size={12} />} label="Time">
           <span className="text-muted-foreground">
-            {task.spentTimeMinutes != null && `spent ${formatMinutes(task.spentTimeMinutes)}`}
-            {task.spentTimeMinutes != null && task.timeEstimateMinutes != null && ' · '}
-            {task.timeEstimateMinutes != null && `est ${formatMinutes(task.timeEstimateMinutes)}`}
+            {task.spentTimeMinutes !== null && `spent ${formatMinutes(task.spentTimeMinutes)}`}
+            {task.spentTimeMinutes !== null && task.timeEstimateMinutes !== null && ' · '}
+            {task.timeEstimateMinutes !== null && `est ${formatMinutes(task.timeEstimateMinutes)}`}
           </span>
         </MetaRow>
       )}
@@ -85,7 +92,7 @@ export function TaskMeta({ task }: TaskMetaProps) {
         </MetaRow>
       )}
 
-      {task.parentId != null && (
+      {task.parentId !== null && (
         <MetaRow icon={<Hash size={12} />} label="Parent">
           <Badge variant="outline" size="xs" className="font-mono">
             #{task.parentId}

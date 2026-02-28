@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { bridge } from '@/bridge/JCEFBridge';
+
 import { settingsKeys } from '@/api/endpoints';
 import type { KaitenSettings } from '@/api/types';
 import { getDefaultSettings } from '@/api/types';
+import { bridge } from '@/bridge/JCEFBridge';
 
 function settingsQueryOptions() {
   return {
@@ -48,7 +49,7 @@ export function useSettingsStatus() {
     /** A connection check is currently in progress */
     isVerifying: isConfigured && !!settings.isVerifyingConnection,
     /** Non-empty when the last connection check failed */
-    connectionError: settings.lastConnectionError ?? '',
+    connectionError: settings.lastConnectionError,
     hasApiToken: settings.hasToken,
     hasServerUrl: !!settings.serverUrl,
     hasCurrentUser: settings.currentUserId !== null,

@@ -1,19 +1,21 @@
-import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
+
 import { useQuery } from '@tanstack/react-query';
-import { useSyncedFields, useSyncedReady } from '@/hooks/useSyncedState';
-import { bridge } from '@/bridge/JCEFBridge';
+import { createFileRoute } from '@tanstack/react-router';
+import { FolderOpen, FileCode2 } from 'lucide-react';
+
 import { timeTrackerKeys } from '@/api/endpoints';
+import { bridge } from '@/bridge/JCEFBridge';
+import { InfoRow } from '@/components/home/InfoRow';
 import { Layout } from '@/components/Layout';
+import { ActivityHeatmap } from '@/components/time-tracker/ActivityHeatmap';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
-import { InfoRow } from '@/components/home/InfoRow';
-import { ActivityHeatmap } from '@/components/time-tracker/ActivityHeatmap';
+import { useSyncedFields, useSyncedReady } from '@/hooks/useSyncedState';
 import { aggregateDailySeconds } from '@/lib/format';
-import { FolderOpen, FileCode2 } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
 
 export const Route = createFileRoute('/')({
   component: IndexComponent,
@@ -56,21 +58,25 @@ function IndexComponent() {
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [gitLog]);
 
-  const projectName = projectPath
-    ? projectPath.split(/[\\/]/).filter(Boolean).pop()
-    : null;
+  const projectName = projectPath ? projectPath.split(/[\\/]/).filter(Boolean).pop() : null;
 
   return (
-    <Layout header={
+    <Layout
+      header={
         <>
-            <Text variant="body">Kaiten Plugin</Text>
-            <Stack direction="row" align="center" spacing="1.5" className="ml-auto text-xs text-muted-foreground">
-                <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                Connected
-            </Stack>
+          <Text variant="body">Kaiten Plugin</Text>
+          <Stack
+            direction="row"
+            align="center"
+            spacing="1.5"
+            className="text-muted-foreground ml-auto text-xs"
+          >
+            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+            Connected
+          </Stack>
         </>
-    }>
-
+      }
+    >
       {/* Project info island */}
       <Card variant="island" padding="sm">
         {isLoading ? (
@@ -82,9 +88,7 @@ function IndexComponent() {
               label="Project"
               value={projectName ?? 'Unknown'}
             />
-            {projectPath && (
-              <InfoRow label="Path" value={projectPath} mono truncate />
-            )}
+            {projectPath && <InfoRow label="Path" value={projectPath} mono truncate />}
             {selectedFile && (
               <>
                 <Separator className="my-1.5" />
@@ -126,9 +130,7 @@ function IndexComponent() {
           <ActivityHeatmap
             data={heatmapMode === 'time' ? aggregatedDaily : aggregatedCommits}
             valueFormatter={
-              heatmapMode === 'commits'
-                ? (v) => `${v} commit${v !== 1 ? 's' : ''}`
-                : undefined
+              heatmapMode === 'commits' ? (v) => `${v} commit${v !== 1 ? 's' : ''}` : undefined
             }
           />
         </Card>

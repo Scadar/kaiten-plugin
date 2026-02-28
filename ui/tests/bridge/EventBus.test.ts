@@ -1,11 +1,46 @@
 /**
  * EventBus tests
  * Verifies event emission, subscription, unsubscription, and memory leak prevention
+ *
+ * Only events defined in Kotlin EventNames / TypeScript EventTypes are used:
+ *   - 'theme:changed'  (IdeTheme payload)
+ *   - 'state:update'   (Partial<AppState> payload)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { EventBus, createEventBus } from '../../src/bridge/EventBus';
-import type { EventName, EventPayload } from '../../src/bridge/types';
+
+import type { EventPayload, IdeTheme } from '../../src/bridge/types';
+
+const MOCK_THEME: IdeTheme = {
+  isDark: false,
+  background: '#ffffff',
+  foreground: '#000000',
+  card: '#ffffff',
+  cardForeground: '#000000',
+  popover: '#ffffff',
+  popoverForeground: '#000000',
+  primary: '#0066cc',
+  primaryForeground: '#ffffff',
+  secondary: '#f0f0f0',
+  secondaryForeground: '#000000',
+  muted: '#f0f0f0',
+  mutedForeground: '#666666',
+  accent: '#e8f4ff',
+  accentForeground: '#000000',
+  border: '#e0e0e0',
+  input: '#e0e0e0',
+  inputForeground: '#000000',
+  ring: '#0066cc',
+  destructive: '#ff0000',
+  destructiveForeground: '#ffffff',
+  radius: '4px',
+  fontSize: '14px',
+  fontSizeSm: '12px',
+  fontSizeXs: '10px',
+  fontFamily: 'sans-serif',
+};
 
 describe('EventBus', () => {
   let eventBus: EventBus;
@@ -17,13 +52,10 @@ describe('EventBus', () => {
   describe('on() - Event subscription', () => {
     it('should subscribe to events and receive emitted payloads', () => {
       const handler = vi.fn();
-      const payload: EventPayload<'task:updated'> = {
-        taskId: '123',
-        task: { id: '123', title: 'Test Task' },
-      };
+      const payload: EventPayload<'theme:changed'> = MOCK_THEME;
 
-      eventBus.on('task:updated', handler);
-      eventBus.emit('task:updated', payload);
+      eventBus.on('theme:changed', handler);
+      eventBus.emit('theme:changed', payload);
 
       expect(handler).toHaveBeenCalledTimes(1);
       expect(handler).toHaveBeenCalledWith(payload);
@@ -32,33 +64,29 @@ describe('EventBus', () => {
     it('should support multiple subscribers to the same event', () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
-      const payload: EventPayload<'task:created'> = {
-        taskId: '456',
-        task: { id: '456', title: 'New Task' },
-      };
 
-      eventBus.on('task:created', handler1);
-      eventBus.on('task:created', handler2);
-      eventBus.emit('task:created', payload);
+      eventBus.on('theme:changed', handler1);
+      eventBus.on('theme:changed', handler2);
+      eventBus.emit('theme:changed', MOCK_THEME);
 
       expect(handler1).toHaveBeenCalledTimes(1);
       expect(handler2).toHaveBeenCalledTimes(1);
-      expect(handler1).toHaveBeenCalledWith(payload);
-      expect(handler2).toHaveBeenCalledWith(payload);
+      expect(handler1).toHaveBeenCalledWith(MOCK_THEME);
+      expect(handler2).toHaveBeenCalledWith(MOCK_THEME);
     });
 
     it('should return an unsubscribe function', () => {
       const handler = vi.fn();
 
-      const unsubscribe = eventBus.on('user:login', handler);
+      const unsubscribe = eventBus.on('theme:changed', handler);
       expect(typeof unsubscribe).toBe('function');
     });
 
     it('should not call handler for different events', () => {
       const handler = vi.fn();
 
-      eventBus.on('task:updated', handler);
-      eventBus.emit('task:created', { taskId: '123', task: {} });
+      eventBus.on('theme:changed', handler);
+      eventBus.emit('state:update', { projectPath: '/test' });
 
       expect(handler).not.toHaveBeenCalled();
     });
@@ -67,25 +95,21 @@ describe('EventBus', () => {
   describe('once() - One-time subscription', () => {
     it('should call handler only once', () => {
       const handler = vi.fn();
-      const payload: EventPayload<'user:login'> = {
-        userId: 'user-1',
-        userName: 'John Doe',
-      };
 
-      eventBus.once('user:login', handler);
-      eventBus.emit('user:login', payload);
-      eventBus.emit('user:login', payload);
+      eventBus.once('theme:changed', handler);
+      eventBus.emit('theme:changed', MOCK_THEME);
+      eventBus.emit('theme:changed', MOCK_THEME);
 
       expect(handler).toHaveBeenCalledTimes(1);
-      expect(handler).toHaveBeenCalledWith(payload);
+      expect(handler).toHaveBeenCalledWith(MOCK_THEME);
     });
 
     it('should allow manual unsubscribe before event is emitted', () => {
       const handler = vi.fn();
 
-      const unsubscribe = eventBus.once('user:logout', handler);
+      const unsubscribe = eventBus.once('theme:changed', handler);
       unsubscribe();
-      eventBus.emit('user:logout', undefined);
+      eventBus.emit('theme:changed', MOCK_THEME);
 
       expect(handler).not.toHaveBeenCalled();
     });
@@ -94,15 +118,11 @@ describe('EventBus', () => {
   describe('emit() - Event emission', () => {
     it('should emit events to subscribed handlers', () => {
       const handler = vi.fn();
-      const payload: EventPayload<'settings:changed'> = {
-        key: 'theme',
-        value: 'dark',
-      };
 
-      eventBus.on('settings:changed', handler);
-      eventBus.emit('settings:changed', payload);
+      eventBus.on('theme:changed', handler);
+      eventBus.emit('theme:changed', MOCK_THEME);
 
-      expect(handler).toHaveBeenCalledWith(payload);
+      expect(handler).toHaveBeenCalledWith(MOCK_THEME);
     });
 
     it('should handle errors in handlers without stopping other handlers', () => {
@@ -112,9 +132,9 @@ describe('EventBus', () => {
       const handler2 = vi.fn();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-      eventBus.on('task:deleted', handler1);
-      eventBus.on('task:deleted', handler2);
-      eventBus.emit('task:deleted', { taskId: '789' });
+      eventBus.on('theme:changed', handler1);
+      eventBus.on('theme:changed', handler2);
+      eventBus.emit('theme:changed', MOCK_THEME);
 
       expect(handler1).toHaveBeenCalledTimes(1);
       expect(handler2).toHaveBeenCalledTimes(1);
@@ -125,7 +145,7 @@ describe('EventBus', () => {
 
     it('should not throw error when emitting event with no subscribers', () => {
       expect(() => {
-        eventBus.emit('task:updated', { taskId: '123', task: {} });
+        eventBus.emit('theme:changed', MOCK_THEME);
       }).not.toThrow();
     });
   });
@@ -134,13 +154,13 @@ describe('EventBus', () => {
     it('should stop receiving events after unsubscribe', () => {
       const handler = vi.fn();
 
-      const unsubscribe = eventBus.on('project:opened', handler);
-      eventBus.emit('project:opened', { projectPath: '/path/to/project' });
+      const unsubscribe = eventBus.on('theme:changed', handler);
+      eventBus.emit('theme:changed', MOCK_THEME);
 
       expect(handler).toHaveBeenCalledTimes(1);
 
       unsubscribe();
-      eventBus.emit('project:opened', { projectPath: '/another/path' });
+      eventBus.emit('theme:changed', MOCK_THEME);
 
       expect(handler).toHaveBeenCalledTimes(1); // Still 1, not called again
     });
@@ -148,11 +168,11 @@ describe('EventBus', () => {
     it('should handle multiple unsubscribes safely', () => {
       const handler = vi.fn();
 
-      const unsubscribe = eventBus.on('project:closed', handler);
+      const unsubscribe = eventBus.on('theme:changed', handler);
       unsubscribe();
       unsubscribe(); // Should not throw
 
-      eventBus.emit('project:closed', undefined);
+      eventBus.emit('theme:changed', MOCK_THEME);
       expect(handler).not.toHaveBeenCalled();
     });
 
@@ -160,11 +180,11 @@ describe('EventBus', () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
 
-      const unsubscribe1 = eventBus.on('file:selected', handler1);
-      eventBus.on('file:selected', handler2);
+      const unsubscribe1 = eventBus.on('theme:changed', handler1);
+      eventBus.on('theme:changed', handler2);
 
       unsubscribe1();
-      eventBus.emit('file:selected', { filePath: '/test.ts' });
+      eventBus.emit('theme:changed', MOCK_THEME);
 
       expect(handler1).not.toHaveBeenCalled();
       expect(handler2).toHaveBeenCalledTimes(1);
@@ -176,11 +196,11 @@ describe('EventBus', () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
 
-      eventBus.on('task:updated', handler1);
-      eventBus.on('task:updated', handler2);
+      eventBus.on('theme:changed', handler1);
+      eventBus.on('theme:changed', handler2);
 
-      eventBus.off('task:updated');
-      eventBus.emit('task:updated', { taskId: '123', task: {} });
+      eventBus.off('theme:changed');
+      eventBus.emit('theme:changed', MOCK_THEME);
 
       expect(handler1).not.toHaveBeenCalled();
       expect(handler2).not.toHaveBeenCalled();
@@ -193,14 +213,14 @@ describe('EventBus', () => {
       const handler2 = vi.fn();
       const handler3 = vi.fn();
 
-      eventBus.on('task:updated', handler1);
-      eventBus.on('user:login', handler2);
+      eventBus.on('theme:changed', handler1);
+      eventBus.on('state:update', handler2);
       eventBus.onAny(handler3);
 
       eventBus.clear();
 
-      eventBus.emit('task:updated', { taskId: '123', task: {} });
-      eventBus.emit('user:login', { userId: '1', userName: 'test' });
+      eventBus.emit('theme:changed', MOCK_THEME);
+      eventBus.emit('state:update', { projectPath: '/test' });
 
       expect(handler1).not.toHaveBeenCalled();
       expect(handler2).not.toHaveBeenCalled();
@@ -214,8 +234,8 @@ describe('EventBus', () => {
 
       eventBus.onAny(handler);
 
-      eventBus.emit('task:updated', { taskId: '123', task: {} });
-      eventBus.emit('user:login', { userId: '1', userName: 'test' });
+      eventBus.emit('theme:changed', MOCK_THEME);
+      eventBus.emit('state:update', { projectPath: '/test' });
 
       expect(handler).toHaveBeenCalledTimes(2);
     });
@@ -224,12 +244,12 @@ describe('EventBus', () => {
       const handler = vi.fn();
 
       const unsubscribe = eventBus.onAny(handler);
-      eventBus.emit('task:created', { taskId: '123', task: {} });
+      eventBus.emit('theme:changed', MOCK_THEME);
 
       expect(handler).toHaveBeenCalledTimes(1);
 
       unsubscribe();
-      eventBus.emit('task:updated', { taskId: '123', task: {} });
+      eventBus.emit('state:update', { projectPath: '/test' });
 
       expect(handler).toHaveBeenCalledTimes(1); // Still 1
     });
@@ -241,7 +261,7 @@ describe('EventBus', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       eventBus.onAny(handler);
-      eventBus.emit('task:deleted', { taskId: '789' });
+      eventBus.emit('theme:changed', MOCK_THEME);
 
       expect(handler).toHaveBeenCalledTimes(1);
       expect(consoleErrorSpy).toHaveBeenCalled();
@@ -254,22 +274,22 @@ describe('EventBus', () => {
     it('should clean up empty handler sets after unsubscribe', () => {
       const handler = vi.fn();
 
-      const unsubscribe = eventBus.on('task:updated', handler);
-      expect(eventBus.listenerCount('task:updated')).toBe(1);
+      const unsubscribe = eventBus.on('theme:changed', handler);
+      expect(eventBus.listenerCount('theme:changed')).toBe(1);
 
       unsubscribe();
-      expect(eventBus.listenerCount('task:updated')).toBe(0);
-      expect(eventBus.eventNames()).not.toContain('task:updated');
+      expect(eventBus.listenerCount('theme:changed')).toBe(0);
+      expect(eventBus.eventNames()).not.toContain('theme:changed');
     });
 
     it('should clean up after once() handlers are called', () => {
       const handler = vi.fn();
 
-      eventBus.once('user:login', handler);
-      expect(eventBus.listenerCount('user:login')).toBe(1);
+      eventBus.once('theme:changed', handler);
+      expect(eventBus.listenerCount('theme:changed')).toBe(1);
 
-      eventBus.emit('user:login', { userId: '1', userName: 'test' });
-      expect(eventBus.listenerCount('user:login')).toBe(0);
+      eventBus.emit('theme:changed', MOCK_THEME);
+      expect(eventBus.listenerCount('theme:changed')).toBe(0);
     });
 
     it('should properly clean up with multiple subscriptions and unsubscriptions', () => {
@@ -277,51 +297,51 @@ describe('EventBus', () => {
       const handler2 = vi.fn();
       const handler3 = vi.fn();
 
-      const unsubscribe1 = eventBus.on('task:updated', handler1);
-      const unsubscribe2 = eventBus.on('task:updated', handler2);
-      eventBus.on('task:updated', handler3);
+      const unsubscribe1 = eventBus.on('theme:changed', handler1);
+      const unsubscribe2 = eventBus.on('theme:changed', handler2);
+      eventBus.on('theme:changed', handler3);
 
-      expect(eventBus.listenerCount('task:updated')).toBe(3);
+      expect(eventBus.listenerCount('theme:changed')).toBe(3);
 
       unsubscribe1();
-      expect(eventBus.listenerCount('task:updated')).toBe(2);
+      expect(eventBus.listenerCount('theme:changed')).toBe(2);
 
       unsubscribe2();
-      expect(eventBus.listenerCount('task:updated')).toBe(1);
+      expect(eventBus.listenerCount('theme:changed')).toBe(1);
     });
   });
 
   describe('Utility methods', () => {
     it('listenerCount() should return correct count', () => {
-      expect(eventBus.listenerCount('task:updated')).toBe(0);
+      expect(eventBus.listenerCount('theme:changed')).toBe(0);
 
-      eventBus.on('task:updated', vi.fn());
-      expect(eventBus.listenerCount('task:updated')).toBe(1);
+      eventBus.on('theme:changed', vi.fn());
+      expect(eventBus.listenerCount('theme:changed')).toBe(1);
 
-      eventBus.on('task:updated', vi.fn());
-      expect(eventBus.listenerCount('task:updated')).toBe(2);
+      eventBus.on('theme:changed', vi.fn());
+      expect(eventBus.listenerCount('theme:changed')).toBe(2);
     });
 
     it('eventNames() should return list of events with handlers', () => {
       expect(eventBus.eventNames()).toEqual([]);
 
-      eventBus.on('task:updated', vi.fn());
-      eventBus.on('user:login', vi.fn());
+      eventBus.on('theme:changed', vi.fn());
+      eventBus.on('state:update', vi.fn());
 
       const names = eventBus.eventNames();
-      expect(names).toContain('task:updated');
-      expect(names).toContain('user:login');
+      expect(names).toContain('theme:changed');
+      expect(names).toContain('state:update');
       expect(names).toHaveLength(2);
     });
 
     it('hasListeners() should check if event has handlers', () => {
-      expect(eventBus.hasListeners('task:updated')).toBe(false);
+      expect(eventBus.hasListeners('theme:changed')).toBe(false);
 
-      eventBus.on('task:updated', vi.fn());
-      expect(eventBus.hasListeners('task:updated')).toBe(true);
+      eventBus.on('theme:changed', vi.fn());
+      expect(eventBus.hasListeners('theme:changed')).toBe(true);
 
-      eventBus.off('task:updated');
-      expect(eventBus.hasListeners('task:updated')).toBe(false);
+      eventBus.off('theme:changed');
+      expect(eventBus.hasListeners('theme:changed')).toBe(false);
     });
   });
 
@@ -338,10 +358,10 @@ describe('EventBus', () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
 
-      bus1.on('task:updated', handler1);
-      bus2.on('task:updated', handler2);
+      bus1.on('theme:changed', handler1);
+      bus2.on('theme:changed', handler2);
 
-      bus1.emit('task:updated', { taskId: '123', task: {} });
+      bus1.emit('theme:changed', MOCK_THEME);
 
       expect(handler1).toHaveBeenCalledTimes(1);
       expect(handler2).not.toHaveBeenCalled();
@@ -350,30 +370,17 @@ describe('EventBus', () => {
 
   describe('Type safety', () => {
     it('should handle different event payload types', () => {
-      const taskHandler = vi.fn();
-      const userHandler = vi.fn();
-      const settingsHandler = vi.fn();
+      const themeHandler = vi.fn();
+      const stateHandler = vi.fn();
 
-      eventBus.on('task:updated', taskHandler);
-      eventBus.on('user:login', userHandler);
-      eventBus.on('settings:changed', settingsHandler);
+      eventBus.on('theme:changed', themeHandler);
+      eventBus.on('state:update', stateHandler);
 
-      eventBus.emit('task:updated', { taskId: '123', task: {} });
-      eventBus.emit('user:login', { userId: '1', userName: 'test' });
-      eventBus.emit('settings:changed', { key: 'theme', value: 'dark' });
+      eventBus.emit('theme:changed', MOCK_THEME);
+      eventBus.emit('state:update', { projectPath: '/my/project' });
 
-      expect(taskHandler).toHaveBeenCalledWith({ taskId: '123', task: {} });
-      expect(userHandler).toHaveBeenCalledWith({ userId: '1', userName: 'test' });
-      expect(settingsHandler).toHaveBeenCalledWith({ key: 'theme', value: 'dark' });
-    });
-
-    it('should handle void payloads', () => {
-      const handler = vi.fn();
-
-      eventBus.on('user:logout', handler);
-      eventBus.emit('user:logout', undefined);
-
-      expect(handler).toHaveBeenCalledWith(undefined);
+      expect(themeHandler).toHaveBeenCalledWith(MOCK_THEME);
+      expect(stateHandler).toHaveBeenCalledWith({ projectPath: '/my/project' });
     });
   });
 });

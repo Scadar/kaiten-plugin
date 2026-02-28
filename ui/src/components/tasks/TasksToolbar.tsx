@@ -1,15 +1,16 @@
 import type { ReactNode } from 'react';
+
+import { RefreshCw, LayoutList, LayoutGrid, Table2 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Stack } from '@/components/ui/stack';
-import { Text } from '@/components/ui/typography';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { RefreshCw, LayoutList, LayoutGrid, Table2 } from 'lucide-react';
+import { Text } from '@/components/ui/typography';
 import { cn } from '@/lib/utils';
 
 export type ViewMode = 'table' | 'list' | 'kanban';
 
 export interface TasksToolbarProps {
-  taskCount: number | undefined;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onRefresh: () => void;
@@ -18,13 +19,12 @@ export interface TasksToolbarProps {
 }
 
 const VIEW_MODES: { mode: ViewMode; icon: ReactNode; label: string }[] = [
-  { mode: 'table',  icon: <Table2 size={13} />,     label: 'Table view'  },
-  { mode: 'list',   icon: <LayoutList size={13} />,  label: 'List view'   },
-  { mode: 'kanban', icon: <LayoutGrid size={13} />,  label: 'Kanban view' },
+  { mode: 'table', icon: <Table2 size={13} />, label: 'Table view' },
+  { mode: 'list', icon: <LayoutList size={13} />, label: 'List view' },
+  { mode: 'kanban', icon: <LayoutGrid size={13} />, label: 'Kanban view' },
 ];
 
 export function TasksToolbar({
-  taskCount,
   viewMode,
   onViewModeChange,
   onRefresh,
@@ -34,10 +34,9 @@ export function TasksToolbar({
   return (
     <>
       {/* Title + count */}
-      <Text variant="body" className="flex-1">Tasks</Text>
-      {taskCount !== undefined && (
-        <Text variant="dimmed">{taskCount}</Text>
-      )}
+      <Text variant="body" className="flex-1">
+        Tasks
+      </Text>
 
       {/* Flat list toggle — only visible in list view */}
       {viewMode === 'list' && (
@@ -47,10 +46,10 @@ export function TasksToolbar({
               variant="ghost"
               size="xs"
               className={cn(
-                'text-xs px-2',
+                'px-2 text-xs',
                 noGrouping
                   ? 'bg-primary/[0.12] text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
               )}
               onClick={() => onNoGroupingChange?.(!noGrouping)}
             >
@@ -65,7 +64,7 @@ export function TasksToolbar({
       <Stack
         direction="row"
         align="center"
-        className="rounded-md border border-border/70 overflow-hidden"
+        className="border-border/70 overflow-hidden rounded-md border"
       >
         {VIEW_MODES.map(({ mode, icon, label }, idx) => (
           <Tooltip key={mode}>
@@ -75,10 +74,10 @@ export function TasksToolbar({
                 size="icon-sm"
                 className={cn(
                   'rounded-none border-0',
-                  idx < VIEW_MODES.length - 1 && 'border-r border-border/70',
+                  idx < VIEW_MODES.length - 1 && 'border-border/70 border-r',
                   viewMode === mode
                     ? 'bg-primary/[0.12] text-primary'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
                 )}
                 onClick={() => onViewModeChange(mode)}
               >
@@ -94,7 +93,7 @@ export function TasksToolbar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="ghost" size="icon-sm" onClick={onRefresh}>
-            <RefreshCw  />
+            <RefreshCw />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">Refresh</TooltipContent>

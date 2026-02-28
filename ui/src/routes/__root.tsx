@@ -1,11 +1,12 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router';
+
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { SetupRequired } from '@/components/SetupRequired';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { useSettingsStatus } from '@/hooks/useSettings';
-import { SetupRequired } from '@/components/SetupRequired';
 
 export const Route = createRootRoute({
   component: RootComponent,

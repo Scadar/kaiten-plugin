@@ -68,10 +68,10 @@ function persist(state: UIStoreState): void {
 const saved = loadState();
 
 export const useUIStore = create<UIStore>((set, get) => ({
-  closedAccordionIds:  saved.closedAccordionIds ?? [],
-  tasksViewMode:       saved.tasksViewMode ?? 'table',
+  closedAccordionIds: saved.closedAccordionIds ?? [],
+  tasksViewMode: saved.tasksViewMode ?? 'table',
   tasksListNoGrouping: saved.tasksListNoGrouping ?? false,
-  releasesActiveTab:   saved.releasesActiveTab ?? 'list',
+  releasesActiveTab: saved.releasesActiveTab ?? 'list',
 
   setClosedAccordionIds: (ids) => {
     const next = { ...get(), closedAccordionIds: ids };

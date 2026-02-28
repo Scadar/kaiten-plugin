@@ -11,7 +11,8 @@
  * - Prevents circular updates by tracking update source
  */
 
-import { StateCreator } from 'zustand';
+import { type StateCreator } from 'zustand';
+
 import { bridge } from '@/bridge/JCEFBridge';
 import type { AppState } from '@/bridge/types';
 
@@ -19,11 +20,7 @@ import type { AppState } from '@/bridge/types';
  * Fields from AppState that should be synchronized to IDE
  * NOTE: Only IDE-specific fields are synced. user, tasks, filters are now managed via React Query.
  */
-const SYNCABLE_FIELDS: (keyof AppState)[] = [
-  'projectPath',
-  'selectedFile',
-  'settings',
-];
+const SYNCABLE_FIELDS: (keyof AppState)[] = ['projectPath', 'selectedFile', 'settings'];
 
 /**
  * Debounce configuration
@@ -39,10 +36,7 @@ let isUpdatingFromIDE = false;
  * Detect changes between previous and current state
  * Returns only the fields that changed
  */
-export function detectChanges(
-  currentState: AppState,
-  previousState: AppState
-): Partial<AppState> {
+export function detectChanges(currentState: AppState, previousState: AppState): Partial<AppState> {
   const changes: Partial<AppState> = {};
 
   for (const field of SYNCABLE_FIELDS) {
@@ -70,7 +64,7 @@ function isEqual(a: unknown, b: unknown): boolean {
   if (typeof a !== typeof b) return false;
 
   // Null/undefined check
-  if (a == null || b == null) return false;
+  if (a === null || b === null) return false;
 
   // Array comparison
   if (Array.isArray(a) && Array.isArray(b)) {
@@ -80,16 +74,13 @@ function isEqual(a: unknown, b: unknown): boolean {
 
   // Object comparison
   if (typeof a === 'object' && typeof b === 'object') {
-    const aKeys = Object.keys(a as object);
-    const bKeys = Object.keys(b as object);
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
 
     if (aKeys.length !== bKeys.length) return false;
 
     return aKeys.every((key) => {
-      return isEqual(
-        (a as Record<string, unknown>)[key],
-        (b as Record<string, unknown>)[key]
-      );
+      return isEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]);
     });
   }
 
@@ -163,9 +154,7 @@ function extractAppState(state: unknown): AppState {
  * Sync middleware implementation
  * This is a Zustand middleware that intercepts setState calls
  */
-export const syncMiddleware = <T extends object>(
-  config: StateCreator<T>
-): StateCreator<T> => {
+export const syncMiddleware = <T extends object>(config: StateCreator<T>): StateCreator<T> => {
   return (set, get, api) => {
     // Track previous state
     let previousState = extractAppState(get());
@@ -210,16 +199,16 @@ export const syncMiddleware = <T extends object>(
 
       // Call original setState with proper type handling
       if (replace === true) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         set(partial as any, true);
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        set(partial as any, replace as false | undefined);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        set(partial as any, replace);
       }
 
       if (isIDEUpdate) {
         // Reset flag after a microtask to allow the update to propagate
-        Promise.resolve().then(() => {
+        void Promise.resolve().then(() => {
           isUpdatingFromIDE = false;
         });
       }
@@ -256,7 +245,7 @@ export interface SyncMiddlewareConfig {
  * @returns Configured sync middleware
  */
 export function createSyncMiddleware<T extends object>(
-  _config: SyncMiddlewareConfig = {}
+  _config: SyncMiddlewareConfig = {},
 ): (stateCreator: StateCreator<T>) => StateCreator<T> {
   // TODO: Apply custom configuration if needed
   // For now, we use the default configuration
@@ -282,7 +271,7 @@ export function markAsIDEUpdate(fn: () => void): void {
     fn();
   } finally {
     // Reset flag after a microtask
-    Promise.resolve().then(() => {
+    void Promise.resolve().then(() => {
       isUpdatingFromIDE = false;
     });
   }

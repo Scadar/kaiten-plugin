@@ -2,18 +2,52 @@
  * JCEFBridge tests
  * Verifies window.__jcef_send__/__jcef_receive__ integration, message routing,
  * RPC calls, event subscriptions, and ready-state handshake
+ *
+ * Only events defined in Kotlin EventNames / TypeScript EventTypes are used:
+ *   - 'theme:changed' (IdeTheme payload)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import { JCEFBridge, createJCEFBridge } from '../../src/bridge/JCEFBridge';
+
 import type {
-  BridgeMessage,
   RPCResponse,
   RPCError,
   EventMessage,
   StateUpdateMessage,
   BridgeReadyMessage,
+  IdeTheme,
 } from '../../src/bridge/types';
+
+const MOCK_THEME: IdeTheme = {
+  isDark: false,
+  background: '#ffffff',
+  foreground: '#000000',
+  card: '#ffffff',
+  cardForeground: '#000000',
+  popover: '#ffffff',
+  popoverForeground: '#000000',
+  primary: '#0066cc',
+  primaryForeground: '#ffffff',
+  secondary: '#f0f0f0',
+  secondaryForeground: '#000000',
+  muted: '#f0f0f0',
+  mutedForeground: '#666666',
+  accent: '#e8f4ff',
+  accentForeground: '#000000',
+  border: '#e0e0e0',
+  input: '#e0e0e0',
+  inputForeground: '#000000',
+  ring: '#0066cc',
+  destructive: '#ff0000',
+  destructiveForeground: '#ffffff',
+  radius: '4px',
+  fontSize: '14px',
+  fontSizeSm: '12px',
+  fontSizeXs: '10px',
+  fontFamily: 'sans-serif',
+};
 
 describe('JCEFBridge', () => {
   let bridge: JCEFBridge;
@@ -22,7 +56,7 @@ describe('JCEFBridge', () => {
   beforeEach(() => {
     // Mock window.__jcef_send__
     mockSend = vi.fn();
-    window.__jcef_send__ = mockSend;
+    window.__jcef_send__ = mockSend as (message: string) => void;
 
     // Create bridge with short timeout for tests
     bridge = new JCEFBridge({ debug: false, readyTimeout: 1000 });
@@ -63,7 +97,7 @@ describe('JCEFBridge', () => {
     it('should accept custom version in options', () => {
       const customBridge = new JCEFBridge({ version: '2.0.0' });
       const calls = mockSend.mock.calls;
-      const lastCall = calls[calls.length - 1][0];
+      const lastCall = calls[calls.length - 1]![0];
 
       expect(lastCall).toContain('"version":"2.0.0"');
 
@@ -135,7 +169,7 @@ describe('JCEFBridge', () => {
       bridge.call('getProjectPath', undefined).catch(() => {}); // Suppress unhandled rejection
 
       expect(mockSend).toHaveBeenCalled();
-      const sentMessage = mockSend.mock.calls[0][0];
+      const sentMessage = mockSend.mock.calls[0]![0];
 
       // Should be valid JSON
       expect(() => JSON.parse(sentMessage)).not.toThrow();
@@ -148,10 +182,10 @@ describe('JCEFBridge', () => {
 
   describe('Message receiving (IDE → React)', () => {
     it('should parse incoming JSON messages', () => {
-      const message: EventMessage = {
+      const message: EventMessage<IdeTheme> = {
         type: 'event',
-        event: 'task:updated',
-        payload: { taskId: '123', task: {} },
+        event: 'theme:changed',
+        payload: MOCK_THEME,
         timestamp: Date.now(),
       };
 
@@ -210,7 +244,7 @@ describe('JCEFBridge', () => {
       const promise = bridge.call('getProjectPath', undefined);
 
       // Extract request ID from sent message
-      const sentMessage = JSON.parse(mockSend.mock.calls[0][0]);
+      const sentMessage = JSON.parse(mockSend.mock.calls[0]![0]);
       const requestId = sentMessage.id;
 
       // Simulate IDE response
@@ -231,7 +265,7 @@ describe('JCEFBridge', () => {
       const promise = bridge.call('getProjectPath', undefined);
 
       // Extract request ID
-      const sentMessage = JSON.parse(mockSend.mock.calls[0][0]);
+      const sentMessage = JSON.parse(mockSend.mock.calls[0]![0]);
       const requestId = sentMessage.id;
 
       // Simulate IDE error
@@ -264,8 +298,8 @@ describe('JCEFBridge', () => {
       expect(mockSend).toHaveBeenCalledTimes(2);
 
       // Get request IDs
-      const req1 = JSON.parse(mockSend.mock.calls[0][0]);
-      const req2 = JSON.parse(mockSend.mock.calls[1][0]);
+      const req1 = JSON.parse(mockSend.mock.calls[0]![0]);
+      const req2 = JSON.parse(mockSend.mock.calls[1]![0]);
 
       // Respond to both
       window.__jcef_receive__!(
@@ -293,37 +327,34 @@ describe('JCEFBridge', () => {
   });
 
   describe('Event subscription', () => {
-    it('should receive events from IDE via event bus', () => {
+    it('should receive theme:changed event from IDE via event bus', () => {
       const handler = vi.fn();
-      bridge.on('task:updated', handler);
+      bridge.on('theme:changed', handler);
 
-      const eventMessage: EventMessage = {
+      const eventMessage: EventMessage<IdeTheme> = {
         type: 'event',
-        event: 'task:updated',
-        payload: { taskId: '123', task: { id: '123', title: 'Test' } },
+        event: 'theme:changed',
+        payload: MOCK_THEME,
         timestamp: Date.now(),
       };
 
       window.__jcef_receive__!(JSON.stringify(eventMessage));
 
       expect(handler).toHaveBeenCalledTimes(1);
-      expect(handler).toHaveBeenCalledWith({
-        taskId: '123',
-        task: { id: '123', title: 'Test' },
-      });
+      expect(handler).toHaveBeenCalledWith(MOCK_THEME);
     });
 
     it('should support multiple event subscribers', () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
 
-      bridge.on('user:login', handler1);
-      bridge.on('user:login', handler2);
+      bridge.on('theme:changed', handler1);
+      bridge.on('theme:changed', handler2);
 
-      const eventMessage: EventMessage = {
+      const eventMessage: EventMessage<IdeTheme> = {
         type: 'event',
-        event: 'user:login',
-        payload: { userId: 'user-1', userName: 'John' },
+        event: 'theme:changed',
+        payload: MOCK_THEME,
         timestamp: Date.now(),
       };
 
@@ -335,14 +366,14 @@ describe('JCEFBridge', () => {
 
     it('should support unsubscribe from events', () => {
       const handler = vi.fn();
-      const unsubscribe = bridge.on('task:created', handler);
+      const unsubscribe = bridge.on('theme:changed', handler);
 
       unsubscribe();
 
-      const eventMessage: EventMessage = {
+      const eventMessage: EventMessage<IdeTheme> = {
         type: 'event',
-        event: 'task:created',
-        payload: { taskId: '456', task: {} },
+        event: 'theme:changed',
+        payload: MOCK_THEME,
         timestamp: Date.now(),
       };
 
@@ -353,12 +384,12 @@ describe('JCEFBridge', () => {
 
     it('should support once() for one-time subscriptions', () => {
       const handler = vi.fn();
-      bridge.once('user:logout', handler);
+      bridge.once('theme:changed', handler);
 
-      const eventMessage: EventMessage = {
+      const eventMessage: EventMessage<IdeTheme> = {
         type: 'event',
-        event: 'user:logout',
-        payload: undefined,
+        event: 'theme:changed',
+        payload: MOCK_THEME,
         timestamp: Date.now(),
       };
 
@@ -371,22 +402,22 @@ describe('JCEFBridge', () => {
     it('should allow emitting events from React to IDE', () => {
       mockSend.mockClear();
 
-      bridge.emit('task:updated', { taskId: '789', task: {} });
+      bridge.emit('theme:changed', MOCK_THEME);
 
       expect(mockSend).toHaveBeenCalledWith(
         expect.stringContaining('"type":"event"')
       );
       expect(mockSend).toHaveBeenCalledWith(
-        expect.stringContaining('"event":"task:updated"')
+        expect.stringContaining('"event":"theme:changed"')
       );
-      expect(mockSend).toHaveBeenCalledWith(expect.stringContaining('"taskId":"789"'));
+      expect(mockSend).toHaveBeenCalledWith(expect.stringContaining('"isDark"'));
     });
   });
 
   describe('State synchronization', () => {
     it('should receive state updates from IDE', () => {
       const handler = vi.fn();
-      bridge.on('state:update' as any, handler);
+      bridge.on('state:update', handler);
 
       const stateUpdate: StateUpdateMessage = {
         type: 'state:update',
@@ -446,7 +477,7 @@ describe('JCEFBridge', () => {
 
       bridge.reportError(new Error('Test error'));
 
-      const sentMessage = JSON.parse(mockSend.mock.calls[0][0]);
+      const sentMessage = JSON.parse(mockSend.mock.calls[0]![0]);
       expect(sentMessage.error.severity).toBe('error');
     });
   });
@@ -514,13 +545,13 @@ describe('JCEFBridge', () => {
 
     it('should clear all event handlers on dispose', () => {
       const handler = vi.fn();
-      bridge.on('task:updated', handler);
+      bridge.on('theme:changed', handler);
 
       bridge.dispose();
 
       // After dispose, __jcef_receive__ is removed, so we can't send messages anymore
       // But we can verify the event bus was cleared
-      expect(bridge.getEventBus().listenerCount('task:updated')).toBe(0);
+      expect(bridge.getEventBus().listenerCount('theme:changed')).toBe(0);
       expect(handler).not.toHaveBeenCalled();
     });
 

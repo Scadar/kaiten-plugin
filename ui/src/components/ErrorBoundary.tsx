@@ -1,5 +1,7 @@
-import { Component, ReactNode, type ErrorInfo } from 'react';
+import { Component, type ReactNode, type ErrorInfo } from 'react';
+
 import { bridge } from '@/bridge/JCEFBridge';
+
 import { FallbackUI } from './FallbackUI';
 
 interface Props {
@@ -35,7 +37,7 @@ export class ErrorBoundary extends Component<Props, State> {
     // Report error to IDE for logging/telemetry
     try {
       bridge.reportError(error, 'error', {
-        componentStack: errorInfo.componentStack || '',
+        componentStack: errorInfo.componentStack ?? '',
       });
     } catch (bridgeError) {
       // If bridge reporting fails, just log it
@@ -46,7 +48,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       // Use custom fallback if provided, otherwise use FallbackUI component
-      return this.props.fallback || <FallbackUI error={this.state.error} />;
+      return this.props.fallback ?? <FallbackUI error={this.state.error} />;
     }
 
     return this.props.children;

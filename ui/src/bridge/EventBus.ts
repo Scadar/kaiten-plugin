@@ -8,9 +8,7 @@ import type { EventName, EventPayload } from './types';
 /**
  * Event handler function type
  */
-export type EventHandler<E extends EventName = EventName> = (
-  payload: EventPayload<E>
-) => void;
+export type EventHandler<E extends EventName = EventName> = (payload: EventPayload<E>) => void;
 
 /**
  * Unsubscribe function type
@@ -35,8 +33,8 @@ interface HandlerEntry {
  * - Wildcard event listening
  */
 export class EventBus {
-  private handlers: Map<string, Set<HandlerEntry>> = new Map();
-  private wildcardHandlers: Set<EventHandler> = new Set();
+  private handlers = new Map<string, Set<HandlerEntry>>();
+  private wildcardHandlers = new Set<EventHandler>();
 
   /**
    * Subscribe to an event

@@ -1,5 +1,5 @@
-import { useReleaseFilterState, useReleaseFilterActions } from '@/state/releaseFilterStore';
 import { FiltersPanelBase } from '@/components/filters/FiltersPanelBase';
+import { useReleaseFilterState, useReleaseFilterActions } from '@/state/releaseFilterStore';
 
 interface ReleasesFiltersPanelProps {
   spaceId: number | null;

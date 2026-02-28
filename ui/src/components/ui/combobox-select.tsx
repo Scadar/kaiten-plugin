@@ -1,10 +1,11 @@
 import * as React from 'react';
+
 import { ChevronsUpDown } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ComboboxList } from '@/components/ui/combobox-list';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 export interface ComboboxSelectOption {
   value: string;
@@ -49,12 +50,19 @@ export function ComboboxSelect({
           className={cn('w-full justify-between font-normal', className)}
         >
           <span className="truncate">
-            {selected ? selected.label : <span className="text-muted-foreground">{placeholder}</span>}
+            {selected ? (
+              selected.label
+            ) : (
+              <span className="text-muted-foreground">{placeholder}</span>
+            )}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" onWheel={(e) => e.stopPropagation()}>
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-0"
+        onWheel={(e) => e.stopPropagation()}
+      >
         {open && (
           <ComboboxList
             options={options}

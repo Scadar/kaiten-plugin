@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
-import { useSettings } from './useSettings';
+
 import { KaitenApiClient } from '@/api/client';
+
+import { useSettings } from './useSettings';
 
 /**
  * Returns a memoized KaitenApiClient instance when settings are configured,
@@ -17,6 +19,6 @@ export function useApiClient(): KaitenApiClient | null {
       settings.serverUrl && settings.hasToken
         ? new KaitenApiClient({ serverUrl: settings.serverUrl })
         : null,
-    [settings.serverUrl, settings.hasToken]
+    [settings.serverUrl, settings.hasToken],
   );
 }
