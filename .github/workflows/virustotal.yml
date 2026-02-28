@@ -1,12 +1,12 @@
 # GitHub Actions Workflow for scanning the built plugin artifact with VirusTotal.
-# Triggered after the Build workflow completes on the main branch.
+# Triggered after the Build workflow completes on the main or develop branch.
 # Requires the VT_API_KEY secret to be set in the repository settings.
 
 name: VirusTotal Scan
 on:
   workflow_run:
     workflows: [ "Build" ]
-    branches: [ main ]
+    branches: [ main, develop ]
     types: [ completed ]
 
 jobs:
