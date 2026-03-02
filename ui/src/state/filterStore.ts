@@ -13,6 +13,8 @@ import { useShallow } from 'zustand/react/shallow';
 import type { KaitenSettings } from '@/api/types';
 import { type SavedFilter } from '@/lib/advancedFilters';
 
+import { loadFilterState, persistFilterState } from './filterStorePersistence';
+
 // ---------------------------------------------------------------------------
 // State & action interfaces
 // ---------------------------------------------------------------------------
@@ -38,39 +40,17 @@ export interface FilterStoreActions {
 export type FilterStore = FilterStoreState & FilterStoreActions;
 
 // ---------------------------------------------------------------------------
-// localStorage persistence for saved filters + active filter
+// localStorage key + thin wrappers around the shared persistence helpers
 // ---------------------------------------------------------------------------
 
 const LS_KEY = 'kaiten:savedFilters';
 
-interface PersistedFilterState {
-  savedFilters: SavedFilter[];
-  activeFilterId: string | null;
+function loadPersistedState() {
+  return loadFilterState(LS_KEY);
 }
 
-function loadPersistedState(): PersistedFilterState {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as unknown;
-      // Migrate from old format (plain array) to new format (object)
-      if (Array.isArray(parsed)) {
-        return { savedFilters: parsed as SavedFilter[], activeFilterId: null };
-      }
-      return parsed as PersistedFilterState;
-    }
-  } catch {
-    // ignore
-  }
-  return { savedFilters: [], activeFilterId: null };
-}
-
-function persistState(state: PersistedFilterState): void {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(state));
-  } catch {
-    // ignore
-  }
+function persistState(state: Parameters<typeof persistFilterState>[1]) {
+  persistFilterState(LS_KEY, state);
 }
 
 // ---------------------------------------------------------------------------

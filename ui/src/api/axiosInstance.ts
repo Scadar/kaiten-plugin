@@ -9,6 +9,7 @@
 
 import axios, {
   AxiosError,
+  CanceledError,
   type AxiosAdapter,
   type AxiosResponse,
   type InternalAxiosRequestConfig,
@@ -34,8 +35,16 @@ const bridgeAdapter: AxiosAdapter = async (
 
   let result: Awaited<ReturnType<typeof bridge.call<'apiRequest'>>>;
   try {
-    result = await bridge.call('apiRequest', { url });
+    result = await bridge.call(
+      'apiRequest',
+      { url },
+      { signal: config.signal as AbortSignal | undefined },
+    );
   } catch (bridgeError) {
+    // AbortSignal fired — translate to axios cancellation so TanStack Query handles it correctly
+    if (bridgeError instanceof DOMException && bridgeError.name === 'AbortError') {
+      throw new CanceledError('canceled', AxiosError.ERR_CANCELED, config);
+    }
     console.error('[bridgeAdapter] bridge.call threw:', bridgeError);
     throw new AxiosError(
       bridgeError instanceof Error ? bridgeError.message : 'Bridge error',

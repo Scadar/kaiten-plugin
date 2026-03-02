@@ -13,6 +13,12 @@ export interface RPCCallOptions {
    * Timeout in milliseconds (default: 30000ms = 30s)
    */
   timeout?: number;
+  /**
+   * AbortSignal to cancel the request.
+   * Rejects with DOMException('AbortError') when aborted.
+   * Note: the Kotlin side (OkHttp) is not notified — only the JS side cleans up.
+   */
+  signal?: AbortSignal;
 }
 
 /**
@@ -108,6 +114,12 @@ export class RPCHandler {
     const timeout = options.timeout ?? this.defaultTimeout;
 
     return new Promise<RPCResult<M>>((resolve, reject) => {
+      // Reject immediately if the signal is already aborted
+      if (options.signal?.aborted) {
+        reject(new DOMException('AbortError', 'AbortError'));
+        return;
+      }
+
       // Set up timeout
       const timeoutId = setTimeout(() => {
         this.pendingRequests.delete(id);
@@ -121,6 +133,19 @@ export class RPCHandler {
         reject,
         timeoutId,
       });
+
+      // Wire up abort signal — clears timeout and removes pending entry
+      if (options.signal) {
+        options.signal.addEventListener(
+          'abort',
+          () => {
+            clearTimeout(timeoutId);
+            this.pendingRequests.delete(id);
+            reject(new DOMException('AbortError', 'AbortError'));
+          },
+          { once: true },
+        );
+      }
 
       // Emit request (will be sent by JCEFBridge)
       this.emitRequest(id, method, params);

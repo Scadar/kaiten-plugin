@@ -37,5 +37,13 @@ export default defineConfig({
     environment: 'happy-dom',
     setupFiles: './src/test/setup.ts',
     include: ['src/**/*.test.{ts,tsx}', 'tests/**/*.test.{ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      thresholds: { lines: 70, functions: 70, branches: 65, statements: 70 },
+      exclude: [
+        'src/components/ui/**', // vendor shadcn code
+        'src/routeTree.gen.ts', // TanStack Router auto-generated
+      ],
+    },
   },
 });

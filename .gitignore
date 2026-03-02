@@ -8,5 +8,5 @@ certs/
 build
 out
 
-.claude
+.claude/
 CLAUDE.md

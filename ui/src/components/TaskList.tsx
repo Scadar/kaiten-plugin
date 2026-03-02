@@ -1,4 +1,4 @@
-import type { Task, Board, Column, Lane } from '@/api/types';
+import type { Task, Board, Column } from '@/api/types';
 import { TaskCard } from '@/components/tasks/TaskCard';
 import {
   Accordion,
@@ -9,6 +9,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
+import { computeOpenItems, deriveNewClosed } from '@/hooks/useAccordionState';
+import { groupTasks } from '@/lib/taskGrouping';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/state/uiStore';
 
@@ -22,128 +24,6 @@ export interface TaskListProps {
   noGrouping?: boolean;
   className?: string;
   onTaskClick?: (taskId: number) => void;
-}
-
-// ---------------------------------------------------------------------------
-// Grouping types
-// ---------------------------------------------------------------------------
-
-interface ColumnGroup {
-  column: Column | null;
-  tasks: Task[];
-}
-
-interface LaneGroup {
-  lane: Lane | null;
-  columnGroups: ColumnGroup[];
-  totalTasks: number;
-}
-
-interface BoardGroup {
-  board: Board | null;
-  laneGroups: LaneGroup[];
-  totalTasks: number;
-}
-
-// ---------------------------------------------------------------------------
-// Grouping logic: tasks → board → lane → column
-// ---------------------------------------------------------------------------
-
-function groupTasks(
-  tasks: Task[],
-  boards: Board[],
-  columnsByBoard: Record<number, Column[]>,
-): BoardGroup[] {
-  const boardMap = new Map<number, Board>(boards.map((b) => [b.id, b]));
-
-  const tasksByBoard = new Map<number | null, Task[]>();
-  for (const task of tasks) {
-    const bid = task.boardId;
-    if (!tasksByBoard.has(bid)) tasksByBoard.set(bid, []);
-    tasksByBoard.get(bid)!.push(task);
-  }
-
-  const boardGroups: BoardGroup[] = [];
-
-  for (const [boardId, boardTasks] of tasksByBoard) {
-    const board = boardId !== null ? (boardMap.get(boardId) ?? null) : null;
-    const laneMap = new Map<number, Lane>(board?.lanes.map((l) => [l.id, l]) ?? []);
-    const columns = boardId !== null ? (columnsByBoard[boardId] ?? []) : [];
-    const sortedColumns = [...columns].sort((a, b) => a.position - b.position);
-
-    const tasksByLane = new Map<number | null, Task[]>();
-    for (const task of boardTasks) {
-      const lid = task.laneId;
-      if (!tasksByLane.has(lid)) tasksByLane.set(lid, []);
-      tasksByLane.get(lid)!.push(task);
-    }
-
-    const laneGroups: LaneGroup[] = [];
-
-    for (const [laneId, laneTasks] of tasksByLane) {
-      const lane = laneId !== null ? (laneMap.get(laneId) ?? null) : null;
-      const columnGroups: ColumnGroup[] = [];
-
-      if (sortedColumns.length > 0) {
-        const tasksByColumn = new Map<number, Task[]>();
-        for (const col of sortedColumns) tasksByColumn.set(col.id, []);
-        const ungrouped: Task[] = [];
-
-        for (const task of laneTasks) {
-          const bucket = tasksByColumn.get(task.columnId);
-          if (bucket !== undefined) bucket.push(task);
-          else ungrouped.push(task);
-        }
-
-        for (const col of sortedColumns) {
-          const colTasks = tasksByColumn.get(col.id) ?? [];
-          if (colTasks.length > 0) columnGroups.push({ column: col, tasks: colTasks });
-        }
-        if (ungrouped.length > 0) columnGroups.push({ column: null, tasks: ungrouped });
-      } else {
-        columnGroups.push({ column: null, tasks: laneTasks });
-      }
-
-      laneGroups.push({ lane, columnGroups, totalTasks: laneTasks.length });
-    }
-
-    boardGroups.push({ board, laneGroups, totalTasks: boardTasks.length });
-  }
-
-  return boardGroups;
-}
-
-// ---------------------------------------------------------------------------
-// Controlled accordion helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Given all item IDs and the persisted set of explicitly-closed IDs,
- * returns the list of open item IDs. Items not seen before are open by default.
- */
-function computeOpenItems(allIds: string[], closedIds: string[]): string[] {
-  const closedSet = new Set(closedIds);
-  return allIds.filter((id) => !closedSet.has(id));
-}
-
-/**
- * Derive the new closed set when the user changes the open state of a group.
- * `allGroupIds`  — all accordion item IDs that belong to this accordion
- * `newOpenIds`   — the newly open IDs reported by the accordion
- * `prevClosed`   — existing closed IDs from the store
- */
-function deriveNewClosed(
-  allGroupIds: string[],
-  newOpenIds: string[],
-  prevClosed: string[],
-): string[] {
-  const openSet = new Set(newOpenIds);
-  const groupSet = new Set(allGroupIds);
-  // Items in this group that are now closed
-  const nowClosed = allGroupIds.filter((id) => !openSet.has(id));
-  // Items from other groups in the store stay unchanged
-  const otherClosed = prevClosed.filter((id) => !groupSet.has(id));
-  return [...otherClosed, ...nowClosed];
 }
 
 // ---------------------------------------------------------------------------
