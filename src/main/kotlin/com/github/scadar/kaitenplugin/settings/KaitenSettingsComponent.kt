@@ -16,7 +16,14 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class KaitenSettingsComponent {
+class KaitenSettingsComponent(
+    private val connectionTester: suspend (url: String, token: String) -> String = { url, token ->
+        val httpClient = HttpClientProvider(token).createClient()
+        val apiClient = KaitenApiClient(httpClient, url)
+        val user = apiClient.getCurrentUser()
+        "Connection successful! Logged in as: ${user.name}"
+    }
+) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -53,12 +60,9 @@ class KaitenSettingsComponent {
 
         scope.launch(Dispatchers.IO) {
             try {
-                val httpClient = HttpClientProvider(token).createClient()
-                val apiClient  = KaitenApiClient(httpClient, url)
-                val user       = apiClient.getCurrentUser()
-
+                val result = connectionTester(url, token)
                 withContext(Dispatchers.Main) {
-                    connectionStatusLabel.text = "Connection successful! Logged in as: ${user.name}"
+                    connectionStatusLabel.text = result
                     testConnectionButton.isEnabled = true
                 }
             } catch (e: Exception) {

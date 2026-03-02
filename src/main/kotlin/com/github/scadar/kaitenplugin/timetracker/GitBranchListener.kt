@@ -6,10 +6,12 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 
-class GitBranchListener(private val project: Project) : GitRepositoryChangeListener {
+class GitBranchListener(
+    private val project: Project,
+    private val timeTrackingService: TimeTrackingService = TimeTrackingService.getInstance(project),
+    private val branchTimeTrackingService: BranchTimeTrackingService = BranchTimeTrackingService.getInstance(project),
+) : GitRepositoryChangeListener {
     private val log = logger<GitBranchListener>()
-    private val timeTrackingService = TimeTrackingService.getInstance(project)
-    private val branchTimeTrackingService = BranchTimeTrackingService.getInstance(project)
 
     override fun repositoryChanged(repository: GitRepository) {
         val currentBranch = repository.currentBranchName ?: return
