@@ -58,6 +58,10 @@ class KaitenSettingsState : PersistentStateComponent<KaitenSettingsState> {
     @XCollection(style = XCollection.Style.v2)
     var branchPatterns: MutableList<String> = mutableListOf("task/ktn-{id}")
 
+    // Commit message template — used by the "Insert Kaiten Task Reference" commit toolbar button.
+    // Use {id} for the task ID and {title} for the card title, e.g. "ktn-{id}: {title}"
+    var commitMessageTemplate: String = "ktn-{id}: {title}"
+
     // Release page settings
     var releaseSpaceId: Long? = null
     var releaseBoardId: Long? = null

@@ -103,4 +103,10 @@ class KaitenApiClient(private val client: OkHttpClient, private val baseUrl: Str
         val dto = executeRequest<UserDto>("$baseUrl/users/current", object : TypeToken<UserDto>() {}.type)
         return dto.toDomain()
     }
+
+    suspend fun getCard(cardId: Long): CardDto? = try {
+        executeRequest<CardDto>("$baseUrl/cards/$cardId", object : TypeToken<CardDto>() {}.type)
+    } catch (_: KaitenApiException) {
+        null
+    }
 }

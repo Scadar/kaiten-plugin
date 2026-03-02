@@ -514,6 +514,9 @@ export interface KaitenSettings {
   // Transient flag set by the IDE while a connection check is in progress.
   // Never persisted; absent from the map when no check is running.
   isVerifyingConnection?: boolean;
+  // Commit message template for the "Insert Kaiten Task Reference" toolbar button.
+  // Supports {id} (task number) and {title} (card title) placeholders.
+  commitMessageTemplate: string;
 }
 
 export function getDefaultSettings(): KaitenSettings {
@@ -537,5 +540,6 @@ export function getDefaultSettings(): KaitenSettings {
     activeReleaseCardId: null,
     lastConnectionError: '',
     isVerifyingConnection: false,
+    commitMessageTemplate: 'ktn-{id}: {title}',
   };
 }
