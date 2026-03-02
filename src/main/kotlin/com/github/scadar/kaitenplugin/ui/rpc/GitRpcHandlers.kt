@@ -127,5 +127,63 @@ class GitRpcHandlers(private val project: Project) : RpcHandlerGroup {
                 }
             }
         }
+
+        /**
+         * Lists all local branches and the current branch name.
+         * Params: none
+         * Result: `{ branches: string[], current: string | null }`
+         */
+        bridge.registerRPC(RPCMethodNames.LIST_BRANCHES) { _ ->
+            val repo = GitRepositoryManager.getInstance(project).repositories.firstOrNull()
+                ?: return@registerRPC mapOf("branches" to emptyList<String>(), "current" to null)
+
+            withContext(Dispatchers.IO) {
+                try {
+                    val handler = GitLineHandler(project, repo.root, GitCommand.BRANCH)
+                    val result = Git.getInstance().runCommand(handler)
+                    val branches = result.output.mapNotNull { line ->
+                        line.trim().trimStart('*').trim().takeIf { it.isNotBlank() }
+                    }
+                    mapOf("branches" to branches, "current" to repo.currentBranchName)
+                } catch (e: Exception) {
+                    log.warn("Failed to list branches", e)
+                    mapOf("branches" to emptyList<String>(), "current" to repo.currentBranchName)
+                }
+            }
+        }
+
+        /**
+         * Creates a new branch from [baseBranch] and checks it out immediately.
+         * Params: `{ branchName: string, baseBranch: string }`
+         * Result: `{ success: true }` on success, `{ error: string }` on failure.
+         */
+        bridge.registerRPC(RPCMethodNames.CREATE_BRANCH) { params ->
+            @Suppress("UNCHECKED_CAST")
+            val p = params as? Map<String, Any?> ?: return@registerRPC mapOf("error" to "Invalid params")
+            val branchName = p["branchName"] as? String ?: return@registerRPC mapOf("error" to "Missing branchName")
+            val baseBranch = p["baseBranch"] as? String ?: return@registerRPC mapOf("error" to "Missing baseBranch")
+
+            val repo = GitRepositoryManager.getInstance(project).repositories.firstOrNull()
+                ?: return@registerRPC mapOf("error" to "No git repository found in this project")
+
+            withContext(Dispatchers.IO) {
+                try {
+                    val handler = GitLineHandler(project, repo.root, GitCommand.CHECKOUT)
+                    handler.addParameters("-b", branchName, baseBranch)
+                    val result = Git.getInstance().runCommand(handler)
+                    if (result.success()) {
+                        // Refresh repo state so GitBranchListener fires → time tracking starts
+                        GitRepositoryManager.getInstance(project).repositories.forEach { it.update() }
+                        mapOf("success" to true)
+                    } else {
+                        val msg = result.errorOutputAsJoinedString.ifBlank { "git checkout -b failed" }
+                        mapOf("error" to msg)
+                    }
+                } catch (e: Exception) {
+                    log.warn("Failed to create branch '$branchName' from '$baseBranch'", e)
+                    mapOf("error" to (e.message ?: "Unknown error"))
+                }
+            }
+        }
     }
 }

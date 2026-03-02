@@ -380,6 +380,18 @@ export interface RPCMethods {
     params: { branchName?: string; maxCount?: number };
     result: GitCommit[];
   };
+
+  // List local branches and current branch
+  listBranches: {
+    params: undefined;
+    result: { branches: string[]; current: string | null };
+  };
+
+  // Create a new branch from baseBranch and check it out
+  createBranch: {
+    params: { branchName: string; baseBranch: string };
+    result: { success: true } | { error: string };
+  };
 }
 
 export interface GitCommit {

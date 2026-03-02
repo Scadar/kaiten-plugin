@@ -1,17 +1,21 @@
 import * as React from 'react';
 
-import { AlertTriangle, ExternalLink, Link as LinkIcon } from 'lucide-react';
+import { AlertTriangle, ExternalLink, GitBranch, Link as LinkIcon } from 'lucide-react';
 
 import type { TaskDetail } from '@/api/types';
+import { CreateBranchDialog } from '@/components/CreateBranchDialog';
 import { CardFilesSection } from '@/components/task-detail/CardFilesSection';
 import { CustomPropertiesSection } from '@/components/task-detail/CustomPropertiesSection';
 import { RichTextContent } from '@/components/task-detail/RichTextContent';
 import { TaskComments } from '@/components/task-detail/TaskComments';
 import { TaskMeta } from '@/components/task-detail/TaskMeta';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
+import { useSettings } from '@/hooks/useSettings';
 import { useTaskDetailData } from '@/hooks/useTaskDetailData';
 
 interface DialogDetailContentProps {
@@ -32,6 +36,8 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
     allFiles,
   } = useTaskDetailData(task);
   const fileUids = allFiles.map((f) => f.uid);
+  const settings = useSettings();
+  const [showCreateBranch, setShowCreateBranch] = React.useState(false);
 
   return (
     <Stack>
@@ -40,7 +46,7 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
         direction="row"
         align="start"
         spacing="3"
-        className="bg-card/95 border-border sticky top-0 z-10 border-b px-4 py-3 backdrop-blur-sm"
+        className="bg-card/95 border-border sticky top-0 z-10 border-b py-3 pr-10 pl-4 backdrop-blur-sm"
       >
         <Stack className="min-w-0 flex-1">
           <Stack direction="row" wrap="wrap" align="center" spacing="2" className="mb-1.5">
@@ -73,6 +79,19 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
           </a>
         )}
       </Stack>
+
+      {/* ── Actions ── */}
+      <Card variant="island" padding="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setShowCreateBranch(true)}
+        >
+          <GitBranch size={12} />
+          Create Branch
+        </Button>
+      </Card>
 
       <Stack spacing="4" className="px-4 py-3">
         {/* ── Tags ── */}
@@ -202,6 +221,14 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
 
         <div className="h-2" />
       </Stack>
+
+      {showCreateBranch && (
+        <CreateBranchDialog
+          taskId={task.id}
+          branchPatterns={settings.branchPatterns}
+          onClose={() => setShowCreateBranch(false)}
+        />
+      )}
     </Stack>
   );
 }
