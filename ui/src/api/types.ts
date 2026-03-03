@@ -108,7 +108,7 @@ export interface TaskDetailDto extends TaskDto {
   spent_time_minutes?: number | null;
   time_estimate_minutes?: number | null;
   parent_id?: number | null;
-  properties?: Record<string, number[]> | null;
+  properties?: Record<string, unknown> | null;
 }
 
 export interface FileDto {
@@ -281,8 +281,8 @@ export interface TaskDetail extends Task {
   spentTimeMinutes: number | null;
   timeEstimateMinutes: number | null;
   parentId: number | null;
-  /** Custom properties: key is "id_{propertyId}", value is array of selected value IDs */
-  properties: Record<string, number[]>;
+  /** Custom properties: key is "id_{propertyId}", value depends on property type */
+  properties: Record<string, unknown>;
 }
 
 export interface CommentAuthor {

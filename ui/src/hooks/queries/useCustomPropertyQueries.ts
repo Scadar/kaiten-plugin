@@ -57,11 +57,39 @@ export function useCustomPropertiesWithValues(): {
 
 export interface ResolvedCustomProperty {
   property: CustomProperty;
-  selectedValueIds: number[];
+  selectedValueIds: (string | number)[];
   selectValues: CustomPropertySelectValue[] | null;
 }
 
-export function useCardCustomProperties(properties: Record<string, number[]>): {
+function extractObjectValue(obj: Record<string, unknown>): string {
+  if (typeof obj.value === 'string') return obj.value;
+  if (typeof obj.value === 'number') return String(obj.value);
+  if (typeof obj.date === 'string') return obj.date;
+  // date-range style: { start, end }
+  if (obj.start !== undefined || obj.end !== undefined) {
+    return [obj.start, obj.end].filter(Boolean).join(' — ');
+  }
+  return JSON.stringify(obj);
+}
+
+function normalizePropertyValues(raw: unknown): (string | number)[] {
+  if (raw === null || raw === undefined) return [];
+  if (Array.isArray(raw)) {
+    return raw.map((v) => {
+      if (typeof v === 'number') return v;
+      if (typeof v === 'string') return v;
+      if (v !== null && typeof v === 'object')
+        return extractObjectValue(v as Record<string, unknown>);
+      return String(v);
+    });
+  }
+  if (typeof raw === 'number') return [raw];
+  if (typeof raw === 'string') return [raw];
+  if (typeof raw === 'object') return [extractObjectValue(raw as Record<string, unknown>)];
+  return [];
+}
+
+export function useCardCustomProperties(properties: Record<string, unknown>): {
   data: ResolvedCustomProperty[];
   isLoading: boolean;
 } {
@@ -69,13 +97,12 @@ export function useCardCustomProperties(properties: Record<string, number[]>): {
 
   const propertyEntries = useMemo(() => {
     return Object.entries(properties)
-      .map(([key, valueIds]) => {
+      .map(([key, rawValue]) => {
         const match = /^id_(\d+)$/.exec(key);
         if (!match) return null;
-        const normalized = Array.isArray(valueIds) ? valueIds : [Number(valueIds)];
-        return { id: parseInt(match[1]!, 10), valueIds: normalized };
+        return { id: parseInt(match[1]!, 10), valueIds: normalizePropertyValues(rawValue) };
       })
-      .filter((e): e is { id: number; valueIds: number[] } => e !== null);
+      .filter((e): e is { id: number; valueIds: (string | number)[] } => e !== null);
   }, [properties]);
 
   const propertyIds = useMemo(() => propertyEntries.map((e) => e.id), [propertyEntries]);
