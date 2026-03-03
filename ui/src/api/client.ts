@@ -214,7 +214,8 @@ export class KaitenApiClient {
   ): Promise<T> {
     const url = `${this.config.serverUrl.replace(/\/$/, '')}/${path}`;
     const log = useLogStore.getState().addEntry;
-    const bodyParams = body !== null && body !== undefined ? (body as Record<string, unknown>) : undefined;
+    const bodyParams =
+      body !== null && body !== undefined ? (body as Record<string, unknown>) : undefined;
     log({ type: 'request', url, method, message: `${method} ${path}`, params: bodyParams });
 
     const startTime = Date.now();

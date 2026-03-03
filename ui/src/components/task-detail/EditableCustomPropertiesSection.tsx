@@ -178,11 +178,7 @@ function NumberPropertyEditor({
       className="hover:bg-accent/40 cursor-text rounded px-0.5 text-sm transition-colors"
       title="Click to edit"
     >
-      {value !== '' ? (
-        String(value)
-      ) : (
-        <span className="text-muted-foreground italic">—</span>
-      )}
+      {value !== '' ? String(value) : <span className="text-muted-foreground italic">—</span>}
     </span>
   );
 }
