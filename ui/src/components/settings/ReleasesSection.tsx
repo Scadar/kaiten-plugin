@@ -10,7 +10,6 @@ import { FieldRow } from '@/components/settings/FieldRow';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ComboboxSelect } from '@/components/ui/combobox-select';
-import { MultiCombobox } from '@/components/ui/multi-combobox';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
 import { useSpaces, useBoards, useColumns } from '@/hooks/useKaitenQuery';
@@ -124,7 +123,8 @@ export function ReleasesSection({ currentSettings }: ReleasesSectionProps) {
           </FieldRow>
 
           <FieldRow label="Columns">
-            <MultiCombobox
+            <ComboboxSelect
+              multiple
               options={columnOptions}
               value={releaseColumnIds.map(String)}
               onChange={(vals) => setReleaseColumnIds(vals.map(Number))}
