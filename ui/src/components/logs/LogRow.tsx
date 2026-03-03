@@ -83,6 +83,11 @@ export function LogRow({ entry }: LogRowProps) {
             {formatTime(entry.timestamp)}
           </span>
           {typeBadge(entry.type)}
+          {entry.method && (
+            <span className="text-muted-foreground shrink-0 font-mono text-xs font-semibold">
+              {entry.method}
+            </span>
+          )}
           {entry.status !== undefined && (
             <span className="text-muted-foreground shrink-0 font-mono text-xs">{entry.status}</span>
           )}
@@ -98,17 +103,19 @@ export function LogRow({ entry }: LogRowProps) {
       </AccordionTrigger>
       <AccordionContent className="px-3 pb-2">
         <Stack spacing="1" className="text-muted-foreground pl-1 font-mono text-xs">
-          <div>
-            <span className="text-foreground/60">msg: </span>
-            {entry.message}
-          </div>
+          {entry.message && (
+            <div>
+              <span className="text-foreground/60">msg: </span>
+              {entry.message}
+            </div>
+          )}
           <div>
             <span className="text-foreground/60">url: </span>
             <span className="break-all">{entry.url}</span>
           </div>
           {entry.params && (
             <div>
-              <span className="text-foreground/60">params: </span>
+              <span className="text-foreground/60">body: </span>
               <span className="break-all">{JSON.stringify(entry.params)}</span>
             </div>
           )}

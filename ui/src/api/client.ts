@@ -42,6 +42,7 @@ import {
   type CardType,
   type CustomProperty,
   type CustomPropertySelectValue,
+  type UpdateCardInput,
   spaceDtoToDomain,
   boardDtoToDomain,
   columnDtoToDomain,
@@ -199,6 +200,85 @@ export class KaitenApiClient {
       const stack = error instanceof Error ? error.stack : undefined;
       if (import.meta.env.DEV) console.error(`[Kaiten API] ERROR ${url} (${duration}ms):`, error);
       log({ type: 'error', url, duration, message: `Error: ${message}`, stack, params });
+      throw new NetworkError(message);
+    }
+  }
+
+  /**
+   * Execute an HTTP mutation (POST / PATCH / PUT / DELETE) via axios.
+   */
+  private async executeMutation<T>(
+    method: 'POST' | 'PATCH' | 'PUT' | 'DELETE',
+    path: string,
+    body?: unknown,
+  ): Promise<T> {
+    const url = `${this.config.serverUrl.replace(/\/$/, '')}/${path}`;
+    const log = useLogStore.getState().addEntry;
+    const bodyParams = body !== null && body !== undefined ? (body as Record<string, unknown>) : undefined;
+    log({ type: 'request', url, method, message: `${method} ${path}`, params: bodyParams });
+
+    const startTime = Date.now();
+    try {
+      let response;
+      if (method === 'PATCH') {
+        response = await this.axiosInstance.patch<T>(path, body);
+      } else if (method === 'PUT') {
+        response = await this.axiosInstance.put<T>(path, body);
+      } else if (method === 'POST') {
+        response = await this.axiosInstance.post<T>(path, body);
+      } else {
+        response = await this.axiosInstance.delete<T>(path);
+      }
+      const duration = Date.now() - startTime;
+      log({
+        type: 'success',
+        url,
+        method,
+        status: response.status,
+        duration,
+        message: `${response.status} OK`,
+      });
+      return response.data;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      if (axios.isAxiosError(error) && error.response) {
+        const resp = error.response as { status: number; data: unknown };
+        const { status, data } = resp;
+        // Extract the most descriptive error text from the server JSON body
+        let serverMsg: string;
+        if (data !== null && data !== undefined && typeof data === 'object' && 'message' in data) {
+          const msg = (data as { message: unknown }).message;
+          serverMsg = typeof msg === 'string' ? msg : JSON.stringify(data);
+        } else if (data !== null && data !== undefined) {
+          serverMsg = JSON.stringify(data);
+        } else {
+          serverMsg = `HTTP ${status}`;
+        }
+        log({
+          type: 'error',
+          url,
+          method,
+          status,
+          duration,
+          message: serverMsg,
+          params: bodyParams,
+        });
+        if (status === 401) throw new UnauthorizedError();
+        if (status === 403) throw new ForbiddenError();
+        if (status === 404) throw new NotFoundError();
+        throw new ServerError(serverMsg);
+      }
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      const stack = error instanceof Error ? error.stack : undefined;
+      log({
+        type: 'error',
+        url,
+        method,
+        duration,
+        message: `Error: ${message}`,
+        stack,
+        params: bodyParams,
+      });
       throw new NetworkError(message);
     }
   }
@@ -400,5 +480,27 @@ export class KaitenApiClient {
 
     const dtos = await this.executeRequest<TaskDto[]>('cards', params);
     return dtos.map(taskDtoToDomain);
+  }
+
+  /**
+   * Update card fields (title, description, due_date, owner_id, tag_ids)
+   */
+  async updateCard(cardId: number, updates: UpdateCardInput): Promise<TaskDetail> {
+    const dto = await this.executeMutation<TaskDetailDto>('PATCH', `cards/${cardId}`, updates);
+    return taskDetailDtoToDomain(dto);
+  }
+
+  /**
+   * Update a single custom property value for a card.
+   * value semantics depend on property type:
+   *   text/rich_text → string
+   *   number         → number
+   *   date           → "YYYY-MM-DD"
+   *   select (single/multi) → number[] of select-value IDs
+   */
+  async updateCardProperty(cardId: number, propertyId: number, value: unknown): Promise<void> {
+    await this.executeMutation<unknown>('PUT', `cards/${cardId}/properties/${propertyId}`, {
+      value,
+    });
   }
 }

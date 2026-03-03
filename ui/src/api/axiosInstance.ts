@@ -37,7 +37,11 @@ const bridgeAdapter: AxiosAdapter = async (
   try {
     result = await bridge.call(
       'apiRequest',
-      { url },
+      {
+        url,
+        method: config.method?.toUpperCase() ?? 'GET',
+        body: config.data ?? null,
+      },
       { signal: config.signal as AbortSignal | undefined },
     );
   } catch (bridgeError) {
@@ -72,8 +76,10 @@ const bridgeAdapter: AxiosAdapter = async (
   }
 
   // HTTP error (4xx / 5xx) — include response so error.response.status works in client.ts
+  // Prefer the actual server JSON body (forwarded from Kotlin) over a synthesised object.
+  const errorData = result.body ?? { message };
   const errorResponse: AxiosResponse = {
-    data: { message },
+    data: errorData,
     status,
     statusText: message,
     headers: {},

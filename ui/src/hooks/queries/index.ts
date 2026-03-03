@@ -5,3 +5,4 @@ export * from './useUserQueries';
 export * from './useTagQueries';
 export * from './useCustomPropertyQueries';
 export * from './useGitQueries';
+export * from './useTaskMutations';

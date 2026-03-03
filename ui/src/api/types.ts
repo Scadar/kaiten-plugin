@@ -484,6 +484,31 @@ export function cardTypeDtoToDomain(dto: CardTypeDto): CardType {
 }
 
 // ============================================================================
+// Mutation Input Types
+// ============================================================================
+
+/** Fields that can be updated on a card via PATCH /cards/{id} */
+export interface UpdateCardInput {
+  title?: string;
+  description?: string | null;
+  due_date?: string | null;
+  owner_id?: number | null;
+  tag_ids?: number[];
+}
+
+/** Payload for updating a custom property value */
+export interface UpdateCardPropertyInput {
+  /** The raw value — type depends on property kind:
+   *  - text/rich_text: string
+   *  - number: number
+   *  - date: ISO date string ("YYYY-MM-DD")
+   *  - select (single): [selectValueId]
+   *  - select (multi): [id1, id2, ...]
+   */
+  value: unknown;
+}
+
+// ============================================================================
 // Settings & Configuration
 // ============================================================================
 

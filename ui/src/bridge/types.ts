@@ -349,10 +349,10 @@ export interface RPCMethods {
 
   // HTTP proxy — routes fetch through Kotlin/OkHttp to bypass JCEF CORS restrictions
   apiRequest: {
-    params: { url: string };
+    params: { url: string; method?: string; body?: unknown };
     result:
       | { ok: true; status: number; body: unknown }
-      | { ok: false; status: number; message: string };
+      | { ok: false; status: number; message: string; body?: unknown };
   };
 
   // Branch time tracking

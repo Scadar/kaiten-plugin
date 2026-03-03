@@ -8,7 +8,9 @@ import com.google.gson.Gson
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.net.SocketTimeoutException
 
@@ -30,6 +32,8 @@ class ApiProxyRpcHandler : RpcHandlerGroup {
 
     override fun register(bridge: JCEFBridgeHandler) {
         val gson = Gson()
+        val jsonMediaType = "application/json; charset=utf-8".toMediaType()
+
         bridge.registerRPC(RPCMethodNames.API_REQUEST) { params ->
             @Suppress("UNCHECKED_CAST")
             val p = params as? Map<String, Any?>
@@ -55,16 +59,39 @@ class ApiProxyRpcHandler : RpcHandlerGroup {
                 return@registerRPC mapOf("ok" to false, "status" to 403, "message" to "URL not allowed")
             }
 
-            val http    = getOrCreateHttpClient(settings)
-            val request = Request.Builder().url(url).get().build()
+            val method = (p["method"] as? String)?.uppercase() ?: "GET"
+            // axios pre-serializes the body via transformRequest, so p["body"] arrives as a String.
+            // If it's already a String use it directly; otherwise serialize (object/array from non-standard callers).
+            val bodyJson: String? = when (val b = p["body"]) {
+                null -> null
+                is String -> b.takeIf { it.isNotBlank() }
+                else -> gson.toJson(b)
+            }
+            val emptyBody = "".toRequestBody(jsonMediaType)
+            val requestBody = bodyJson?.toRequestBody(jsonMediaType)
+
+            val http = getOrCreateHttpClient(settings)
+            val requestBuilder = Request.Builder().url(url)
+            val request = when (method) {
+                "POST"   -> requestBuilder.post(requestBody ?: emptyBody).build()
+                "PATCH"  -> requestBuilder.patch(requestBody ?: emptyBody).build()
+                "PUT"    -> requestBuilder.put(requestBody ?: emptyBody).build()
+                "DELETE" -> requestBuilder.delete().build()
+                else     -> requestBuilder.get().build()
+            }
+
             try {
                 val response = withContext(Dispatchers.IO) { http.newCall(request).execute() }
                 val status   = response.code
                 val body     = response.body.string()
-                if (status == 200) {
-                    mapOf("ok" to true,  "status" to status, "body" to gson.fromJson(body, Any::class.java))
+                val parsedBody: Any? = if (body.isNotBlank()) {
+                    runCatching { gson.fromJson(body, Any::class.java) }.getOrElse { body }
+                } else null
+                if (status in 200..299) {
+                    mapOf("ok" to true, "status" to status, "body" to parsedBody)
                 } else {
-                    mapOf("ok" to false, "status" to status, "message" to response.message.ifEmpty { "HTTP Error $status" })
+                    val reason = response.message.ifEmpty { "HTTP Error $status" }
+                    mapOf("ok" to false, "status" to status, "message" to reason, "body" to parsedBody)
                 }
             } catch (_: SocketTimeoutException) {
                 mapOf("ok" to false, "status" to 0, "message" to "Timeout")
