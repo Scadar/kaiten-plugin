@@ -12,26 +12,30 @@ export interface TaskCommentsProps {
   error: Error | null;
   onRefresh: () => void;
   allFiles?: CardFile[];
+  hideHeader?: boolean;
 }
 
-/** Comments section: header with count + refresh, then list or state messages. */
+/** Comments section: optional header with count + refresh, then list or state messages. */
 export function TaskComments({
   comments,
   isLoading,
   error,
   onRefresh,
   allFiles = [],
+  hideHeader = false,
 }: TaskCommentsProps) {
   return (
     <Stack spacing="0">
-      <Stack direction="row" align="center" spacing="1.5" className="mb-2">
-        <MessageSquare size={12} className="text-muted-foreground" />
-        <Text variant="overline">Comments</Text>
-        {comments && <Text variant="dimmed">({comments.length})</Text>}
-        <Button variant="ghost" size="icon-xs" className="ml-auto h-5 w-5" onClick={onRefresh}>
-          <RefreshCw size={11} />
-        </Button>
-      </Stack>
+      {!hideHeader && (
+        <Stack direction="row" align="center" spacing="1.5" className="mb-2">
+          <MessageSquare size={12} className="text-muted-foreground" />
+          <Text variant="overline">Comments</Text>
+          {comments && <Text variant="dimmed">({comments.length})</Text>}
+          <Button variant="ghost" size="icon-xs" className="ml-auto h-5 w-5" onClick={onRefresh}>
+            <RefreshCw size={11} />
+          </Button>
+        </Stack>
+      )}
 
       {isLoading ? (
         <Text variant="dimmed" className="pl-0.5">

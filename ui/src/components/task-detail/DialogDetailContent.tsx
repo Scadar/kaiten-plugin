@@ -5,9 +5,9 @@ import { AlertTriangle, ExternalLink, GitBranch, Link as LinkIcon } from 'lucide
 import type { TaskDetail } from '@/api/types';
 import { CreateBranchDialog } from '@/components/CreateBranchDialog';
 import { CardFilesSection } from '@/components/task-detail/CardFilesSection';
+import { CommentsBottomBar } from '@/components/task-detail/CommentsBottomBar';
 import { CustomPropertiesSection } from '@/components/task-detail/CustomPropertiesSection';
 import { RichTextContent } from '@/components/task-detail/RichTextContent';
-import { TaskComments } from '@/components/task-detail/TaskComments';
 import { TaskMeta } from '@/components/task-detail/TaskMeta';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -209,17 +209,8 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
           </>
         )}
 
-        {/* ── Comments ── */}
-        <Separator />
-        <TaskComments
-          comments={comments}
-          isLoading={commentsLoading}
-          error={commentsError}
-          onRefresh={refetchComments}
-          allFiles={allFiles}
-        />
-
-        <div className="h-2" />
+        {/* spacer so content isn't hidden behind fixed comments bar */}
+        <div className="h-12" />
       </Stack>
 
       {showCreateBranch && (
@@ -229,6 +220,14 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
           onClose={() => setShowCreateBranch(false)}
         />
       )}
+
+      <CommentsBottomBar
+        comments={comments}
+        isLoading={commentsLoading}
+        error={commentsError}
+        onRefresh={refetchComments}
+        allFiles={allFiles}
+      />
     </Stack>
   );
 }
