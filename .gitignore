@@ -8,6 +8,9 @@ certs/
 build
 out
 
+.claude/
+CLAUDE.md
+
 # Auto Claude data directory
 .auto-claude/
 

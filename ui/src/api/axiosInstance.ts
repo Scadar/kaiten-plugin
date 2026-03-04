@@ -9,6 +9,7 @@
 
 import axios, {
   AxiosError,
+  CanceledError,
   type AxiosAdapter,
   type AxiosResponse,
   type InternalAxiosRequestConfig,
@@ -34,8 +35,20 @@ const bridgeAdapter: AxiosAdapter = async (
 
   let result: Awaited<ReturnType<typeof bridge.call<'apiRequest'>>>;
   try {
-    result = await bridge.call('apiRequest', { url });
+    result = await bridge.call(
+      'apiRequest',
+      {
+        url,
+        method: config.method?.toUpperCase() ?? 'GET',
+        body: config.data ?? null,
+      },
+      { signal: config.signal as AbortSignal | undefined },
+    );
   } catch (bridgeError) {
+    // AbortSignal fired — translate to axios cancellation so TanStack Query handles it correctly
+    if (bridgeError instanceof DOMException && bridgeError.name === 'AbortError') {
+      throw new CanceledError('canceled', AxiosError.ERR_CANCELED, config);
+    }
     console.error('[bridgeAdapter] bridge.call threw:', bridgeError);
     throw new AxiosError(
       bridgeError instanceof Error ? bridgeError.message : 'Bridge error',
@@ -63,8 +76,10 @@ const bridgeAdapter: AxiosAdapter = async (
   }
 
   // HTTP error (4xx / 5xx) — include response so error.response.status works in client.ts
+  // Prefer the actual server JSON body (forwarded from Kotlin) over a synthesised object.
+  const errorData = result.body ?? { message };
   const errorResponse: AxiosResponse = {
-    data: { message },
+    data: errorData,
     status,
     statusText: message,
     headers: {},

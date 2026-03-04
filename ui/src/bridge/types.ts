@@ -349,10 +349,10 @@ export interface RPCMethods {
 
   // HTTP proxy — routes fetch through Kotlin/OkHttp to bypass JCEF CORS restrictions
   apiRequest: {
-    params: { url: string };
+    params: { url: string; method?: string; body?: unknown };
     result:
       | { ok: true; status: number; body: unknown }
-      | { ok: false; status: number; message: string };
+      | { ok: false; status: number; message: string; body?: unknown };
   };
 
   // Branch time tracking
@@ -379,6 +379,18 @@ export interface RPCMethods {
   getGitLog: {
     params: { branchName?: string; maxCount?: number };
     result: GitCommit[];
+  };
+
+  // List local branches and current branch
+  listBranches: {
+    params: undefined;
+    result: { branches: string[]; current: string | null };
+  };
+
+  // Create a new branch from baseBranch and check it out
+  createBranch: {
+    params: { branchName: string; baseBranch: string };
+    result: { success: true } | { error: string };
   };
 }
 

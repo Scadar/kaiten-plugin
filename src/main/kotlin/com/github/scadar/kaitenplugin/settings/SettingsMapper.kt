@@ -28,7 +28,8 @@ object SettingsMapper {
         "releaseBoardId"       to settings.releaseBoardId,
         "releaseColumnIds"     to settings.releaseColumnIds.toList(),
         "activeReleaseCardId"  to settings.activeReleaseCardId,
-        "lastConnectionError"  to settings.lastConnectionError
+        "lastConnectionError"   to settings.lastConnectionError,
+        "commitMessageTemplate" to settings.commitMessageTemplate
     )
 
     /**
@@ -71,5 +72,7 @@ object SettingsMapper {
         if (updates.containsKey("activeReleaseCardId")) {
             settings.activeReleaseCardId = (updates["activeReleaseCardId"] as? Number)?.toLong()
         }
+
+        (updates["commitMessageTemplate"] as? String)?.let { settings.commitMessageTemplate = it }
     }
 }

@@ -1,17 +1,23 @@
 import * as React from 'react';
 
-import { AlertTriangle, ExternalLink, Link as LinkIcon } from 'lucide-react';
+import { AlertTriangle, ExternalLink, GitBranch, Link as LinkIcon } from 'lucide-react';
 
 import type { TaskDetail } from '@/api/types';
+import { CreateBranchDialog } from '@/components/CreateBranchDialog';
 import { CardFilesSection } from '@/components/task-detail/CardFilesSection';
-import { CustomPropertiesSection } from '@/components/task-detail/CustomPropertiesSection';
-import { RichTextContent } from '@/components/task-detail/RichTextContent';
-import { TaskComments } from '@/components/task-detail/TaskComments';
-import { TaskMeta } from '@/components/task-detail/TaskMeta';
+import { CommentsBottomBar } from '@/components/task-detail/CommentsBottomBar';
+import { EditableCustomPropertiesSection } from '@/components/task-detail/EditableCustomPropertiesSection';
+import { EditableDescription } from '@/components/task-detail/EditableDescription';
+import { InlineEditText } from '@/components/task-detail/InlineEditText';
+import { TaskMetaEditable } from '@/components/task-detail/TaskMetaEditable';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
+import { useUpdateCard, useUpdateCardProperty } from '@/hooks/useKaitenQuery';
+import { useSettings } from '@/hooks/useSettings';
 import { useTaskDetailData } from '@/hooks/useTaskDetailData';
 
 interface DialogDetailContentProps {
@@ -32,6 +38,12 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
     allFiles,
   } = useTaskDetailData(task);
   const fileUids = allFiles.map((f) => f.uid);
+  const settings = useSettings();
+  const [showCreateBranch, setShowCreateBranch] = React.useState(false);
+
+  const updateCard = useUpdateCard(task.id);
+  const updateProperty = useUpdateCardProperty(task.id);
+  const isSaving = updateCard.isPending || updateProperty.isPending;
 
   return (
     <Stack>
@@ -40,7 +52,7 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
         direction="row"
         align="start"
         spacing="3"
-        className="bg-card/95 border-border sticky top-0 z-10 border-b px-4 py-3 backdrop-blur-sm"
+        className="bg-card/95 border-border sticky top-0 z-10 border-b py-3 pr-10 pl-4 backdrop-blur-sm"
       >
         <Stack className="min-w-0 flex-1">
           <Stack direction="row" wrap="wrap" align="center" spacing="2" className="mb-1.5">
@@ -57,7 +69,13 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
               </Badge>
             )}
           </Stack>
-          <Text variant="subheading">{task.title}</Text>
+          <InlineEditText
+            value={task.title}
+            onSave={async (title) => {
+              await updateCard.mutateAsync({ title });
+            }}
+            className="w-full text-base leading-snug font-semibold"
+          />
         </Stack>
 
         {kaitenUrl && (
@@ -74,23 +92,20 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
         )}
       </Stack>
 
-      <Stack spacing="4" className="px-4 py-3">
-        {/* ── Tags ── */}
-        {task.tags.length > 0 && (
-          <Stack direction="row" wrap="wrap" spacing="1.5">
-            {task.tags.map((tag) => (
-              <Badge
-                key={tag.id}
-                variant="outline"
-                className="h-5 rounded-sm px-2 py-0 text-xs font-normal"
-                style={tag.color ? { borderColor: tag.color, color: tag.color } : undefined}
-              >
-                {tag.name}
-              </Badge>
-            ))}
-          </Stack>
-        )}
+      {/* ── Actions ── */}
+      <Card variant="island" padding="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setShowCreateBranch(true)}
+        >
+          <GitBranch size={12} />
+          Create Branch
+        </Button>
+      </Card>
 
+      <Stack spacing="4" className="px-4 py-3">
         {/* ── Block reason ── */}
         {task.blocked && task.blockReason && (
           <div className="border-destructive/40 bg-destructive/5 flex items-start gap-2 rounded-lg border px-3 py-2">
@@ -101,34 +116,44 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
 
         <Separator />
 
-        {/* ── Meta ── */}
-        <TaskMeta task={task} />
+        {/* ── Editable meta (assignee, due date, tags, …) ── */}
+        <TaskMetaEditable
+          task={task}
+          onUpdateAssignee={async (owner_id) => {
+            await updateCard.mutateAsync({ owner_id });
+          }}
+          onUpdateDueDate={async (due_date) => {
+            await updateCard.mutateAsync({ due_date });
+          }}
+          onUpdateTags={async (tag_ids) => {
+            await updateCard.mutateAsync({ tag_ids });
+          }}
+          isSaving={isSaving}
+        />
 
-        {/* ── Custom Properties ── */}
+        {/* ── Editable custom properties ── */}
         {Object.keys(task.properties).length > 0 && (
           <>
             <Separator />
-            <div>
-              <SectionHeading>Properties</SectionHeading>
-              <div className="mt-2">
-                <CustomPropertiesSection properties={task.properties} />
-              </div>
-            </div>
+            <EditableCustomPropertiesSection
+              properties={task.properties}
+              onSaveProperty={async (propertyId, value) => {
+                await updateProperty.mutateAsync({ propertyId, value });
+              }}
+            />
           </>
         )}
 
-        {/* ── Description ── */}
-        {task.description && (
-          <>
-            <Separator />
-            <div>
-              <SectionHeading>Description</SectionHeading>
-              <p className="text-foreground/90 mt-2 text-sm leading-relaxed break-words whitespace-pre-wrap">
-                <RichTextContent html={task.description} excludeUids={fileUids} />
-              </p>
-            </div>
-          </>
-        )}
+        {/* ── Editable description ── */}
+        <Separator />
+        <EditableDescription
+          description={task.description}
+          fileUids={fileUids}
+          onSave={async (description) => {
+            await updateCard.mutateAsync({ description });
+          }}
+          isSaving={updateCard.isPending}
+        />
 
         {/* ── Files ── */}
         {allFiles.length > 0 && (
@@ -190,18 +215,25 @@ export function DialogDetailContent({ task }: DialogDetailContentProps) {
           </>
         )}
 
-        {/* ── Comments ── */}
-        <Separator />
-        <TaskComments
-          comments={comments}
-          isLoading={commentsLoading}
-          error={commentsError}
-          onRefresh={refetchComments}
-          allFiles={allFiles}
-        />
-
-        <div className="h-2" />
+        {/* spacer so content isn't hidden behind fixed comments bar */}
+        <div className="h-12" />
       </Stack>
+
+      {showCreateBranch && (
+        <CreateBranchDialog
+          taskId={task.id}
+          branchPatterns={settings.branchPatterns}
+          onClose={() => setShowCreateBranch(false)}
+        />
+      )}
+
+      <CommentsBottomBar
+        comments={comments}
+        isLoading={commentsLoading}
+        error={commentsError}
+        onRefresh={refetchComments}
+        allFiles={allFiles}
+      />
     </Stack>
   );
 }

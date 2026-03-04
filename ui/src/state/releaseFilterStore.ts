@@ -13,37 +13,20 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { SavedFilter } from '@/lib/advancedFilters';
 
-// ---------------------------------------------------------------------------
-// Persisted shape
-// ---------------------------------------------------------------------------
-
-interface PersistedState {
-  savedFilters: SavedFilter[];
-  activeFilterId: string | null;
-}
+import { loadFilterState, persistFilterState } from './filterStorePersistence';
 
 // ---------------------------------------------------------------------------
-// localStorage helpers
+// localStorage key + thin wrappers
 // ---------------------------------------------------------------------------
 
 const LS_KEY = 'kaiten:releaseFilters';
 
-function load(): PersistedState {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (raw) return JSON.parse(raw) as PersistedState;
-  } catch {
-    // ignore
-  }
-  return { savedFilters: [], activeFilterId: null };
+function load() {
+  return loadFilterState(LS_KEY);
 }
 
-function persist(state: PersistedState): void {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(state));
-  } catch {
-    // ignore
-  }
+function persist(state: Parameters<typeof persistFilterState>[1]) {
+  persistFilterState(LS_KEY, state);
 }
 
 // ---------------------------------------------------------------------------

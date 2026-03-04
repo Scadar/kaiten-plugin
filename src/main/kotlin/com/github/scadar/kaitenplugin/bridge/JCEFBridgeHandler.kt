@@ -37,6 +37,7 @@ class JCEFBridgeHandler(
 ) {
     private val log = logger<JCEFBridgeHandler>()
     private val gson = Gson()
+    private val messageSender = BridgeMessageSender(browser, gson)
 
     // RPC handler registry: method name -> handler function
     private val rpcHandlers = ConcurrentHashMap<String, suspend (Any?) -> Any?>()
@@ -120,7 +121,7 @@ class JCEFBridgeHandler(
             source = BridgeSource.IDE,
             version = version
         )
-        sendToReact(message)
+        messageSender.send(message)
         isReady = true
         log.info("Sent ready handshake to React")
     }
@@ -177,7 +178,7 @@ class JCEFBridgeHandler(
                     details = null
                 )
             )
-            sendToReact(errorResponse)
+            messageSender.send(errorResponse)
             log.warn("RPC method not found: ${request.method}")
             return
         }
@@ -193,7 +194,7 @@ class JCEFBridgeHandler(
                 id = request.id,
                 result = result
             )
-            sendToReact(response)
+            messageSender.send(response)
             log.debug("RPC request handled successfully: ${request.method}")
         } catch (e: Exception) {
             // Log full trace on JVM side; send only a sanitised message to React.
@@ -208,7 +209,7 @@ class JCEFBridgeHandler(
                     details = null
                 )
             )
-            sendToReact(errorResponse)
+            messageSender.send(errorResponse)
         }
     }
 
@@ -300,31 +301,10 @@ class JCEFBridgeHandler(
                 id = message.id,
                 latency = System.currentTimeMillis() - message.timestamp
             )
-            sendToReact(pong)
+            messageSender.send(pong)
             log.debug("Responded to ping: ${message.id}")
         } catch (e: Exception) {
             log.error("Error handling ping", e)
-        }
-    }
-
-    /**
-     * Send a message to React via executeJavaScript
-     */
-    private fun sendToReact(message: Any) {
-        try {
-            val messageJson = gson.toJson(message)
-
-            // gson.toJson(string) produces a properly escaped JSON string literal including
-            // surrounding double-quotes (e.g. "abc\"def\\n"). Passing this directly to JS
-            // avoids any order-dependent manual escaping and is injection-safe.
-            val jsStringLiteral = gson.toJson(messageJson)
-            val script = "window.__jcef_receive__ && window.__jcef_receive__($jsStringLiteral);"
-
-            browser.cefBrowser.executeJavaScript(script, browser.cefBrowser.url, 0)
-
-            log.debug("Sent message to React: ${message.javaClass.simpleName}")
-        } catch (e: Exception) {
-            log.error("Error sending message to React", e)
         }
     }
 
@@ -368,7 +348,7 @@ class JCEFBridgeHandler(
             event = event,
             payload = payload
         )
-        sendToReact(message)
+        messageSender.send(message)
         log.debug("Emitted event: $event")
     }
 
@@ -391,7 +371,7 @@ class JCEFBridgeHandler(
             timestamp = System.currentTimeMillis(),
             updates = updates
         )
-        sendToReact(message)
+        messageSender.send(message)
         log.debug("Sent state update: ${updates.keys}")
     }
 

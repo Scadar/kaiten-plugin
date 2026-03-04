@@ -13,8 +13,10 @@ import javax.swing.SwingUtilities
 @Service(Service.Level.PROJECT)
 class IdeFocusTracker(private val project: Project) : Disposable {
     private val log = logger<IdeFocusTracker>()
-    private val timeTrackingService = TimeTrackingService.getInstance(project)
-    private val branchTimeTrackingService = BranchTimeTrackingService.getInstance(project)
+
+    // Lazy to avoid circular service initialisation and allow easier testing.
+    private val timeTrackingService by lazy { TimeTrackingService.getInstance(project) }
+    private val branchTimeTrackingService by lazy { BranchTimeTrackingService.getInstance(project) }
 
     // FIX: @Volatile ensures writes from EDT (WindowFocusListener) are immediately
     // visible to background threads that call isIdeInFocus() — specifically

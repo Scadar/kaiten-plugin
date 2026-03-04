@@ -1,4 +1,5 @@
 import type { CustomPropertySelectValue } from '@/api/types';
+import { PlainTextContent } from '@/components/task-detail/RichTextContent';
 import { Badge } from '@/components/ui/badge';
 import { Stack } from '@/components/ui/stack';
 import { Text } from '@/components/ui/typography';
@@ -38,7 +39,7 @@ function getKaitenColor(index: number | null): string | undefined {
 }
 
 interface CustomPropertiesSectionProps {
-  properties: Record<string, number[]>;
+  properties: Record<string, unknown>;
 }
 
 export function CustomPropertiesSection({ properties }: CustomPropertiesSectionProps) {
@@ -55,21 +56,28 @@ export function CustomPropertiesSection({ properties }: CustomPropertiesSectionP
           <Text variant="dimmed" className="w-24 shrink-0 truncate pt-0.5" title={property.name}>
             {property.name}
           </Text>
-          <Stack direction="row" wrap="wrap" spacing="1" className="flex-1">
-            {property.type === 'select'
-              ? selectValues
-                ? resolveSelectValues(selectedValueIds, selectValues, property.colorful)
-                : selectedValueIds.map((id) => (
-                    <Badge key={id} variant="outline" size="xs" className="font-normal">
-                      {id}
-                    </Badge>
-                  ))
-              : selectedValueIds.map((v) => (
-                  <Badge key={v} variant="outline" size="xs" className="font-normal">
-                    {v}
-                  </Badge>
-                ))}
-          </Stack>
+          <div className="min-w-0 flex-1">
+            {property.type === 'select' ? (
+              <Stack direction="row" wrap="wrap" spacing="1">
+                {selectValues
+                  ? resolveSelectValues(
+                      selectedValueIds.filter((id): id is number => typeof id === 'number'),
+                      selectValues,
+                      property.colorful,
+                    )
+                  : selectedValueIds.map((id) => (
+                      <Badge key={String(id)} variant="outline" size="xs" className="font-normal">
+                        {String(id)}
+                      </Badge>
+                    ))}
+              </Stack>
+            ) : (
+              <PlainTextContent
+                text={selectedValueIds.map(String).join(', ')}
+                className="text-sm break-words whitespace-pre-wrap"
+              />
+            )}
+          </div>
         </Stack>
       ))}
     </Stack>

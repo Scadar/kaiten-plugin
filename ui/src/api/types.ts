@@ -108,7 +108,7 @@ export interface TaskDetailDto extends TaskDto {
   spent_time_minutes?: number | null;
   time_estimate_minutes?: number | null;
   parent_id?: number | null;
-  properties?: Record<string, number[]> | null;
+  properties?: Record<string, unknown> | null;
 }
 
 export interface FileDto {
@@ -281,8 +281,8 @@ export interface TaskDetail extends Task {
   spentTimeMinutes: number | null;
   timeEstimateMinutes: number | null;
   parentId: number | null;
-  /** Custom properties: key is "id_{propertyId}", value is array of selected value IDs */
-  properties: Record<string, number[]>;
+  /** Custom properties: key is "id_{propertyId}", value depends on property type */
+  properties: Record<string, unknown>;
 }
 
 export interface CommentAuthor {
@@ -484,6 +484,31 @@ export function cardTypeDtoToDomain(dto: CardTypeDto): CardType {
 }
 
 // ============================================================================
+// Mutation Input Types
+// ============================================================================
+
+/** Fields that can be updated on a card via PATCH /cards/{id} */
+export interface UpdateCardInput {
+  title?: string;
+  description?: string | null;
+  due_date?: string | null;
+  owner_id?: number | null;
+  tag_ids?: number[];
+}
+
+/** Payload for updating a custom property value */
+export interface UpdateCardPropertyInput {
+  /** The raw value — type depends on property kind:
+   *  - text/rich_text: string
+   *  - number: number
+   *  - date: ISO date string ("YYYY-MM-DD")
+   *  - select (single): [selectValueId]
+   *  - select (multi): [id1, id2, ...]
+   */
+  value: unknown;
+}
+
+// ============================================================================
 // Settings & Configuration
 // ============================================================================
 
@@ -514,6 +539,9 @@ export interface KaitenSettings {
   // Transient flag set by the IDE while a connection check is in progress.
   // Never persisted; absent from the map when no check is running.
   isVerifyingConnection?: boolean;
+  // Commit message template for the "Insert Kaiten Task Reference" toolbar button.
+  // Supports {id} (task number) and {title} (card title) placeholders.
+  commitMessageTemplate: string;
 }
 
 export function getDefaultSettings(): KaitenSettings {
@@ -537,5 +565,6 @@ export function getDefaultSettings(): KaitenSettings {
     activeReleaseCardId: null,
     lastConnectionError: '',
     isVerifyingConnection: false,
+    commitMessageTemplate: 'ktn-{id}: {title}',
   };
 }

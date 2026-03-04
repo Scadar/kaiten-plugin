@@ -75,7 +75,7 @@ function walkNode(
   // Text node — parse Markdown links inside it
   if (node.nodeType === Node.TEXT_NODE) {
     const text = node.textContent ?? '';
-    return text ? parseMdLinks(text, excludeUids, baseUrl, counter) : [];
+    return text ? parseLinks(text, excludeUids, baseUrl, counter) : [];
   }
 
   if (node.nodeType !== Node.ELEMENT_NODE) return [];
@@ -118,12 +118,14 @@ function walkNode(
   return walkChildren(el, excludeUids, baseUrl, counter);
 }
 
-// ── Markdown link parsing ─────────────────────────────────────────────────────
+// ── Link parsing ──────────────────────────────────────────────────────────────
 
-// Matches  ![alt](url)  and  [text](url)  with optional "title" attribute
-const MD_RE = /(!?\[([^\]]*)])\(([^)\s"]+)(?:\s+"[^"]*")?\)/g;
+// Matches (in priority order):
+//   1. ![alt](url) or [text](url)  — Markdown links/images
+//   2. https?://...               — bare URLs
+const LINK_RE = /(!?\[([^\]]*)])\(([^)\s"]+)(?:\s+"[^"]*")?\)|(https?:\/\/[^\s<>"')\]]+)/g;
 
-function parseMdLinks(
+function parseLinks(
   text: string,
   excludeUids: string[],
   baseUrl: string,
@@ -131,37 +133,52 @@ function parseMdLinks(
 ): React.ReactNode[] {
   const result: React.ReactNode[] = [];
   let last = 0;
-  MD_RE.lastIndex = 0;
+  LINK_RE.lastIndex = 0;
 
   let m: RegExpExecArray | null;
-  while ((m = MD_RE.exec(text)) !== null) {
-    // Text before this match
+  while ((m = LINK_RE.exec(text)) !== null) {
     if (m.index > last) result.push(text.slice(last, m.index));
 
-    const isImage = m[0].startsWith('!');
-    const label = m[2]; // text inside [ ]
-    const url = resolveUrl(m[3] ?? '', baseUrl);
     const key = counter.n++;
 
-    // Images are always file attachments — already shown in the files section, suppress
-    if (isImage) {
-      last = m.index + m[0].length;
-      continue;
-    }
+    if (m[4] !== undefined) {
+      // Bare URL
+      const url = resolveUrl(m[4], baseUrl);
+      if (!excludeUids.some((uid) => url.includes(uid))) {
+        result.push(
+          <a
+            key={key}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            {m[4]}
+          </a>,
+        );
+      } else {
+        result.push(m[4]);
+      }
+    } else {
+      // Markdown link or image
+      const isImage = m[0].startsWith('!');
+      const label = m[2];
+      const url = resolveUrl(m[3] ?? '', baseUrl);
 
-    // Suppress links that reference an already-attached file
-    if (!excludeUids.some((uid) => url.includes(uid))) {
-      result.push(
-        <a
-          key={key}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline"
-        >
-          {label ?? url}
-        </a>,
-      );
+      // Images are file attachments — already shown in the files section, suppress
+      if (!isImage && !excludeUids.some((uid) => url.includes(uid))) {
+        result.push(
+          <a
+            key={key}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            {label ?? url}
+          </a>,
+        );
+      }
     }
 
     last = m.index + m[0].length;
@@ -169,4 +186,24 @@ function parseMdLinks(
 
   if (last < text.length) result.push(text.slice(last));
   return result.filter((n) => n !== null && n !== '');
+}
+
+// ── Plain text component (no HTML) ────────────────────────────────────────────
+
+interface PlainTextContentProps {
+  text: string;
+  className?: string;
+}
+
+/**
+ * Renders plain text with clickable bare URLs and Markdown-style links.
+ * Use this for non-HTML values (e.g. custom property values).
+ */
+export function PlainTextContent({ text, className }: PlainTextContentProps) {
+  const { serverUrl } = useSettings();
+  const nodes = React.useMemo(() => {
+    const counter = { n: 0 };
+    return parseLinks(text, [], serverUrl, counter);
+  }, [text, serverUrl]);
+  return <span className={className}>{nodes}</span>;
 }

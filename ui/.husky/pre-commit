@@ -1,4 +1,6 @@
 cd ui
-npm run lint
+npm run format
+npm run lint:fix
+git add .
 npm run format:check
 npm test -- --run

@@ -22,8 +22,8 @@ function saveRoute(pathname: string): void {
   if (EPHEMERAL_PREFIXES.some((p) => pathname.startsWith(p))) return;
   try {
     localStorage.setItem(ROUTE_LS_KEY, pathname);
-  } catch {
-    /* ignore */
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[App] localStorage error:', e);
   }
 }
 
@@ -37,8 +37,8 @@ try {
   if (savedRoute && savedRoute !== '/' && isDefaultHash) {
     window.location.hash = savedRoute;
   }
-} catch {
-  /* ignore */
+} catch (e) {
+  if (import.meta.env.DEV) console.warn('[App] localStorage error:', e);
 }
 
 // ---------------------------------------------------------------------------

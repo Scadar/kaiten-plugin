@@ -159,6 +159,8 @@ object RPCMethodNames {
     // Git
     const val GET_GIT_LOG             = "getGitLog"
     const val CHECK_BRANCHES_MERGED   = "checkBranchesMerged"
+    const val LIST_BRANCHES           = "listBranches"
+    const val CREATE_BRANCH           = "createBranch"
 }
 
 // ============================================================================

@@ -183,7 +183,7 @@ function defaultComparison(key: FilterKey): FilterComparison {
  * encoded JSON always satisfies the API constraint, regardless of how the
  * filter was constructed in the UI.
  */
-function normalizeGroup(group: FilterGroup): FilterGroup {
+export function normalizeGroup(group: FilterGroup): FilterGroup {
   const normalizedConditions = group.conditions.map((node) => {
     if (isFilterCondition(node)) {
       // Naked condition inside an AND group → wrap in OR group
@@ -203,7 +203,7 @@ function normalizeGroup(group: FilterGroup): FilterGroup {
   return { ...group, conditions: normalizedConditions };
 }
 
-function serializeNode(node: FilterNode): object {
+export function serializeNode(node: FilterNode): object {
   if (isFilterGroup(node)) {
     return {
       key: node.logic,

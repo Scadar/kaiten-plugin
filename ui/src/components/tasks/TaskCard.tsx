@@ -1,6 +1,9 @@
-import { ExternalLink } from 'lucide-react';
+import * as React from 'react';
+
+import { ExternalLink, GitBranch } from 'lucide-react';
 
 import type { Task, Column } from '@/api/types';
+import { CreateBranchDialog } from '@/components/CreateBranchDialog';
 import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Stack } from '@/components/ui/stack';
@@ -29,6 +32,7 @@ export function TaskCard({ task, columns, onClick, className, showColumn = true 
   const column = getColumnName(columns, task.columnId);
   const settings = useSettings();
   const selectedSpaceId = useFilterStore((s) => s.selectedSpaceId);
+  const [showCreateBranch, setShowCreateBranch] = React.useState(false);
 
   const kaitenUrl = buildKaitenUrl(settings.serverUrl, selectedSpaceId, task.id);
 
@@ -97,18 +101,43 @@ export function TaskCard({ task, columns, onClick, className, showColumn = true 
         </Stack>
       </Stack>
 
-      {/* Open in Kaiten — visible on hover */}
-      {kaitenUrl && (
-        <a
-          href={kaitenUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="text-muted-foreground hover:text-primary mt-0.5 shrink-0 opacity-0 transition-all group-hover:opacity-100"
-          title="Open in Kaiten"
+      {/* Actions visible on hover */}
+      <Stack
+        direction="row"
+        align="center"
+        spacing="1"
+        className="mt-0.5 shrink-0 opacity-0 transition-all group-hover:opacity-100"
+      >
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowCreateBranch(true);
+          }}
+          className="text-muted-foreground hover:text-primary transition-colors"
+          title="Create branch for this task"
         >
-          <ExternalLink size={12} />
-        </a>
+          <GitBranch size={12} />
+        </button>
+        {kaitenUrl && (
+          <a
+            href={kaitenUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-muted-foreground hover:text-primary transition-colors"
+            title="Open in Kaiten"
+          >
+            <ExternalLink size={12} />
+          </a>
+        )}
+      </Stack>
+
+      {showCreateBranch && (
+        <CreateBranchDialog
+          taskId={task.id}
+          branchPatterns={settings.branchPatterns}
+          onClose={() => setShowCreateBranch(false)}
+        />
       )}
     </Stack>
   );

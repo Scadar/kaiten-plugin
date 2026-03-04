@@ -7,6 +7,7 @@ export interface LogEntry {
   timestamp: number;
   type: LogEntryType;
   url: string;
+  method?: string;
   status?: number;
   duration?: number;
   message: string;

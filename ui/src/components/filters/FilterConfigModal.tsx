@@ -8,7 +8,6 @@ import { ComboboxSelect } from '@/components/ui/combobox-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MultiCombobox } from '@/components/ui/multi-combobox';
 import { Stack } from '@/components/ui/stack';
 import {
   useTags,
@@ -261,7 +260,8 @@ export function FilterConfigModal({
                         (optional — limits visible columns)
                       </span>
                     </Label>
-                    <MultiCombobox
+                    <ComboboxSelect
+                      multiple
                       options={boardColumns
                         .slice()
                         .sort((a, b) => a.position - b.position)

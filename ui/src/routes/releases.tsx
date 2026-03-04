@@ -2,25 +2,26 @@ import { useState, useMemo, useCallback } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { type ColumnDef } from '@tanstack/react-table';
-import {
-  AlertCircle,
-  Check,
-  ExternalLink,
-  GitBranch,
-  Loader2,
-  PackageSearch,
-  Settings,
-  Star,
-  X,
-} from 'lucide-react';
+import { PackageSearch, Settings, Star } from 'lucide-react';
 
 import { settingsKeys } from '@/api/endpoints';
-import type { Task, KaitenSettings } from '@/api/types';
+import type { KaitenSettings } from '@/api/types';
 import { bridge } from '@/bridge/JCEFBridge';
 import { Layout } from '@/components/Layout';
+import { ReleaseBranchChecker } from '@/components/releases/ReleaseBranchChecker';
+import {
+  ReleaseCardSummary,
+  ReleaseDueDate,
+  ReleaseTags,
+} from '@/components/releases/ReleaseCardSummary';
+import { ReleaseChildCards } from '@/components/releases/ReleaseChildCards';
 import { ReleasesFiltersPanel } from '@/components/ReleasesFiltersPanel';
 import { CardsTable } from '@/components/tasks/CardsTable';
+import {
+  makeExternalLinkColumn,
+  makeActiveStarColumn,
+  makeBranchStatusColumn,
+} from '@/components/tasks/columnDefs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -201,61 +202,15 @@ function ReleasesListTab({ settings, releaseFiltersConfigured }: ReleasesListTab
     return <NoFiltersNotice />;
   }
 
-  const activeStarColumn: ColumnDef<Task> = {
-    id: 'active',
-    enableHiding: false,
-    enableSorting: false,
-    header: () => (
-      <span title="Mark as active release">
-        <Star size={11} className="text-muted-foreground/50" />
-      </span>
-    ),
-    cell: ({ row }) => {
-      const isActive = row.original.id === activeReleaseCardId;
-      return (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            void handleSetActive(row.original.id);
-          }}
-          title={isActive ? 'Remove as active release' : 'Set as active release'}
-          className={cn(
-            'flex items-center justify-center transition-colors',
-            isActive
-              ? 'text-primary'
-              : 'text-muted-foreground hover:text-primary opacity-20 group-hover/row:opacity-60 hover:!opacity-100',
-          )}
-        >
-          {isActive ? <Star size={12} fill="currentColor" /> : <Star size={12} />}
-        </button>
-      );
-    },
-    size: 28,
-  };
+  const activeStarColumn = makeActiveStarColumn({
+    activeCardId: activeReleaseCardId,
+    onSetActive: (id) => void handleSetActive(id),
+  });
 
-  const actionsColumn: ColumnDef<Task> = {
-    id: 'actions',
-    enableHiding: false,
-    enableSorting: false,
-    header: undefined,
-    cell: ({ row }) => {
-      const url = buildKaitenUrl(settings.serverUrl, releaseSpaceId, row.original.id);
-      if (!url) return null;
-      return (
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="text-muted-foreground hover:text-primary opacity-0 transition-all group-hover/row:opacity-100"
-          title="Open in Kaiten"
-        >
-          <ExternalLink size={11} />
-        </a>
-      );
-    },
-    size: 24,
-  };
+  const actionsColumn = makeExternalLinkColumn({
+    serverUrl: settings.serverUrl,
+    spaceId: releaseSpaceId,
+  });
 
   return (
     <div className="pt-2 pb-2">
@@ -426,73 +381,19 @@ function ActiveReleaseContent({
   }
 
   const columnName = columnMap[task.columnId];
-  const conditionLabel = task.condition !== null ? CONDITION_LABELS[task.condition] : null;
 
-  // ── Child table — custom columns ─────────────────────────────────────────────
+  const branchStatusColumn = makeBranchStatusColumn({
+    releaseBranch,
+    branchPatterns,
+    branchResults,
+    isLoading: branchesLoading,
+    error: branchesError,
+  });
 
-  const branchStatusColumn: ColumnDef<Task> = {
-    id: 'branchStatus',
-    enableHiding: false,
-    enableSorting: false,
-    header: () => <GitBranch size={12} className="text-muted-foreground" />,
-    cell: ({ row }) => {
-      if (!releaseBranch) {
-        return <span className="text-muted-foreground text-xs opacity-30">—</span>;
-      }
-      if (branchesLoading) {
-        return <span className="text-muted-foreground text-xs opacity-40">…</span>;
-      }
-      if (branchesError) {
-        return (
-          <AlertCircle
-            size={12}
-            className="text-destructive opacity-60"
-            aria-label={branchesError.message}
-          />
-        );
-      }
-      const candidates = branchPatterns.map((p) => p.replace('{id}', String(row.original.id)));
-      const matchedBranch = candidates.find((b) => branchResults?.[b] === true);
-      return matchedBranch ? (
-        <Check
-          size={12}
-          className="text-green-500"
-          aria-label={`${matchedBranch} is in the release branch`}
-        />
-      ) : (
-        <X
-          size={12}
-          className="text-muted-foreground opacity-50"
-          aria-label={`Not found: ${candidates.join(', ')}`}
-        />
-      );
-    },
-    size: 36,
-  };
-
-  const childActionsColumn: ColumnDef<Task> = {
-    id: 'actions',
-    enableHiding: false,
-    enableSorting: false,
-    header: undefined,
-    cell: ({ row }) => {
-      const url = buildKaitenUrl(serverUrl, releaseSpaceId, row.original.id);
-      if (!url) return null;
-      return (
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="text-muted-foreground hover:text-primary opacity-0 transition-all group-hover/row:opacity-100"
-          title="Open in Kaiten"
-        >
-          <ExternalLink size={11} />
-        </a>
-      );
-    },
-    size: 24,
-  };
+  const childActionsColumn = makeExternalLinkColumn({
+    serverUrl,
+    spaceId: releaseSpaceId,
+  });
 
   return (
     <>
@@ -503,175 +404,44 @@ function ActiveReleaseContent({
         {/* ── Release card summary ── */}
         <Card variant="island" padding="md" className="mt-2">
           <Stack spacing="2">
-            <Stack direction="row" align="start" spacing="2">
-              <Stack className="min-w-0 flex-1" spacing="0">
-                <Stack direction="row" align="center" wrap="wrap" spacing="2" className="mb-1">
-                  <span className="text-muted-foreground shrink-0 font-mono text-xs">
-                    #{task.id}
-                  </span>
-                  {columnName && (
-                    <Badge variant="secondary" size="xs" className="font-normal">
-                      {columnName}
-                    </Badge>
-                  )}
-                  {conditionLabel && (
-                    <Badge variant="outline" size="xs" className="font-normal">
-                      {conditionLabel}
-                    </Badge>
-                  )}
-                  {task.blocked && (
-                    <Badge variant="destructive" size="xs" className="font-normal">
-                      Blocked
-                    </Badge>
-                  )}
-                </Stack>
-                <p className="text-sm leading-snug font-semibold">{task.title}</p>
-              </Stack>
-
-              {kaitenUrl && (
-                <a
-                  href={kaitenUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary shrink-0 text-xs transition-colors"
-                  title="Open in Kaiten"
-                >
-                  <ExternalLink size={12} />
-                </a>
-              )}
-            </Stack>
-
-            {task.dueDate && (
-              <Text variant="dimmed">Due: {new Date(task.dueDate).toLocaleDateString()}</Text>
-            )}
-
-            {task.tags.length > 0 && (
-              <Stack direction="row" wrap="wrap" spacing="1">
-                {task.tags.map((tag) => (
-                  <Badge
-                    key={tag.id}
-                    variant="outline"
-                    size="xs"
-                    className="font-normal"
-                    style={tag.color ? { borderColor: tag.color, color: tag.color } : undefined}
-                  >
-                    {tag.name}
-                  </Badge>
-                ))}
-              </Stack>
-            )}
+            <ReleaseCardSummary task={task} columnName={columnName} kaitenUrl={kaitenUrl} />
+            <ReleaseDueDate task={task} />
+            <ReleaseTags task={task} />
           </Stack>
         </Card>
 
         {/* ── Release branch check ── */}
         <Card variant="island" padding="md">
-          <Stack spacing="1.5">
-            <Stack direction="row" align="center" spacing="1.5">
-              <GitBranch size={13} className="text-muted-foreground shrink-0" />
-              <Text variant="overline">Release branch</Text>
-            </Stack>
-            <Stack direction="row" align="center" spacing="1">
-              <Input
-                size="sm"
-                placeholder={`e.g. release/v1.0.0`}
-                value={releaseBranchInput}
-                onChange={(e) => setReleaseBranchInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') setReleaseBranch(releaseBranchInput.trim() || null);
-                }}
-                className="flex-1"
-              />
-              <Button
-                variant="outline"
-                size="xs"
-                onClick={() => {
-                  const branch = releaseBranchInput.trim() || null;
-                  if (branch === releaseBranch) {
-                    void refetchBranches();
-                  } else {
-                    setReleaseBranch(branch);
-                  }
-                }}
-                disabled={branchesLoading}
-              >
-                {branchesLoading ? <Loader2 size={12} className="animate-spin" /> : 'Check'}
-              </Button>
-            </Stack>
-            {branchesError && (
-              <Stack direction="row" align="center" spacing="1">
-                <AlertCircle size={12} className="text-destructive shrink-0" />
-                <Text variant="dimmed" className="text-destructive">
-                  {branchesError.message}
-                </Text>
-              </Stack>
-            )}
-            {releaseBranch && !branchesLoading && !branchesError && branchResults && (
-              <Text variant="dimmed" className="text-muted-foreground">
-                {
-                  (childTasks ?? []).filter((t) =>
-                    branchPatterns.some((p) => branchResults[p.replace('{id}', String(t.id))]),
-                  ).length
-                }{' '}
-                / {(childTasks ?? []).length} tasks added to{' '}
-                <span className="font-mono">{releaseBranch}</span>
-              </Text>
-            )}
-          </Stack>
+          <ReleaseBranchChecker
+            releaseBranchInput={releaseBranchInput}
+            onInputChange={setReleaseBranchInput}
+            onCheck={() => {
+              const branch = releaseBranchInput.trim() || null;
+              if (branch === releaseBranch) void refetchBranches();
+              else setReleaseBranch(branch);
+            }}
+            isLoading={branchesLoading}
+            error={branchesError}
+            releaseBranch={releaseBranch}
+            childTasks={childTasks ?? []}
+            branchPatterns={branchPatterns}
+            branchResults={branchResults}
+          />
         </Card>
 
         {/* ── Children table ── */}
-        <div className="px-3 pb-0.5">
-          <Text variant="overline">
-            Child cards
-            {childTasks !== undefined && (
-              <span className="text-muted-foreground ml-1.5 font-normal normal-case">
-                ({filteredChildren.length})
-              </span>
-            )}
-          </Text>
-        </div>
-
-        <div className="mb-2 px-2">
-          <Input
-            size="sm"
-            placeholder="Search child cards…"
-            value={childSearch}
-            onChange={(e) => setChildSearch(e.target.value)}
-          />
-        </div>
-
-        {childrenLoading ? (
-          <Stack align="center" justify="center" className="py-6">
-            <Text variant="secondary">Loading child cards…</Text>
-          </Stack>
-        ) : (
-          <Card variant="island">
-            <CardsTable
-              key={activeFilter?.id ?? 'default'}
-              tasks={filteredChildren}
-              columnMap={columnMap}
-              columns={[
-                'id',
-                'title',
-                branchStatusColumn,
-                'responsible',
-                'members',
-                childActionsColumn,
-              ]}
-              onRowClick={(id) => navigate({ to: '/card/$cardId', params: { cardId: String(id) } })}
-              emptyMessage="No child cards found"
-            />
-          </Card>
-        )}
+        <ReleaseChildCards
+          tasks={filteredChildren}
+          totalCount={childTasks?.length}
+          columnMap={columnMap}
+          searchValue={childSearch}
+          onSearchChange={setChildSearch}
+          isLoading={childrenLoading}
+          activeFilterId={activeFilter?.id}
+          extraColumns={[branchStatusColumn, childActionsColumn]}
+          onRowClick={(id) => navigate({ to: '/card/$cardId', params: { cardId: String(id) } })}
+        />
       </Stack>
     </>
   );
 }
-
-// ── Condition labels ──────────────────────────────────────────────────────────
-
-const CONDITION_LABELS: Record<number, string> = {
-  1: 'Active',
-  2: 'Done',
-  3: 'Archived',
-};
