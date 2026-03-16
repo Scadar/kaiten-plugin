@@ -141,7 +141,7 @@ jobs:
 
       # Run Qodana inspections for Java/Kotlin
       - name: Qodana Scan
-        uses: JetBrains/qodana-action@v2025.3.1
+        uses: JetBrains/qodana-action@v2025.3.2
         with:
           args: --config,qodana-java.yml
           artifact-name: qodana-report-java
@@ -182,7 +182,7 @@ jobs:
 
       # Run Qodana inspections for JavaScript/TypeScript
       - name: Qodana Scan
-        uses: JetBrains/qodana-action@v2025.3.1
+        uses: JetBrains/qodana-action@v2025.3.2
         with:
           args: --config,qodana-js.yml
           artifact-name: qodana-report-js
